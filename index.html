@@ -720,7 +720,7 @@
         let currentRole = "";
         let isMultiMode = false;
 
-        function showGamePreloader(customTitle = "SYNCHRONIZING...", duration = 900, callback) {
+        function showGamePreloader(customTitle = "SYNCHRONIZING...", duration = 2000, callback) {
             const preloader = document.getElementById('gamePreloader');
             document.getElementById('loadingTitleText').innerText = customTitle;
             const fillEl = document.getElementById('progressBarFill');
