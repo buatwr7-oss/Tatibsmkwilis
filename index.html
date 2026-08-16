@@ -720,7 +720,7 @@
         let currentRole = "";
         let isMultiMode = false;
 
-        function showGamePreloader(customTitle = "SYNCHRONIZING...", duration = 2000, callback) {
+        function showGamePreloader(customTitle = "SYNCHRONIZING...", duration = 3000, callback) {
             const preloader = document.getElementById('gamePreloader');
             document.getElementById('loadingTitleText').innerText = customTitle;
             const fillEl = document.getElementById('progressBarFill');
@@ -787,7 +787,7 @@
                 pass: passIn
             };
 
-            showGamePreloader("VERIFYING CREDENTIALS...", 1000, () => {
+            showGamePreloader("VERIFYING CREDENTIALS...", 6000, () => {
                 fetch(scriptURL, {
                     method: "POST",
                     body: JSON.stringify(payload)
@@ -834,7 +834,7 @@
                 localStorage.setItem('gelar_time', Date.now());
             }
 
-            showGamePreloader("FETCHING CHARACTER DATA...", 900, () => {
+            showGamePreloader("FETCHING CHARACTER DATA...", 2900, () => {
                 const hasilBox = document.getElementById('hasilPoinSiswa');
                 const barHpFill = document.getElementById('barHpFill');
                 const txtHpPercent = document.getElementById('txtHpPercent');
@@ -1070,7 +1070,7 @@
 
         function eksekusiSimpanWithLoading() {
             tutupModal();
-            showGamePreloader("SAVING TO CLOUD SHEET...", 900, () => {
+            showGamePreloader("SAVING TO CLOUD SHEET...", 2900, () => {
                 alert("✅ Data Poin/HP berhasil dicatat dan disinkronkan ke database!");
                 document.getElementById('formEntry').reset();
                 initFormEntry();
@@ -1090,7 +1090,7 @@
             btnRekap.style.background = "transparent"; btnKontrol.style.background = "transparent"; btnCetak.style.background = "transparent";
 
             if (tabName === 'rekap') {
-                showGamePreloader("FETCHING STUDENT RECORDS...", 600, () => {
+                showGamePreloader("FETCHING STUDENT RECORDS...", 2600, () => {
                     tabRekap.classList.remove('hidden'); btnRekap.className = ""; btnRekap.style.background = "#1e3c72";
                     renderTabelRekap();
                 });
@@ -1146,7 +1146,7 @@
             const nisnSiswa = document.getElementById('adminSiswaSelect').value;
             if(!nisnSiswa) { alert("Pilih siswa terlebih dahulu!"); return; }
             
-            showGamePreloader("UPDATING CLOUD DATABASE...", 900, () => {
+            showGamePreloader("UPDATING CLOUD DATABASE...", 2900, () => {
                 alert(`👑 AKSI SUPER ADMIN BERHASIL!\nTarget NISN: ${nisnSiswa}\nSistem telah memperbarui data rekapitulasi siswa!`);
                 document.getElementById('formAdminAction').reset();
                 document.getElementById('adminSiswaSelect').innerHTML = `<option value="">-- Pilih Kelas Dulu --</option>`;
@@ -1180,7 +1180,7 @@
         }
 
         function prosesCetakLaporanWithLoading() {
-            showGamePreloader("GENERATING REPORT DOCUMENT...", 1000, () => {
+            showGamePreloader("GENERATING REPORT DOCUMENT...", 2000, () => {
                 const kat = document.getElementById('cetakKategori').value;
                 if (kat === 'semua') { alert("🖨️ Laporan Rekapitulasi Keseluruhan Sekolah berhasil diunduh (Google Sheets)!"); } 
                 else if (kat === 'kelas') { alert(`🖨️ Laporan Rekapitulasi Kelas ${document.getElementById('cetakKelasSelect').value} berhasil diunduh!`); } 
