@@ -720,25 +720,40 @@
         let currentRole = "";
         let isMultiMode = false;
 
-        function showGamePreloader(customTitle = "SYNCHRONIZING...", duration = 3000, callback) {
+        // FUNGSI PRELOADER DINAMIS YANG BARU
+        function showGamePreloader(customTitle = "SYNCHRONIZING...", callback) {
             const preloader = document.getElementById('gamePreloader');
             document.getElementById('loadingTitleText').innerText = customTitle;
             const fillEl = document.getElementById('progressBarFill');
             const percentEl = document.getElementById('loadingPercentText');
             
             preloader.classList.remove('hidden');
-            let currentPercent = 0; fillEl.style.width = '0%'; percentEl.innerText = '0%';
+            let currentPercent = 0; 
+            fillEl.style.width = '0%'; 
+            percentEl.innerText = '0%';
             
-            let intervalTime = duration / 50;
-            let loadingInterval = setInterval(() => {
-                currentPercent += 2; 
-                if (currentPercent > 100) currentPercent = 100;
-                fillEl.style.width = currentPercent + '%'; percentEl.innerText = currentPercent + '%';
-                if (currentPercent >= 100) {
-                    clearInterval(loadingInterval);
-                    setTimeout(() => { preloader.classList.add('hidden'); if (callback) callback(); }, 200); 
+            // Simulasi progress naik perlahan sampai 85%
+            let progressInterval = setInterval(() => {
+                if (currentPercent < 85) {
+                    currentPercent += 5;
+                    fillEl.style.width = currentPercent + '%';
+                    percentEl.innerText = currentPercent + '%';
                 }
-            }, intervalTime);
+            }, 100);
+
+            // Fungsi penutup loading saat data sudah tiba
+            const finishLoading = () => {
+                clearInterval(progressInterval);
+                fillEl.style.width = '100%';
+                percentEl.innerText = '100%';
+                setTimeout(() => { 
+                    preloader.classList.add('hidden'); 
+                }, 200);
+            };
+
+            if (callback) {
+                callback(finishLoading);
+            }
         }
 
         function togglePassword() {
@@ -771,6 +786,7 @@
 
         function logout() { location.reload(); }
 
+        // FUNGSI LOGIN DINAMIS KE DATABASE
         function login() {
             const usernameIn = document.getElementById('namaGuruInput').value.trim();
             const passIn = document.getElementById('password').value.trim();
@@ -787,13 +803,16 @@
                 pass: passIn
             };
 
-            showGamePreloader("VERIFYING CREDENTIALS...", 6000, () => {
+            showGamePreloader("VERIFYING CREDENTIALS...", (done) => {
                 fetch(scriptURL, {
                     method: "POST",
                     body: JSON.stringify(payload)
                 })
                 .then(response => response.json())
                 .then(res => {
+                    // Selesaikan loading bar ke 100% dan tutup preloader
+                    done();
+
                     if (res.status === "success") {
                         currentRole = res.user.role;
                         document.getElementById('pesanEror').style.display = "none";
@@ -815,18 +834,18 @@
                     }
                 })
                 .catch(error => {
+                    done(); // Tetap tutup preloader meski error
                     console.error("Error:", error);
                     document.getElementById('pesanEror').style.display = "block";
                 });
             });
         }
 
-        // LOGIKA STATUS SISWA (PERBAIKAN: BAR HP MERAH PENUH JIKA MINUS)
+        // PENYESUAIAN FUNGSI LAIN AGAR PRELOADER TIDAK ERROR (SIMULASI DELAY 2 DETIK)
         function cariPoinSiswaWithLoading() {
             const nisnInput = document.getElementById('nisnSiswaInput').value.trim();
             if (!nisnInput) { alert("Silakan ketik nomor NIS / NISN kamu!"); return; }
 
-            // Cek Speedrunner (< 2 detik sejak halaman dibuka)
             const clickTime = Date.now();
             const timeDiff = (clickTime - pageLoadTime) / 1000;
             if (timeDiff < 2) {
@@ -834,105 +853,105 @@
                 localStorage.setItem('gelar_time', Date.now());
             }
 
-            showGamePreloader("FETCHING CHARACTER DATA...", 2900, () => {
-                const hasilBox = document.getElementById('hasilPoinSiswa');
-                const barHpFill = document.getElementById('barHpFill');
-                const txtHpPercent = document.getElementById('txtHpPercent');
-                const barShieldFill = document.getElementById('barShieldFill');
-                const txtShieldPercent = document.getElementById('txtShieldPercent');
-                const banner = document.getElementById('rpgStatusBanner');
-                const txtKondisi = document.getElementById('txtStatusKondisi');
-                const txtPenanganan = document.getElementById('txtStatusPenanganan');
+            showGamePreloader("FETCHING CHARACTER DATA...", (done) => {
+                setTimeout(() => {
+                    const hasilBox = document.getElementById('hasilPoinSiswa');
+                    const barHpFill = document.getElementById('barHpFill');
+                    const txtHpPercent = document.getElementById('txtHpPercent');
+                    const barShieldFill = document.getElementById('barShieldFill');
+                    const txtShieldPercent = document.getElementById('txtShieldPercent');
+                    const banner = document.getElementById('rpgStatusBanner');
+                    const txtKondisi = document.getElementById('txtStatusKondisi');
+                    const txtPenanganan = document.getElementById('txtStatusPenanganan');
 
-                const siswa = masterDataSiswa.find(s => s.nisn === nisnInput);
+                    const siswa = masterDataSiswa.find(s => s.nisn === nisnInput);
 
-                if (siswa) {
-                    hasilBox.classList.remove('hidden');
+                    if (siswa) {
+                        hasilBox.classList.remove('hidden');
 
-                    // --- SISTEM GELAR RAHASIA (EASTER EGG) ---
-                    let displayGelar = "";
-                    const currentHour = new Date().getHours();
+                        let displayGelar = "";
+                        const currentHour = new Date().getHours();
 
-                    if (currentHour >= 22 || currentHour < 4) {
-                        displayGelar = "🦉 The Night Owl";
-                    } else if (siswa.hp === 200 && siswa.shield === 200) {
-                        displayGelar = "🛡️ Perfect Defender";
-                    } else {
-                        const savedGelar = localStorage.getItem('secret_gelar');
-                        const savedTime = localStorage.getItem('gelar_time');
-                        if (savedGelar && (Date.now() - savedTime < 24 * 60 * 60 * 1000)) {
-                            displayGelar = savedGelar;
-                        }
-                    }
-
-                    const nameContainer = document.getElementById('txtNamaSiswaHasil');
-                    if (displayGelar) {
-                        nameContainer.innerHTML = `${siswa.nama.toUpperCase()} <span style="font-size:9px; background:#f1c40f; color:#1a2536; padding:2px 6px; border-radius:4px; margin-left:6px; vertical-align:middle; font-weight:700;">${displayGelar}</span>`;
-                    } else {
-                        nameContainer.innerText = siswa.nama.toUpperCase();
-                    }
-
-                    document.getElementById('txtKelasSiswaHasil').innerText = `Kelas: ${siswa.kelas} | NISN: ${siswa.nisn}`;
-
-                    // PERBAIKAN LOGIKA PROGRESS BAR HP & WARNA
-                    let hpPercentWidth;
-                    if (siswa.hp < 0) {
-                        hpPercentWidth = Math.min(100, Math.abs(siswa.hp) / 2); // Visual proporsi nilai minus
-                        barHpFill.style.width = `${hpPercentWidth}%`;
-                        barHpFill.style.background = "#e74c3c"; // Merah pekat untuk kritis/minus
-                        txtHpPercent.innerText = `${siswa.hp}/200 (KRITIS)`;
-                        txtHpPercent.style.color = "#e74c3c";
-                    } else {
-                        hpPercentWidth = Math.max(0, Math.min(100, (siswa.hp / 200) * 100));
-                        barHpFill.style.width = `${hpPercentWidth}%`;
-                        txtHpPercent.innerText = `${siswa.hp}/200`;
-                        
-                        if (siswa.hp < 100) {
-                            barHpFill.style.background = "#f39c12"; // Kuning/Oranye Waspada
-                            txtHpPercent.style.color = "#f39c12";
+                        if (currentHour >= 22 || currentHour < 4) {
+                            displayGelar = "🦉 The Night Owl";
+                        } else if (siswa.hp === 200 && siswa.shield === 200) {
+                            displayGelar = "🛡️ Perfect Defender";
                         } else {
-                            barHpFill.style.background = "#2ecc71"; // Hijau Normal
-                            txtHpPercent.style.color = "#2ecc71";
+                            const savedGelar = localStorage.getItem('secret_gelar');
+                            const savedTime = localStorage.getItem('gelar_time');
+                            if (savedGelar && (Date.now() - savedTime < 24 * 60 * 60 * 1000)) {
+                                displayGelar = savedGelar;
+                            }
                         }
-                    }
 
-                    let shieldPercentWidth = Math.min(100, (siswa.shield / 200) * 100);
-                    txtShieldPercent.innerText = `${siswa.shield}/200`;
-                    barShieldFill.style.width = `${shieldPercentWidth}%`;
+                        const nameContainer = document.getElementById('txtNamaSiswaHasil');
+                        if (displayGelar) {
+                            nameContainer.innerHTML = `${siswa.nama.toUpperCase()} <span style="font-size:9px; background:#f1c40f; color:#1a2536; padding:2px 6px; border-radius:4px; margin-left:6px; vertical-align:middle; font-weight:700;">${displayGelar}</span>`;
+                        } else {
+                            nameContainer.innerText = siswa.nama.toUpperCase();
+                        }
 
-                    if (siswa.hp === 200 && siswa.shield > 0) {
-                        txtKondisi.innerText = "KONDISI: 🌟 BERPRESTASI (TELADAN)";
-                        txtPenanganan.innerText = "Status: Karakter stabil, mendapatkan bonus Shield dari prestasi.";
-                        banner.style.borderLeftColor = "#3498db";
-                    } else if (siswa.hp < 100 && siswa.hp >= 0) {
-                        txtKondisi.innerText = "KONDISI: ⚠️ WASPADA (SP 1)";
-                        txtPenanganan.innerText = "Status Penanganan: Dalam pengawasan intensif oleh Wali Kelas.";
-                        banner.style.borderLeftColor = "#f39c12";
-                    } else if (siswa.hp < 0) {
-                        txtKondisi.innerText = "KONDISI: 🚨 KRITIS (OVER-PENALTY)";
-                        txtPenanganan.innerText = "Status Penanganan: Dijadwalkan Sidang Pembinaan Guru & Pemanggilan Orang Tua.";
-                        banner.style.borderLeftColor = "#e74c3c";
+                        document.getElementById('txtKelasSiswaHasil').innerText = `Kelas: ${siswa.kelas} | NISN: ${siswa.nisn}`;
+
+                        let hpPercentWidth;
+                        if (siswa.hp < 0) {
+                            hpPercentWidth = Math.min(100, Math.abs(siswa.hp) / 2);
+                            barHpFill.style.width = `${hpPercentWidth}%`;
+                            barHpFill.style.background = "#e74c3c";
+                            txtHpPercent.innerText = `${siswa.hp}/200 (KRITIS)`;
+                            txtHpPercent.style.color = "#e74c3c";
+                        } else {
+                            hpPercentWidth = Math.max(0, Math.min(100, (siswa.hp / 200) * 100));
+                            barHpFill.style.width = `${hpPercentWidth}%`;
+                            txtHpPercent.innerText = `${siswa.hp}/200`;
+                            
+                            if (siswa.hp < 100) {
+                                barHpFill.style.background = "#f39c12";
+                                txtHpPercent.style.color = "#f39c12";
+                            } else {
+                                barHpFill.style.background = "#2ecc71";
+                                txtHpPercent.style.color = "#2ecc71";
+                            }
+                        }
+
+                        let shieldPercentWidth = Math.min(100, (siswa.shield / 200) * 100);
+                        txtShieldPercent.innerText = `${siswa.shield}/200`;
+                        barShieldFill.style.width = `${shieldPercentWidth}%`;
+
+                        if (siswa.hp === 200 && siswa.shield > 0) {
+                            txtKondisi.innerText = "KONDISI: 🌟 BERPRESTASI (TELADAN)";
+                            txtPenanganan.innerText = "Status: Karakter stabil, mendapatkan bonus Shield dari prestasi.";
+                            banner.style.borderLeftColor = "#3498db";
+                        } else if (siswa.hp < 100 && siswa.hp >= 0) {
+                            txtKondisi.innerText = "KONDISI: ⚠️ WASPADA (SP 1)";
+                            txtPenanganan.innerText = "Status Penanganan: Dalam pengawasan intensif oleh Wali Kelas.";
+                            banner.style.borderLeftColor = "#f39c12";
+                        } else if (siswa.hp < 0) {
+                            txtKondisi.innerText = "KONDISI: 🚨 KRITIS (OVER-PENALTY)";
+                            txtPenanganan.innerText = "Status Penanganan: Dijadwalkan Sidang Pembinaan Guru & Pemanggilan Orang Tua.";
+                            banner.style.borderLeftColor = "#e74c3c";
+                        } else {
+                            txtKondisi.innerText = "KONDISI: NORMAL";
+                            txtPenanganan.innerText = "Status: Tidak ada penanganan khusus.";
+                            banner.style.borderLeftColor = "#f1c40f";
+                        }
+
+                        document.getElementById('txtCountPrestasi').innerText = `${siswa.shield > 0 ? '2' : '0'} Kali`;
+                        document.getElementById('txtCountPelanggaran').innerText = `${siswa.hp < 200 ? '1' : '0'} Kali`;
+
+                        document.getElementById('listRiwayatSiswa').innerHTML = `
+                            <div class="history-item ${siswa.shield > 0 ? 'shield' : 'minus'}" style="background: #111823; color: #fff;">
+                                <strong>${siswa.shield > 0 ? '🛡️ Catatan Prestasi / Bonus' : '⚠️ Catatan Pelanggaran Terakhir'}</strong><br>
+                                <span style="color: #ccc;">${siswa.shield > 0 ? 'Mendapatkan apresiasi kedisiplinan & prestasi' : 'Pengurangan poin berdasarkan catatan tata tertib'}</span><br>
+                                <small style="color: #888;">Agustus 2026</small>
+                            </div>
+                        `;
                     } else {
-                        txtKondisi.innerText = "KONDISI: NORMAL";
-                        txtPenanganan.innerText = "Status: Tidak ada penanganan khusus.";
-                        banner.style.borderLeftColor = "#f1c40f";
+                        hasilBox.classList.add('hidden');
+                        alert("⚠️ Nomor NIS / NISN tidak ditemukan di database!");
                     }
-
-                    document.getElementById('txtCountPrestasi').innerText = `${siswa.shield > 0 ? '2' : '0'} Kali`;
-                    document.getElementById('txtCountPelanggaran').innerText = `${siswa.hp < 200 ? '1' : '0'} Kali`;
-
-                    document.getElementById('listRiwayatSiswa').innerHTML = `
-                        <div class="history-item ${siswa.shield > 0 ? 'shield' : 'minus'}" style="background: #111823; color: #fff;">
-                            <strong>${siswa.shield > 0 ? '🛡️ Catatan Prestasi / Bonus' : '⚠️ Catatan Pelanggaran Terakhir'}</strong><br>
-                            <span style="color: #ccc;">${siswa.shield > 0 ? 'Mendapatkan apresiasi kedisiplinan & prestasi' : 'Pengurangan poin berdasarkan catatan tata tertib'}</span><br>
-                            <small style="color: #888;">Agustus 2026</small>
-                        </div>
-                    `;
-
-                } else {
-                    hasilBox.classList.add('hidden');
-                    alert("⚠️ Nomor NIS / NISN tidak ditemukan di database!");
-                }
+                    done(); // Tutup preloader
+                }, 2000); // Simulasi tunggu 2 detik
             });
         }
 
@@ -1070,10 +1089,13 @@
 
         function eksekusiSimpanWithLoading() {
             tutupModal();
-            showGamePreloader("SAVING TO CLOUD SHEET...", 2900, () => {
-                alert("✅ Data Poin/HP berhasil dicatat dan disinkronkan ke database!");
-                document.getElementById('formEntry').reset();
-                initFormEntry();
+            showGamePreloader("SAVING TO CLOUD SHEET...", (done) => {
+                setTimeout(() => {
+                    alert("✅ Data Poin/HP berhasil dicatat dan disinkronkan ke database!");
+                    document.getElementById('formEntry').reset();
+                    initFormEntry();
+                    done(); // Tutup preloader
+                }, 2000); // Simulasi tunggu 2 detik
             });
         }
 
@@ -1090,9 +1112,12 @@
             btnRekap.style.background = "transparent"; btnKontrol.style.background = "transparent"; btnCetak.style.background = "transparent";
 
             if (tabName === 'rekap') {
-                showGamePreloader("FETCHING STUDENT RECORDS...", 2600, () => {
-                    tabRekap.classList.remove('hidden'); btnRekap.className = ""; btnRekap.style.background = "#1e3c72";
-                    renderTabelRekap();
+                showGamePreloader("FETCHING STUDENT RECORDS...", (done) => {
+                    setTimeout(() => {
+                        tabRekap.classList.remove('hidden'); btnRekap.className = ""; btnRekap.style.background = "#1e3c72";
+                        renderTabelRekap();
+                        done(); // Tutup preloader
+                    }, 2000);
                 });
             } else if (tabName === 'kontrol') {
                 tabKontrol.classList.remove('hidden'); btnKontrol.className = ""; btnKontrol.style.background = "#1e3c72";
@@ -1121,7 +1146,7 @@
                 tr.innerHTML = `
                     <td><strong>${s.nama}</strong></td>
                     <td>${s.kelas}</td>
-                    <td>${s.hp} HP ${s.shield > 0 ? `<br><span style="color:#3498db; font-size:10px;">+${s.shield} Shield</span>` : ''}</td>
+                    <td>${s.hp} HP ${s.shield > 0 ? `<br><span style="color:#3498db; font-size:10px;">+${s.shield}</span>` : ''}</td>
                     <td><span style="font-size: 9px; padding: 3px 6px; background: ${badgeColor}; color: #fff; border-radius: 4px; font-weight: bold;">${statusBadge}</span></td>
                 `;
                 tbody.appendChild(tr);
@@ -1146,10 +1171,13 @@
             const nisnSiswa = document.getElementById('adminSiswaSelect').value;
             if(!nisnSiswa) { alert("Pilih siswa terlebih dahulu!"); return; }
             
-            showGamePreloader("UPDATING CLOUD DATABASE...", 2900, () => {
-                alert(`👑 AKSI SUPER ADMIN BERHASIL!\nTarget NISN: ${nisnSiswa}\nSistem telah memperbarui data rekapitulasi siswa!`);
-                document.getElementById('formAdminAction').reset();
-                document.getElementById('adminSiswaSelect').innerHTML = `<option value="">-- Pilih Kelas Dulu --</option>`;
+            showGamePreloader("UPDATING CLOUD DATABASE...", (done) => {
+                setTimeout(() => {
+                    alert(`👑 AKSI SUPER ADMIN BERHASIL!\nTarget NISN: ${nisnSiswa}\nSistem telah memperbarui data rekapitulasi siswa!`);
+                    document.getElementById('formAdminAction').reset();
+                    document.getElementById('adminSiswaSelect').innerHTML = `<option value="">-- Pilih Kelas Dulu --</option>`;
+                    done(); // Tutup preloader
+                }, 2000);
             });
         }
 
@@ -1180,15 +1208,18 @@
         }
 
         function prosesCetakLaporanWithLoading() {
-            showGamePreloader("GENERATING REPORT DOCUMENT...", 2000, () => {
-                const kat = document.getElementById('cetakKategori').value;
-                if (kat === 'semua') { alert("🖨️ Laporan Rekapitulasi Keseluruhan Sekolah berhasil diunduh (Google Sheets)!"); } 
-                else if (kat === 'kelas') { alert(`🖨️ Laporan Rekapitulasi Kelas ${document.getElementById('cetakKelasSelect').value} berhasil diunduh!`); } 
-                else {
-                    const selectedNisn = document.getElementById('cetakSiswaSelect').value;
-                    if(!selectedNisn) { alert("Pilih siswa terlebih dahulu dari kolom pencarian!"); return; }
-                    alert(`🖨️ Dokumen Laporan Detail Siswa (NISN: ${selectedNisn}) berhasil diunduh!`);
-                }
+            showGamePreloader("GENERATING REPORT DOCUMENT...", (done) => {
+                setTimeout(() => {
+                    const kat = document.getElementById('cetakKategori').value;
+                    if (kat === 'semua') { alert("🖨️ Laporan Rekapitulasi Keseluruhan Sekolah berhasil diunduh (Google Sheets)!"); } 
+                    else if (kat === 'kelas') { alert(`🖨️ Laporan Rekapitulasi Kelas ${document.getElementById('cetakKelasSelect').value} berhasil diunduh!`); } 
+                    else {
+                        const selectedNisn = document.getElementById('cetakSiswaSelect').value;
+                        if(!selectedNisn) { alert("Pilih siswa terlebih dahulu dari kolom pencarian!"); done(); return; }
+                        alert(`🖨️ Dokumen Laporan Detail Siswa (NISN: ${selectedNisn}) berhasil diunduh!`);
+                    }
+                    done(); // Tutup preloader
+                }, 2000);
             });
         }
 
