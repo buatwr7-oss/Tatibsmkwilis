@@ -772,31 +772,46 @@
         function logout() { location.reload(); }
 
         function login() {
-            const namaIn = document.getElementById('namaGuruInput').value.trim();
+            const usernameIn = document.getElementById('namaGuruInput').value.trim();
             const passIn = document.getElementById('password').value.trim();
             
-            const akun = daftarGuru.find(g => g.nama.toLowerCase() === namaIn.toLowerCase() && g.pass === passIn);
-
-            if (akun) {
-                showGamePreloader("VERIFYING CREDENTIALS...", 800, () => {
-                    currentRole = akun.role;
-                    document.getElementById('pesanEror').style.display = "none";
-                    document.getElementById('loginCard').classList.add('hidden');
-
-                    if (akun.role === "Super Admin") {
-                        document.getElementById('txtNamaAdmin').innerText = akun.nama;
-                        document.getElementById('adminCard').classList.remove('hidden');
-                        switchAdminTab('rekap'); 
-                    } else {
-                        document.getElementById('txtNamaGuru').innerText = akun.nama;
-                        document.getElementById('txtRoleGuru').innerText = "Jabatan: " + akun.role;
-                        document.getElementById('entryCard').classList.remove('hidden');
-                        initFormEntry();
-                    }
-                });
-            } else {
-                document.getElementById('pesanEror').style.display = "block";
+            if (!usernameIn || !passIn) {
+                alert("Username dan Password wajib diisi!");
+                return;
             }
+
+            showGamePreloader("VERIFYING CREDENTIALS...", 800, () => {
+                // URL Web App Google Apps Script milikmu
+                const scriptURL = "https://script.google.com/macros/s/AKfycbwcycYo1id85poz4B_-WyNL8TPpFpQL3z4u9uRpu582v2aqnjJMsV18aMNUE0jFckRG/exec";
+
+                const payload = {
+                    action: "loginGuru",
+                    username: usernameIn,
+                    pass: passIn
+                };
+
+                fetch(scriptURL, {
+                    method: "POST",
+                    mode: "no-cors", // Diperlukan untuk menghindari error CORS pada Google Apps Script
+                    headers: {
+                        "Content-Type": "text/plain;charset=utf-8"
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(() => {
+                    // Karena menggunakan mode 'no-cors', kita lakukan verifikasi manual berdasarkan database lokal atau data dummy/fetch ulang.
+                    // Atau kita bisa gunakan cara fetch standar dengan response JSON jika dijalankan secara online penuh.
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    document.getElementById('pesanEror').style.display = "block";
+                });
+
+                // *Catatan Sementara*: 
+                // Karena Google Apps Script memblokir respons langsung lewat mode 'no-cors' dari file lokal (C:/...), 
+                // apakah file ini akan kamu uji coba secara online (misal di GitHub Pages / Netlify), 
+                // atau kita buatkan metode fetch dengan penyesuaian agar bisa dites langsung dari komputer lokal?
+            });
         }
 
         // LOGIKA STATUS SISWA (PERBAIKAN: BAR HP MERAH PENUH JIKA MINUS)
