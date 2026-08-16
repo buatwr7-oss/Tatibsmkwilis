@@ -77,6 +77,12 @@
             object-fit: contain; 
             filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15)); 
             cursor: pointer;
+            
+            /* Tambahan untuk mematikan menu download/save image di HP */
+            -webkit-touch-callout: none; 
+            -webkit-user-select: none;   
+            user-select: none;
+            pointer-events: auto;
         }
 
         h2 { color: #1e3c72; margin-bottom: 3px; font-size: 19px; font-weight: 700; line-height: 1.3; }
