@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tatib SMK Wiraguna Limbangan</title>
+    <title>Tatib SMK Wiraguna 🛡️</title>
+    <link rel="icon" type="image/png" href="logo.ico">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -11,6 +12,7 @@
         body {
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #f1c40f 100%);
@@ -28,24 +30,14 @@
         }
 
         .particles-container {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            overflow: hidden;
-            pointer-events: none;
-            z-index: 1;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden; pointer-events: none; z-index: 1;
         }
 
         .particle {
-            position: absolute;
-            display: block;
-            pointer-events: none;
-            width: 6px;
-            height: 6px;
-            background: rgba(255, 215, 0, 0.7);
-            border-radius: 50%;
-            box-shadow: 0 0 8px rgba(255, 215, 0, 0.9);
-            animation: floatUp 12s linear infinite;
-            bottom: -20px;
+            position: absolute; display: block; pointer-events: none;
+            background: rgba(255, 215, 0, 0.7); border-radius: 50%;
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.9); animation: floatUp 12s linear infinite; bottom: -20px;
         }
 
         .particle:nth-child(1) { left: 10%; width: 5px; height: 5px; animation-duration: 8s; animation-delay: 0s; }
@@ -68,25 +60,29 @@
             border-radius: 25px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.3);
             width: 100%;
-            max-width: 460px;
+            max-width: 480px;
             backdrop-filter: blur(15px);
             position: relative;
             z-index: 2;
             border: 2px solid rgba(255, 215, 0, 0.4);
+            display: flex;
+            flex-direction: column;
         }
 
         .text-center { text-align: center; }
-        .logo { width: 85px; height: 85px; margin-bottom: 10px; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15)); }
+        .logo { 
+            width: 85px; height: 85px; 
+            margin: 0 auto 10px auto; 
+            display: block; 
+            object-fit: contain; 
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15)); 
+            cursor: pointer;
+        }
 
         h2 { color: #1e3c72; margin-bottom: 3px; font-size: 19px; font-weight: 700; line-height: 1.3; }
         
         .header-app {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid rgba(30, 60, 114, 0.15);
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid rgba(30, 60, 114, 0.15);
         }
         .header-app .user-info h3 { font-size: 14px; color: #1e3c72; margin: 0; }
         .header-app .user-info p { font-size: 11px; color: #b7950b; font-weight: 600; margin: 0; }
@@ -95,200 +91,193 @@
         .row-group { display: flex; gap: 8px; }
         .row-group .input-box { flex: 1; }
         
-        /* CSS MATA PASSWORD */
         .password-container { position: relative; }
-        .eye-icon {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #666;
-            font-size: 16px;
-            user-select: none;
-        }
+        .eye-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #666; font-size: 16px; user-select: none; }
         
         label { display: block; font-size: 11px; font-weight: 600; color: #444; margin-bottom: 4px; text-transform: uppercase; }
 
         input, select, textarea {
-            width: 100%;
-            padding: 11px 13px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            outline: none;
-            font-size: 13px;
-            background: #fff;
-            transition: 0.3s;
+            width: 100%; padding: 11px 13px; border: 2px solid #e2e8f0; border-radius: 12px; outline: none; font-size: 13px; background: #fff; transition: 0.3s;
         }
         input[type="password"], input[type="text"].pwd-visible { padding-right: 40px; }
-        
         input:focus, select:focus, textarea:focus { border-color: #1e3c72; box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.15); }
 
-        .checkbox-container {
-            max-height: 120px;
-            overflow-y: auto;
-            border: 2px solid #eee;
-            border-radius: 12px;
-            padding: 8px 12px;
-            background: #fff;
-        }
+        .checkbox-container { max-height: 120px; overflow-y: auto; border: 2px solid #eee; border-radius: 12px; padding: 8px 12px; background: #fff; }
         .checkbox-item { display: flex; align-items: center; font-size: 12px; padding: 4px 0; color: #444; }
         .checkbox-item input { width: auto; margin-right: 8px; }
 
         .options-container { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
         .option-item {
-            display: flex;
-            align-items: center;
-            background: #fff;
-            border: 2px solid #eee;
-            padding: 10px 12px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 12px;
-            color: #444;
+            display: flex; align-items: center; background: #fff; border: 2px solid #eee; padding: 10px 12px; border-radius: 12px; cursor: pointer; transition: 0.2s; font-size: 12px; color: #444;
         }
         .option-item input[type="radio"] { width: auto; margin-right: 10px; accent-color: #1e3c72; }
         .option-item:hover { border-color: #1e3c72; background: rgba(30, 60, 114, 0.05); }
 
         button {
-            width: 100%;
-            padding: 12px;
-            background: #1e3c72;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-            margin-top: 10px;
-            box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
+            width: 100%; padding: 12px; background: #1e3c72; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 10px; box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
         }
         button:active { transform: scale(0.98); background: #162b52; }
-
         .btn-outline { background: transparent; color: #1e3c72; border: 2px solid #1e3c72; box-shadow: none; }
-        .btn-logout { width: auto; padding: 6px 12px; font-size: 11px; background: #e74c3c; margin-top: 0; box-shadow: none; }
+        .btn-logout { width: auto; padding: 6px 12px; font-size: 11px; background: #e74c3c; margin-top: 0; box-shadow: none; color: white; border:none;}
         .btn-danger { background: #e74c3c; box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3); }
         #pesanEror { color: #e74c3c; font-size: 13px; margin-top: 15px; display: none; font-weight: 600; }
         .hidden { display: none !important; }
 
-        /* Dashboard Siswa */
-        .siswa-card-box {
-            background: #f8f9fa;
-            border-radius: 18px;
-            padding: 16px;
-            margin-top: 15px;
-            border: 1.5px solid #e2e8f0;
-            text-align: left;
-        }
+        /* --- STYLE RPG CLASSIC PROFILE (RAPI & PRESISI) --- */
+        .rpg-card-container { background: #1a2536; border: 3px solid #f1c40f; border-radius: 16px; padding: 15px; color: #fff; text-align: left; box-shadow: inset 0 0 15px rgba(0,0,0,0.6); margin-top: 15px; }
         
-        .siswa-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .siswa-info h4 { font-size: 14px; color: #1e3c72; margin: 0; }
-        .siswa-info p { font-size: 11px; color: #666; margin: 0; }
-        .status-badge { padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+        .rpg-top-section { display: flex; gap: 12px; align-items: center; border-bottom: 2px solid #2c3e50; padding-bottom: 12px; margin-bottom: 12px; }
+        .rpg-avatar-box { width: 65px; height: 65px; background: #2c3e50; border: 2px solid #f1c40f; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 32px; flex-shrink: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
+        .rpg-info-box { flex-grow: 1; display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
+        .rpg-name { font-size: 14px; font-weight: 700; color: #f1c40f; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rpg-class-lvl { font-size: 11px; color: #bdc3c7; font-weight: 500; }
 
-        .gauge-section { background: #fff; padding: 12px; border-radius: 14px; border: 1px solid #eee; margin-bottom: 15px; }
-        .bar-group { margin-bottom: 10px; }
-        .bar-group:last-child { margin-bottom: 0; }
-        .bar-text { display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; margin-bottom: 4px; }
-        .bar-bg { background: #e9ecef; height: 14px; border-radius: 10px; overflow: hidden; position: relative; }
+        .rpg-bar-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; background: #111823; padding: 10px; border-radius: 8px; border: 1px solid #34495e; }
+        .rpg-bar-row { display: flex; flex-direction: column; gap: 3px; }
+        .rpg-bar-meta { display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; }
         
-        .hp-fill { height: 100%; border-radius: 10px; background: #2ecc71; transition: width 0.5s ease; }
-        .shield-fill { height: 100%; border-radius: 10px; background: #3498db; transition: width 0.5s ease; }
+        .rpg-bar-outer { width: 100%; background: #2c3e50; height: 10px; border-radius: 5px; overflow: hidden; position: relative; border: 1px solid #1a2536; }
+        .rpg-hp-fill { height: 100%; background: #2ecc71; transition: width 0.4s; }
+        .rpg-shield-fill { height: 100%; background: #3498db; transition: width 0.4s; }
 
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .stat-box { background: #fff; padding: 10px; border-radius: 12px; border: 1px solid #eee; text-align: center; }
-        .stat-label { font-size: 10px; color: #777; text-transform: uppercase; display: block; margin-bottom: 2px; }
-        .stat-value { font-size: 13px; font-weight: bold; }
+        .rpg-status-banner { background: #2c3e50; border-left: 4px solid #f1c40f; padding: 8px 10px; border-radius: 0 6px 6px 0; font-size: 11px; margin-bottom: 10px; }
+        .rpg-status-banner strong { color: #f1c40f; display: block; margin-bottom: 2px; font-size: 10px; text-transform: uppercase; }
 
-        .history-title { font-size: 11px; color: #1e3c72; margin-bottom: 8px; font-weight: 700; text-transform: uppercase; }
-        .history-list { max-height: 140px; overflow-y: auto; }
+        .rpg-stats-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+        .rpg-stat-item { background: #111823; border: 1px solid #34495e; padding: 6px; border-radius: 6px; text-align: center; font-size: 10px; }
+
+        .history-title { font-size: 11px; color: #f1c40f; margin-bottom: 8px; font-weight: 700; text-transform: uppercase; }
+        .history-list { max-height: 120px; overflow-y: auto; }
         .history-item { background: #fff; border-left: 3px solid #1e3c72; padding: 8px 10px; margin-bottom: 6px; border-radius: 0 8px 8px 0; font-size: 11px; border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee; }
         .history-item.plus { border-left-color: #2ecc71; }
         .history-item.minus { border-left-color: #e74c3c; }
         .history-item.shield { border-left-color: #3498db; }
 
         /* TABEL REKAPITULASI ADMIN */
-        .rekap-container {
-            margin-top: 10px;
-            background: #fff;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            padding: 10px;
-            text-align: left;
-        }
-        .rekap-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 11px;
-            margin-top: 8px;
-        }
-        .rekap-table th, .rekap-table td {
-            padding: 8px 6px;
-            border-bottom: 1px solid #eee;
-            text-align: left;
-        }
-        .rekap-table th {
-            background: #f8f9fa;
-            color: #1e3c72;
-            font-weight: 700;
-        }
+        .rekap-container { margin-top: 10px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
+        .rekap-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 8px; }
+        .rekap-table th, .rekap-table td { padding: 8px 6px; border-bottom: 1px solid #eee; text-align: left; }
+        .rekap-table th { background: #f8f9fa; color: #1e3c72; font-weight: 700; }
+        .admin-nav { display: flex; gap: 6px; margin-bottom: 12px; }
+        .admin-nav button { margin-top: 0; padding: 8px 10px; font-size: 11px; }
+        .admin-tab-content { width: 100%; }
 
-        /* MENU NAVIGASI ADMIN */
-        .admin-nav {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 12px;
+        /* GAME PRELOADER */
+        .game-preloader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(8, 12, 24, 0.94); backdrop-filter: blur(8px);
+            z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; transition: opacity 0.3s ease;
         }
-        .admin-nav button {
-            margin-top: 0;
-            padding: 8px 10px;
-            font-size: 11px;
-        }
+        .loading-box-game { width: 80%; max-width: 320px; text-align: center; }
+        .loading-title-game { font-size: 12px; font-weight: 700; letter-spacing: 2px; color: #f1c40f; margin-bottom: 10px; text-transform: uppercase; text-shadow: 0 0 8px rgba(241, 196, 15, 0.6); }
+        .progress-bar-bg { width: 100%; height: 16px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(241, 196, 15, 0.5); border-radius: 10px; overflow: hidden; padding: 2px; box-shadow: 0 0 15px rgba(241, 196, 15, 0.2); }
+        .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #f39c12, #f1c40f); border-radius: 6px; box-shadow: 0 0 10px #f1c40f; transition: width 0.1s linear; }
+        .loading-percent-game { font-size: 14px; font-weight: bold; color: #fff; margin-top: 8px; letter-spacing: 1px; }
 
+        /* MODAL */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 999; padding: 20px; }
         .modal-box { background: #fff; padding: 20px; border-radius: 20px; width: 100%; max-width: 350px; text-align: left; }
         .modal-box h4 { margin-bottom: 10px; color: #1e3c72; }
         .modal-detail { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 15px; }
+
+        /* QUEST BOARD (TATIB) STYLES */
+        .quest-tabs { display: flex; gap: 5px; margin-bottom: 10px; }
+        .quest-tabs button { margin-top: 0; padding: 8px; font-size: 11px; flex: 1; border: 2px solid transparent;}
+        .accordion { border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; overflow: hidden; background: #fff; }
+        .accordion-header { padding: 10px 12px; font-size: 12px; font-weight: 700; background: #f8f9fa; color: #1e3c72; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .accordion-header:hover { background: #e2e8f0; }
+        .accordion-body { display: none; padding: 0; max-height: 250px; overflow-y: auto; background: #fff; }
+        .accordion-body.active { display: block; }
+        .q-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-top: 1px solid #eee; font-size: 11px; }
+        .q-item:nth-child(even) { background: #fafafa; }
+        .badge-hp { background: #e74c3c; color: #fff; padding: 3px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; white-space: nowrap; }
+        .badge-shield { background: #3498db; color: #fff; padding: 3px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; white-space: nowrap; }
+        
+        .quest-card-btn { transition: transform 0.2s, box-shadow 0.2s; }
+        .quest-card-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(52, 152, 219, 0.4); }
+
+        /* --- CSS ANIMASI EASTER EGG KOIN EMAS (DIPERPANJANG JADI 5 DETIK) --- */
+        @keyframes coinSpinSlow {
+            0% { transform: scale(0.3) rotateY(0deg); opacity: 0; }
+            20% { transform: scale(1.3) rotateY(360deg); opacity: 1; }
+            80% { transform: scale(1) rotateY(1080deg); opacity: 1; }
+            100% { transform: scale(0.8) rotateY(1440deg); opacity: 0; }
+        }
+        .secret-coin-popup {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 99999;
+        }
+        .coin-icon {
+            font-size: 100px;
+            animation: coinSpinSlow 5s ease-in-out forwards;
+            filter: drop-shadow(0 0 25px #f1c40f);
+        }
     </style>
 </head>
 <body>
 
+    <!-- FULL-SCREEN GAME PROGRESS BAR PRELOADER -->
+    <div id="gamePreloader" class="game-preloader hidden">
+        <div class="loading-box-game">
+            <div id="loadingTitleText" class="loading-title-game">SYNCHRONIZING DATABASE...</div>
+            <div class="progress-bar-bg">
+                <div id="progressBarFill" class="progress-bar-fill"></div>
+            </div>
+            <div id="loadingPercentText" class="loading-percent-game">0%</div>
+        </div>
+    </div>
+
+    <!-- KONTENER RAHASIA KOIN EMAS -->
+    <div id="secretCoinModal" class="secret-coin-popup hidden">
+        <div style="text-align: center;">
+            <img src="https://cdn-icons-png.flaticon.com/512/1490/1490853.png" class="coin-icon" style="width: 90px; height: 90px; object-fit: contain;">
+            <h3 style="color: #f1c40f; margin-top: 15px; font-size: 18px; text-shadow: 0 0 10px rgba(0,0,0,0.8); letter-spacing: 1px;">KAMU BERHASIL MENEMUKAN EASTER EGGS!</h3>
+            <p style="color: #fff; font-size: 13px; margin-top: 5px;">"Ini salah satu dari beberapa easter eggs yang ada di web ini!"</p>
+        </div>
+    </div>
+
     <div class="particles-container">
-        <span class="particle"></span>
-        <span class="particle"></span>
-        <span class="particle"></span>
-        <span class="particle"></span>
-        <span class="particle"></span>
-        <span class="particle"></span>
+        <span class="particle"></span><span class="particle"></span><span class="particle"></span>
+        <span class="particle"></span><span class="particle"></span><span class="particle"></span>
     </div>
 
-    <!-- 1. HALAMAN UTAMA MENU -->
-    <div id="mainMenuCard" class="card text-center">
-        <img src="logo.png" alt="Logo SMK Wiraguna" class="logo">
+    <!-- WRAPPER UNTUK MENU UTAMA -->
+    <div id="menuWrapper" style="width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 15px; align-items: center; z-index: 2;">
         
-        <h2 style="margin-bottom: 0;">TATA TERTIB</h2>
-        <h2 style="color: #1e3c72; margin-top: 0;">SMK WIRAGUNA LIMBANGAN</h2>
-        
-        <p style="font-size: 10px; color: #b7950b; margin-top: 10px; margin-bottom: 15px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
-            SISTEM MANAJEMEN KARAKTER & KEDISIPLINAN SISWA
-        </p>
-        
-        <button onclick="bukaPortal('guru')">👨‍🏫 Portal Guru / Petugas</button>
-        <button class="btn-outline" onclick="bukaPortal('siswa')">👨‍🎓 Portal Cek Status Siswa</button>
+        <div id="mainMenuCard" class="card text-center" style="width: 100%;">
+            <img src="logo.png" alt="Logo SMK Wiraguna" class="logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
+            <h2 style="margin-bottom: 0;">TATA TERTIB</h2>
+            <h2 style="color: #1e3c72; margin-top: 0;">SMK WIRAGUNA LIMBANGAN</h2>
+            <p style="font-size: 10px; color: #b7950b; margin-top: 10px; margin-bottom: 15px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
+                SISTEM MANAJEMEN KARAKTER & KEDISIPLINAN SISWA
+            </p>
+            
+            <button onclick="bukaPortal('guru')">👨‍🏫 Portal Guru / Petugas</button>
+            <button class="btn-outline" onclick="bukaPortal('siswa')">👨‍🎓 Portal Cek Status Siswa</button>
+        </div>
+
+        <div id="questTriggerCard" class="card text-center quest-card-btn" style="width: 100%; padding: 15px 20px; cursor: pointer; border-color: #3498db; background: rgba(255, 255, 255, 0.95);" onclick="bukaPortal('quest')">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
+                <span style="font-size: 28px;">📜</span>
+                <div style="text-align: left;">
+                    <h3 style="font-size: 14px; color: #1e3c72; margin: 0; font-weight: 700;">Papan Quest (Buku Tatib)</h3>
+                    <p style="font-size: 11px; color: #666; margin: 0; font-weight: 500;">Jelajahi aturan poin & hadiah prestasimu!</p>
+                </div>
+                <span style="font-size: 16px; color: #3498db; margin-left: auto;">▶</span>
+            </div>
+        </div>
+
     </div>
 
-    <!-- 2. HALAMAN LOGIN GURU / SUPER ADMIN -->
+    <!-- HALAMAN LOGIN GURU / SUPER ADMIN -->
     <div id="loginCard" class="card text-center hidden">
-        <img src="logo.png" alt="Logo SMK Wiraguna" class="logo">
+        <img src="logo.png" alt="Logo SMK" class="logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
         <h2>Login Petugas</h2>
-        
         <form id="formLogin" onsubmit="event.preventDefault(); login();">
             <div class="input-box">
                 <input type="text" id="namaGuruInput" placeholder="Nama Guru / Pengguna" required autocomplete="off">
             </div>
-            <!-- MATA PASSWORD -->
             <div class="input-box password-container">
                 <input type="password" id="password" placeholder="Password" required>
                 <span id="eyeIcon" class="eye-icon" onclick="togglePassword()">👁️</span>
@@ -299,74 +288,87 @@
         <p id="pesanEror">Nama atau Password salah!</p>
     </div>
 
-    <!-- 3. PORTAL CEK SISWA (PRIVASI NISN) -->
+    <!-- PORTAL CEK SISWA (RPG CLASSIC STYLE - RAPI & PRESISI) -->
     <div id="siswaCard" class="card hidden">
         <div class="header-app">
             <div class="user-info">
                 <h3>Portal Siswa</h3>
-                <p>Status Poin & Shield</p>
+                <p>Status Karakter & Kedisiplinan</p>
             </div>
             <button class="btn-logout" onclick="kembaliKeMenu()">Keluar</button>
         </div>
 
         <div class="input-box">
             <label>NOMOR NIS / NISN *</label>
-            <input type="text" id="nisnSiswaInput" inputmode="numeric" placeholder="Ketik NIS / NISN (Coba: 1001, 1002, 1003)..." required autocomplete="off">
+            <input type="text" id="nisnSiswaInput" inputmode="numeric" placeholder="Ketik NISN (Coba: 1001, 1003 [Minus])" required autocomplete="off">
         </div>
-        <button onclick="cariPoinSiswa()">Tampilkan Status Saya</button>
+        <button onclick="cariPoinSiswaWithLoading()">Tampilkan Status Saya</button>
 
-        <div id="hasilPoinSiswa" class="siswa-card-box hidden">
-            <div class="siswa-header">
-                <div class="siswa-info">
-                    <h4 id="txtNamaSiswaHasil">-</h4>
-                    <p id="txtKelasSiswaHasil">-</p>
-                </div>
-                <div id="statusBadgeSiswa" class="status-badge">-</div>
-            </div>
-
-            <div class="gauge-section">
-                <div class="bar-group">
-                    <div class="bar-text">
-                        <span id="txtHpLabel">❤️ HEALTH POINT (HP)</span>
-                        <span id="txtHpPercent">200 / 200 HP</span>
-                    </div>
-                    <div class="bar-bg">
-                        <div id="barHpFill" class="hp-fill" style="width: 100%;"></div>
+        <!-- KONTENER HASIL RPG PROFILE -->
+        <div id="hasilPoinSiswa" class="hidden">
+            <div class="rpg-card-container">
+                
+                <!-- BAGIAN ATAS: AVATAR & NAMA / KELAS -->
+                <div class="rpg-top-section">
+                    <div class="rpg-avatar-box">🛡️</div>
+                    <div class="rpg-info-box">
+                        <div id="txtNamaSiswaHasil" class="rpg-name">-</div>
+                        <div id="txtKelasSiswaHasil" class="rpg-class-lvl">-</div>
                     </div>
                 </div>
 
-                <div class="bar-group" style="margin-top: 8px;">
-                    <div class="bar-text">
-                        <span style="color:#3498db;">🛡️ SHIELD POINT (BONUS)</span>
-                        <span id="txtShieldPercent" style="color:#3498db;">0 / 200 SHIELD</span>
+                <!-- BAGIAN TENGAH: BAR HP & SHIELD DIBAWAH (RAPI & FULL WIDTH) -->
+                <div class="rpg-bar-group">
+                    <div class="rpg-bar-row">
+                        <div class="rpg-bar-meta">
+                            <span style="color: #2ecc71;">❤️ HEALTH POINT (HP)</span>
+                            <span id="txtHpPercent" style="color: #2ecc71;">200/200</span>
+                        </div>
+                        <div class="rpg-bar-outer">
+                            <div id="barHpFill" class="rpg-hp-fill" style="width: 100%;"></div>
+                        </div>
                     </div>
-                    <div class="bar-bg">
-                        <div id="barShieldFill" class="shield-fill" style="width: 0%;"></div>
+
+                    <div class="rpg-bar-row" style="margin-top: 4px;">
+                        <div class="rpg-bar-meta">
+                            <span style="color: #3498db;">🛡️ SHIELD POINT (BONUS)</span>
+                            <span id="txtShieldPercent" style="color: #3498db;">0/200</span>
+                        </div>
+                        <div class="rpg-bar-outer">
+                            <div id="barShieldFill" class="rpg-shield-fill" style="width: 0%;"></div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="stat-grid">
-                <div class="stat-box">
-                    <span class="stat-label">🏆 PRESTASI</span>
-                    <div class="stat-value" id="txtCountPrestasi" style="color: #2ecc71;">0 Kali</div>
-                    <span id="txtTotalPlusHp" style="font-size: 10px; color: #3498db;">+0 Bonus</span>
+                <!-- BANNER KONDISI & STATUS PENANGANAN -->
+                <div id="rpgStatusBanner" class="rpg-status-banner">
+                    <strong id="txtStatusKondisi">KONDISI: NORMAL</strong>
+                    <span id="txtStatusPenanganan" style="color: #ecf0f1;">Status: Tidak ada penanganan khusus.</span>
                 </div>
-                <div class="stat-box">
-                    <span class="stat-label">⚠️ PELANGGARAN</span>
-                    <div class="stat-value" id="txtCountPelanggaran" style="color: #e74c3c;">0 Kali</div>
-                    <span id="txtTotalMinHp" style="font-size: 10px; color: #e74c3c;">-0 Poin</span>
-                </div>
-            </div>
 
-            <div class="history-title">Riwayat Catatan Kejadian:</div>
-            <div id="listRiwayatSiswa" class="history-list">
-                <!-- Log Dimuat di Sini -->
+                <!-- STATISTIK RINGKAS -->
+                <div class="rpg-stats-mini">
+                    <div class="rpg-stat-item">
+                        <span style="color: #2ecc71; display: block; font-weight: bold;" id="txtCountPrestasi">0 Kali</span>
+                        <span style="color: #95a5a6;">Total Prestasi</span>
+                    </div>
+                    <div class="rpg-stat-item">
+                        <span style="color: #e74c3c; display: block; font-weight: bold;" id="txtCountPelanggaran">0 Kali</span>
+                        <span style="color: #95a5a6;">Total Pelanggaran</span>
+                    </div>
+                </div>
+
+                <!-- RIWAYAT KEJADIAN -->
+                <div class="history-title">Riwayat Catatan Kejadian:</div>
+                <div id="listRiwayatSiswa" class="history-list">
+                    <!-- Log Dimuat di Sini -->
+                </div>
+
             </div>
         </div>
     </div>
 
-    <!-- 4. HALAMAN ENTRY GURU BIASA -->
+    <!-- HALAMAN ENTRY GURU -->
     <div id="entryCard" class="card hidden">
         <div class="header-app">
             <div class="user-info">
@@ -381,12 +383,8 @@
                 <div class="input-box" style="flex: 1.2;">
                     <label>HARI *</label>
                     <select id="hari" required>
-                        <option value="Senin">Senin</option>
-                        <option value="Selasa">Selasa</option>
-                        <option value="Rabu">Rabu</option>
-                        <option value="Kamis">Kamis</option>
-                        <option value="Jum'at">Jum'at</option>
-                        <option value="Sabtu">Sabtu</option>
+                        <option value="Senin">Senin</option><option value="Selasa">Selasa</option><option value="Rabu">Rabu</option>
+                        <option value="Kamis">Kamis</option><option value="Jum'at">Jum'at</option><option value="Sabtu">Sabtu</option>
                     </select>
                 </div>
                 <div class="input-box" style="flex: 1.5;">
@@ -408,8 +406,6 @@
                         <option value="Kantin">Kantin</option>
                         <option value="Lapangan">Lapangan</option>
                         <option value="Toilet">Toilet</option>
-                        <option value="Parkir">Parkir</option>
-                        <option value="Gerbang">Gerbang</option>
                     </select>
                 </div>
                 <div class="input-box">
@@ -424,7 +420,7 @@
             <div id="boxSubKategori" class="input-box hidden">
                 <label>TINGKAT PELANGGARAN *</label>
                 <select id="subKategori" onchange="renderOpsiPoin()">
-                    <option value="">-- Pilih Tingkat Pelanggaran --</option>
+                    <option value="">-- Pilih Tingkat --</option>
                     <option value="Ringan">Pelanggaran Ringan</option>
                     <option value="Sedang">Pelanggaran Sedang</option>
                     <option value="Berat">Pelanggaran Berat</option>
@@ -433,7 +429,7 @@
 
             <div class="input-box">
                 <label>KELAS *</label>
-                <select id="kelas" required>
+                <select id="kelas" onchange="updateEntrySiswaList()" required>
                     <option value="">-- Pilih Kelas --</option>
                     <option value="10 SMK">10 SMK</option>
                     <option value="11 SMK">11 SMK</option>
@@ -450,16 +446,11 @@
                 </div>
 
                 <select id="selectSingleSiswa" required>
-                    <option value="">-- Pilih Siswa --</option>
-                    <option value="AHMAD DANIEL AL-FARIZKY">AHMAD DANIEL AL-FARIZKY</option>
-                    <option value="BUDI SETIAWAN">BUDI SETIAWAN</option>
-                    <option value="REZA MAHENDRA">REZA MAHENDRA</option>
+                    <option value="">-- Pilih Kelas Dulu --</option>
                 </select>
 
                 <div id="boxMultiSiswa" class="checkbox-container hidden">
-                    <label class="checkbox-item"><input type="checkbox" name="multiSiswa" value="AHMAD DANIEL AL-FARIZKY"> AHMAD DANIEL AL-FARIZKY</label>
-                    <label class="checkbox-item"><input type="checkbox" name="multiSiswa" value="BUDI SETIAWAN"> BUDI SETIAWAN</label>
-                    <label class="checkbox-item"><input type="checkbox" name="multiSiswa" value="REZA MAHENDRA"> REZA MAHENDRA</label>
+                    <span style="font-size:11px; color:#888;">Pilih kelas dulu...</span>
                 </div>
             </div>
 
@@ -474,7 +465,7 @@
         </form>
     </div>
 
-    <!-- 5. HALAMAN SUPER ADMIN (BERBASIS MENU NAVIGASI & PENCARIAN LAPORAN) -->
+    <!-- HALAMAN SUPER ADMIN -->
     <div id="adminCard" class="card hidden" style="max-width: 520px;">
         <div class="header-app">
             <div class="user-info">
@@ -484,14 +475,13 @@
             <button class="btn-logout" onclick="logout()">Keluar</button>
         </div>
 
-        <!-- MENU NAVIGASI DI ATAS -->
         <div class="admin-nav">
             <button id="navBtnRekap" onclick="switchAdminTab('rekap')" style="background: #1e3c72;">📊 Rekapitulasi</button>
             <button id="navBtnKontrol" onclick="switchAdminTab('kontrol')" class="btn-outline">👑 Kontrol Siswa</button>
             <button id="navBtnCetak" onclick="switchAdminTab('cetak')" class="btn-outline">🖨️ Cetak Laporan</button>
         </div>
 
-        <!-- TAB 1: HALAMAN UTAMA REKAPITULASI (DEFAULT) -->
+        <!-- TAB 1: REKAPITULASI -->
         <div id="adminTabRekap" class="admin-tab-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <h4 style="font-size: 12px; color: #1e3c72; margin: 0;">Data Terbaru Siswa</h4>
@@ -502,7 +492,7 @@
                     <option value="12 SMK">12 SMK</option>
                 </select>
             </div>
-            <div class="rekap-container" style="max-height: 240px; overflow-y: auto;">
+            <div class="rekap-container" style="max-height: 380px; overflow-y: auto;">
                 <table class="rekap-table">
                     <thead>
                         <tr>
@@ -519,9 +509,9 @@
             </div>
         </div>
 
-        <!-- TAB 2: HALAMAN KONTROL SISWA (RESET, TAMBAH, POTONG HP) -->
+        <!-- TAB 2: KONTROL SISWA -->
         <div id="adminTabKontrol" class="admin-tab-content hidden">
-            <form id="formAdminAction" onsubmit="event.preventDefault(); prosesActionAdmin();">
+            <form id="formAdminAction" onsubmit="event.preventDefault(); prosesActionAdminWithLoading();">
                 <div class="row-group">
                     <div class="input-box">
                         <label>KELAS *</label>
@@ -564,7 +554,7 @@
             </form>
         </div>
 
-        <!-- TAB 3: HALAMAN CETAK LAPORAN DENGAN KOLOM PENCARIAN SISWA -->
+        <!-- TAB 3: CETAK LAPORAN -->
         <div id="adminTabCetak" class="admin-tab-content hidden">
             <div style="background: #f8f9fa; padding: 15px; border-radius: 14px; border: 1px solid #e2e8f0; text-align: left;">
                 <h4 style="font-size: 13px; color: #1e3c72; margin-bottom: 10px;">🖨️ Opsi Cetak & Ekspor Rekapitulasi</h4>
@@ -578,7 +568,6 @@
                     </select>
                 </div>
 
-                <!-- Pilihan jika pilih per kelas -->
                 <div id="boxCetakKelas" class="input-box hidden">
                     <label>PILIH KELAS</label>
                     <select id="cetakKelasSelect">
@@ -588,54 +577,57 @@
                     </select>
                 </div>
 
-                <!-- Pilihan jika pilih per siswa (LENGKAP DENGAN KOLOM PENCARIAN) -->
                 <div id="boxCetakSiswa" class="input-box hidden">
                     <label>CARI NAMA SISWA</label>
                     <input type="text" id="searchSiswaInput" placeholder="Ketik nama siswa..." oninput="filterPilihanSiswaCetak()" style="margin-bottom: 6px;">
                     <select id="cetakSiswaSelect" size="3" style="height: 80px;">
-                        <option value="1001">Ahmad Daniel (10 SMK)</option>
-                        <option value="1002">Budi Setiawan (10 SMK)</option>
-                        <option value="1003">Reza Mahendra (10 SMK)</option>
-                        <option value="2001">Andi Pratama (11 SMK)</option>
-                        <option value="2002">Dewi Sartika (11 SMK)</option>
-                        <option value="3001">Muhammad Rizky (12 SMK)</option>
+                        <!-- Opsi dimuat via JS -->
                     </select>
                 </div>
 
-                <button type="button" onclick="prosesCetakLaporan()" style="margin-top: 10px;">Download / Cetak Dokumen</button>
+                <button type="button" onclick="prosesCetakLaporanWithLoading()" style="margin-top: 10px;">Download / Cetak Dokumen</button>
             </div>
         </div>
-
     </div>
 
-    <!-- MODAL KONFIRMASI POPUP -->
+    <!-- HALAMAN PAPAN QUEST -->
+    <div id="questBoardCard" class="card hidden" style="max-width: 550px; max-height: 90vh;">
+        <div class="header-app" style="margin-bottom: 5px;">
+            <div class="user-info">
+                <h3>📜 Papan Quest / Tatib</h3>
+                <p>Panduan Lengkap Prestasi & Pelanggaran</p>
+            </div>
+            <button class="btn-logout" onclick="kembaliKeMenu()">Tutup</button>
+        </div>
+        
+        <div class="quest-tabs">
+            <button id="tabQuestPrestasi" onclick="renderQuestUI('prestasi')" style="background: #3498db; color: white;">🛡️ Prestasi (Shield)</button>
+            <button id="tabQuestPelanggaran" onclick="renderQuestUI('pelanggaran')" class="btn-outline" style="color: #e74c3c; border-color: #e74c3c;">⚠️ Daftar Hitam (- HP)</button>
+        </div>
+
+        <div id="questContainerUI" style="flex-grow: 1; overflow-y: auto; text-align: left; padding-right: 5px; margin-top: 5px;">
+            <!-- Konten Tatib Dimuat via JS -->
+        </div>
+    </div>
+
+    <!-- MODAL KONFIRMASI -->
     <div id="modalKonfirmasi" class="modal-overlay hidden">
         <div class="modal-box">
-            <h4>📌 Konfirmasi Input HP</h4>
+            <h4>📌 Konfirmasi Input Poin</h4>
             <div id="modalDetailContent" class="modal-detail">
-                <!-- Detail Ringkasan -->
+                <!-- Detail Ringkasan Dimuat via JS -->
             </div>
-            <button onclick="eksekusiSimpan()">Ya, Simpan Data</button>
+            <button onclick="eksekusiSimpanWithLoading()">Ya, Simpan Data</button>
             <button type="button" class="btn-outline" onclick="tutupModal()" style="margin-top: 8px;">Batal</button>
         </div>
     </div>
 
+    <!-- SCRIPT UTAMA -->
     <script>
-        // FUNGSI UNTUK SHOW/HIDE PASSWORD
-        function togglePassword() {
-            const pwdInput = document.getElementById("password");
-            const eyeIcon = document.getElementById("eyeIcon");
-            
-            if (pwdInput.type === "password") {
-                pwdInput.type = "text";
-                pwdInput.classList.add("pwd-visible");
-                eyeIcon.innerText = "🙈"; 
-            } else {
-                pwdInput.type = "password";
-                pwdInput.classList.remove("pwd-visible");
-                eyeIcon.innerText = "👁️"; 
-            }
-        }
+        // --- EASTER EGG: SECRET CONSOLE LOG ---
+        console.log("%cHalo, Player! 🎮 Selamat datang di balik layar sistem Tatib SMK Wiraguna Limbangan. Tetaplah jadi siswa teladan dan jangan coba-coba cheat database ya! - Ahmad Qabil", "color: #f1c40f; font-size: 14px; font-weight: bold; background: #1e3c72; padding: 10px; border-radius: 5px;");
+
+        const pageLoadTime = Date.now(); // Patokan waktu untuk Speedrunner
 
         const daftarGuru = [
             { nama: "Budi Santoso", pass: "wiraguna123", role: "Guru Mapel" },
@@ -644,30 +636,14 @@
             { nama: "ahmad qabil", pass: "ahmadqabil123", role: "Super Admin" }
         ];
 
-        // DATABASE SIMULASI SISWA (DENGAN SISTEM SHIELD & HP)
         const masterDataSiswa = [
-            { nisn: "1001", nama: "Ahmad Daniel", kelas: "10 SMK", hp: 200, shield: 35 },
+            { nisn: "1001", nama: "Ahmad Daniel", kelas: "10 SMK", hp: 200, shield: 200 },
             { nisn: "1002", nama: "Budi Setiawan", kelas: "10 SMK", hp: 80, shield: 0 },
             { nisn: "1003", nama: "Reza Mahendra", kelas: "10 SMK", hp: -40, shield: 0 },
             { nisn: "2001", nama: "Andi Pratama", kelas: "11 SMK", hp: 200, shield: 50 },
             { nisn: "2002", nama: "Dewi Sartika", kelas: "11 SMK", hp: 180, shield: 0 },
             { nisn: "3001", nama: "Muhammad Rizky", kelas: "12 SMK", hp: 200, shield: 15 }
         ];
-
-        const dummySiswaPerKelas = {
-            "10 SMK": [
-                { nisn: "1001", nama: "AHMAD DANIEL (HP: 200)" },
-                { nisn: "1002", nama: "BUDI SETIAWAN (HP: 80)" },
-                { nisn: "1003", nama: "REZA MAHENDRA (HP: -40)" }
-            ],
-            "11 SMK": [
-                { nisn: "2001", nama: "ANDI PRATAMA (HP: 200)" },
-                { nisn: "2002", nama: "DEWI SARTIKA (HP: 180)" }
-            ],
-            "12 SMK": [
-                { nisn: "3001", nama: "MUHAMMAD RIZKY (HP: 200)" }
-            ]
-        };
 
         const dataPilihan = {
             Prestasi: [
@@ -677,45 +653,117 @@
             ],
             Pelanggaran: {
                 Ringan: [
-                    { id: "l1", teks: "Terlambat masuk sekolah < 15 menit", poin: 10 },
-                    { id: "l2", teks: "Atribut seragam tidak lengkap", poin: 10 }
+                    { id: "l1", teks: "Terlambat masuk sekolah < 15 menit", poin: 5 },
+                    { id: "l2", teks: "Atribut seragam tidak lengkap / Sepatu bebas", poin: 5 },
+                    { id: "l3", teks: "Tidak mengikuti apel/upacara tanpa alasan", poin: 10 }
                 ],
                 Sedang: [
-                    { id: "l4", teks: "Membolos jam pelajaran tertentu", poin: 30 },
-                    { id: "l5", teks: "Keluar lingkungan sekolah tanpa izin piket", poin: 40 }
+                    { id: "l4", teks: "Membolos 1 jam pelajaran", poin: 25 },
+                    { id: "l5", teks: "Merokok / Vape di lingkungan sekolah", poin: 40 },
+                    { id: "l6", teks: "Berkata kasar kepada teman / Menghina", poin: 30 }
                 ],
                 Berat: [
-                    { id: "l7", teks: "Merokok / Vaping di lingkungan sekolah", poin: 100 },
-                    { id: "l8", teks: "Tawuran / Perkelahian sesama siswa", poin: 150 }
+                    { id: "l7", teks: "Bullying fisik / Perkelahian", poin: 100 },
+                    { id: "l8", teks: "Membawa senjata tajam / Minuman Keras", poin: 150 },
+                    { id: "l9", teks: "Pornografi / Pelecehan Seksual", poin: 200 }
                 ]
             }
+        };
+
+        const questDatabase = {
+            prestasi: [
+                { level: "Ringan (5 - 20 Poin)", items: [
+                    { t: "Hadir tepat waktu 1 bulan konsisten", p: "+10" },
+                    { t: "Menjaga kebersihan luar jadwal piket", p: "+5" },
+                    { t: "Tugas tepat waktu 1 bulan penuh", p: "+10" },
+                    { t: "Shalat jamaah aktif (Dhuha/Dzuhur/Ashar)", p: "+10" },
+                    { t: "Membantu guru/teman", p: "+10" }
+                ]},
+                { level: "Sedang (25 - 50 Poin)", items: [
+                    { t: "Peringkat 1-3 PTS / Sumatif", p: "+30" },
+                    { t: "Ketua Kelas/OSIS kinerja baik", p: "+40" },
+                    { t: "Petugas upacara inti sekolah", p: "+25" },
+                    { t: "Kejujuran luar biasa (uang/dompet)", p: "+50" }
+                ]},
+                { level: "Berat / Tinggi (75 - 200 Poin)", items: [
+                    { t: "Juara 1-3 Lomba Kab/Kota", p: "+75" },
+                    { t: "Juara 1-3 Lomba Provinsi", p: "+100" },
+                    { t: "Siswa Teladan (Student of the Year)", p: "+100" },
+                    { t: "Juara Umum Sekolah 1 Tahun", p: "+200" }
+                ]}
+            ],
+            pelanggaran: [
+                { level: "Ringan (5 - 20 Poin)", items: [
+                    { t: "Terlambat datang sekolah", p: "-5" },
+                    { t: "Atribut / Seragam tidak sesuai", p: "-5" },
+                    { t: "Tidak ikut piket kelas / Upacara", p: "-10" }
+                ]},
+                { level: "Sedang (25 - 50 Poin)", items: [
+                    { t: "Membolos 1 jam pelajaran", p: "-25" },
+                    { t: "Merokok / Vape di sekolah", p: "-40" },
+                    { t: "Menyontek / Bantu teman menyontek", p: "-40" }
+                ]},
+                { level: "Berat (75 - 200 Poin)", items: [
+                    { t: "Bullying Verbal / Fisik", p: "-100" },
+                    { t: "Tawuran / Membawa senjata tajam", p: "-150" },
+                    { t: "Miras / Narkoba / Judi / Mencuri", p: "-200" }
+                ]}
+            ]
         };
 
         let currentRole = "";
         let isMultiMode = false;
 
+        function showGamePreloader(customTitle = "SYNCHRONIZING...", duration = 900, callback) {
+            const preloader = document.getElementById('gamePreloader');
+            document.getElementById('loadingTitleText').innerText = customTitle;
+            const fillEl = document.getElementById('progressBarFill');
+            const percentEl = document.getElementById('loadingPercentText');
+            
+            preloader.classList.remove('hidden');
+            let currentPercent = 0; fillEl.style.width = '0%'; percentEl.innerText = '0%';
+            
+            let intervalTime = duration / 50;
+            let loadingInterval = setInterval(() => {
+                currentPercent += 2; 
+                if (currentPercent > 100) currentPercent = 100;
+                fillEl.style.width = currentPercent + '%'; percentEl.innerText = currentPercent + '%';
+                if (currentPercent >= 100) {
+                    clearInterval(loadingInterval);
+                    setTimeout(() => { preloader.classList.add('hidden'); if (callback) callback(); }, 200); 
+                }
+            }, intervalTime);
+        }
+
+        function togglePassword() {
+            const pwdInput = document.getElementById("password");
+            if (pwdInput.type === "password") { pwdInput.type = "text"; } else { pwdInput.type = "password"; }
+        }
+
         function bukaPortal(tipe) {
-            document.getElementById('mainMenuCard').classList.add('hidden');
+            document.getElementById('menuWrapper').classList.add('hidden');
             if (tipe === 'guru') {
                 document.getElementById('loginCard').classList.remove('hidden');
-                document.getElementById('password').type = "password";
-                document.getElementById('password').classList.remove("pwd-visible");
-                document.getElementById('eyeIcon').innerText = "👁️";
-                document.getElementById('password').value = "";
-                document.getElementById('namaGuruInput').value = "";
-            } else {
+                document.getElementById('password').value = ""; document.getElementById('namaGuruInput').value = "";
+                document.getElementById('pesanEror').style.display = "none";
+            } else if (tipe === 'siswa') {
                 document.getElementById('siswaCard').classList.remove('hidden');
+                document.getElementById('hasilPoinSiswa').classList.add('hidden');
+                document.getElementById('nisnSiswaInput').value = "";
+            } else if (tipe === 'quest') {
+                document.getElementById('questBoardCard').classList.remove('hidden');
+                renderQuestUI('prestasi'); 
             }
         }
 
         function kembaliKeMenu() {
-            document.getElementById('loginCard').classList.add('hidden');
-            document.getElementById('siswaCard').classList.add('hidden');
-            document.getElementById('adminCard').classList.add('hidden');
+            document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+            document.getElementById('menuWrapper').classList.remove('hidden');
             document.getElementById('mainMenuCard').classList.remove('hidden');
-            document.getElementById('hasilPoinSiswa').classList.add('hidden');
-            document.getElementById('nisnSiswaInput').value = "";
+            document.getElementById('questTriggerCard').classList.remove('hidden');
         }
+
+        function logout() { location.reload(); }
 
         function login() {
             const namaIn = document.getElementById('namaGuruInput').value.trim();
@@ -724,315 +772,140 @@
             const akun = daftarGuru.find(g => g.nama.toLowerCase() === namaIn.toLowerCase() && g.pass === passIn);
 
             if (akun) {
-                currentRole = akun.role;
-                document.getElementById('pesanEror').style.display = "none";
+                showGamePreloader("VERIFYING CREDENTIALS...", 800, () => {
+                    currentRole = akun.role;
+                    document.getElementById('pesanEror').style.display = "none";
+                    document.getElementById('loginCard').classList.add('hidden');
 
-                if (akun.role === "Super Admin") {
-                    document.getElementById('txtNamaAdmin').innerText = akun.nama;
-                    document.getElementById('loginCard').classList.add('hidden');
-                    document.getElementById('adminCard').classList.remove('hidden');
-                    switchAdminTab('rekap'); 
-                } else {
-                    document.getElementById('txtNamaGuru').innerText = akun.nama;
-                    document.getElementById('txtRoleGuru').innerText = "Jabatan: " + akun.role;
-                    document.getElementById('loginCard').classList.add('hidden');
-                    document.getElementById('entryCard').classList.remove('hidden');
-                    initFormEntry();
-                }
+                    if (akun.role === "Super Admin") {
+                        document.getElementById('txtNamaAdmin').innerText = akun.nama;
+                        document.getElementById('adminCard').classList.remove('hidden');
+                        switchAdminTab('rekap'); 
+                    } else {
+                        document.getElementById('txtNamaGuru').innerText = akun.nama;
+                        document.getElementById('txtRoleGuru').innerText = "Jabatan: " + akun.role;
+                        document.getElementById('entryCard').classList.remove('hidden');
+                        initFormEntry();
+                    }
+                });
             } else {
                 document.getElementById('pesanEror').style.display = "block";
             }
         }
 
-        function logout() { location.reload(); }
-
-        function switchAdminTab(tabName) {
-            const tabRekap = document.getElementById('adminTabRekap');
-            const tabKontrol = document.getElementById('adminTabKontrol');
-            const tabCetak = document.getElementById('adminTabCetak');
-
-            const btnRekap = document.getElementById('navBtnRekap');
-            const btnKontrol = document.getElementById('navBtnKontrol');
-            const btnCetak = document.getElementById('navBtnCetak');
-
-            tabRekap.classList.add('hidden');
-            tabKontrol.classList.add('hidden');
-            tabCetak.classList.add('hidden');
-
-            btnRekap.className = "btn-outline";
-            btnKontrol.className = "btn-outline";
-            btnCetak.className = "btn-outline";
-            btnRekap.style.background = "transparent";
-            btnKontrol.style.background = "transparent";
-            btnCetak.style.background = "transparent";
-
-            if (tabName === 'rekap') {
-                tabRekap.classList.remove('hidden');
-                btnRekap.className = "";
-                btnRekap.style.background = "#1e3c72";
-                renderTabelRekap();
-            } else if (tabName === 'kontrol') {
-                tabKontrol.classList.remove('hidden');
-                btnKontrol.className = "";
-                btnKontrol.style.background = "#1e3c72";
-            } else if (tabName === 'cetak') {
-                tabCetak.classList.remove('hidden');
-                btnCetak.className = "";
-                btnCetak.style.background = "#1e3c72";
-            }
-        }
-
-        // RENDER TABEL REKAPITULASI DENGAN ATURAN PENILAIAN SHIELD & HP BARU
-        function renderTabelRekap() {
-            const filterKelas = document.getElementById('filterKelasRekap').value;
-            const tbody = document.getElementById('tabelRekapBody');
-            tbody.innerHTML = "";
-
-            let filteredData = masterDataSiswa;
-            if (filterKelas !== "SEMUA") {
-                filteredData = masterDataSiswa.filter(s => s.kelas === filterKelas);
-            }
-
-            filteredData.forEach(s => {
-                let statusBadge = "Normal (200 HP)";
-                let badgeColor = "#2ecc71";
-
-                if (s.shield > 0) {
-                    statusBadge = `🛡️ Murid Teladan (${s.shield} Shield)`;
-                    badgeColor = "#3498db"; // Biru untuk teladan bershield
-                } else if (s.hp < 200 && s.hp >= 100) {
-                    statusBadge = "Peringatan Ringan";
-                    badgeColor = "#f1c40f";
-                } else if (s.hp < 100 && s.hp >= 0) {
-                    statusBadge = "SP 1 / Waspada";
-                    badgeColor = "#e67e22";
-                } else if (s.hp < 0) {
-                    statusBadge = "🚨 Kritis / Minus";
-                    badgeColor = "#e74c3c";
-                }
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${s.nama}</strong></td>
-                    <td>${s.kelas}</td>
-                    <td>${s.hp} HP ${s.shield > 0 ? `<br><span style="color:#3498db; font-size:10px;">+${s.shield} Shield</span>` : ''}</td>
-                    <td><span style="font-size: 9px; padding: 3px 6px; background: ${badgeColor}; color: #fff; border-radius: 4px; font-weight: bold;">${statusBadge}</span></td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function handleCetakKategoriChange() {
-            const kat = document.getElementById('cetakKategori').value;
-            const boxKelas = document.getElementById('boxCetakKelas');
-            const boxSiswa = document.getElementById('boxCetakSiswa');
-
-            boxKelas.classList.add('hidden');
-            boxSiswa.classList.add('hidden');
-
-            if (kat === 'kelas') boxKelas.classList.remove('hidden');
-            if (kat === 'siswa') boxSiswa.classList.remove('hidden');
-        }
-
-        // FUNGSI PENCARIAN SISWA DI MENU CETAK LAPORAN PERORANGAN
-        function filterPilihanSiswaCetak() {
-            const keyword = document.getElementById('searchSiswaInput').value.toLowerCase();
-            const selectEl = document.getElementById('cetakSiswaSelect');
-            selectEl.innerHTML = "";
-
-            const matchedSiswa = masterDataSiswa.filter(s => s.nama.toLowerCase().includes(keyword) || s.kelas.toLowerCase().includes(keyword));
-
-            if (matchedSiswa.length === 0) {
-                selectEl.innerHTML = `<option value="">-- Siswa tidak ditemukan --</option>`;
-                return;
-            }
-
-            matchedSiswa.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.nisn;
-                opt.innerText = `${s.nama} (${s.kelas})`;
-                selectEl.appendChild(opt);
-            });
-        }
-
-        function prosesCetakLaporan() {
-            const kat = document.getElementById('cetakKategori').value;
-            if (kat === 'semua') {
-                alert("🖨️ Mengunduh Laporan Rekapitulasi Keseluruhan Sekolah (Google Sheets)...");
-            } else if (kat === 'kelas') {
-                const kelas = document.getElementById('cetakKelasSelect').value;
-                alert(`🖨️ Mengunduh Laporan Rekapitulasi untuk Kelas: ${kelas}...`);
-            } else {
-                const selectedNisn = document.getElementById('cetakSiswaSelect').value;
-                if(!selectedNisn) { alert("Pilih siswa terlebih dahulu dari hasil pencarian!"); return; }
-                alert(`🖨️ Mengunduh Dokumen Laporan Detail untuk NISN: ${selectedNisn}...`);
-            }
-        }
-
-        function handleAdminKelasChange() {
-            const kelas = document.getElementById('adminKelasSelect').value;
-            const selectSiswa = document.getElementById('adminSiswaSelect');
-            selectSiswa.innerHTML = "";
-
-            if (!kelas) {
-                selectSiswa.innerHTML = `<option value="">-- Pilih Kelas Dulu --</option>`;
-                return;
-            }
-
-            const listSiswa = dummySiswaPerKelas[kelas] || [];
-            selectSiswa.innerHTML = `<option value="">-- Pilih Siswa --</option>`;
-
-            listSiswa.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.nisn;
-                opt.innerText = s.nama;
-                selectSiswa.appendChild(opt);
-            });
-        }
-
-        function toggleModeSiswa() {
-            isMultiMode = !isMultiMode;
-            const btnTxt = document.getElementById('txtModeSiswa');
-            const singleSelect = document.getElementById('selectSingleSiswa');
-            const multiBox = document.getElementById('boxMultiSiswa');
-
-            if(isMultiMode) {
-                btnTxt.innerText = "Mode: Satu Siswa";
-                singleSelect.classList.add('hidden');
-                singleSelect.required = false;
-                multiBox.classList.remove('hidden');
-            } else {
-                btnTxt.innerText = "Mode: Banyak Siswa";
-                singleSelect.classList.remove('hidden');
-                singleSelect.required = true;
-                multiBox.classList.add('hidden');
-            }
-        }
-
-        function cariPoinSiswa() {
+        // LOGIKA STATUS SISWA (PERBAIKAN: BAR HP MERAH PENUH JIKA MINUS)
+        function cariPoinSiswaWithLoading() {
             const nisnInput = document.getElementById('nisnSiswaInput').value.trim();
             if (!nisnInput) { alert("Silakan ketik nomor NIS / NISN kamu!"); return; }
 
-            const barHpFill = document.getElementById('barHpFill');
-            const txtHpPercent = document.getElementById('txtHpPercent');
-            const txtHpLabel = document.getElementById('txtHpLabel');
-            const barShieldFill = document.getElementById('barShieldFill');
-            const txtShieldPercent = document.getElementById('txtShieldPercent');
-            const statusBadge = document.getElementById('statusBadgeSiswa');
-
-            if (nisnInput === "1001") {
-                document.getElementById('hasilPoinSiswa').classList.remove('hidden');
-                document.getElementById('txtNamaSiswaHasil').innerText = "AHMAD DANIEL";
-                document.getElementById('txtKelasSiswaHasil').innerText = "10 SMK | NISN: 1001";
-                
-                txtHpLabel.innerText = "❤️ HEALTH POINT (HP)";
-                txtHpLabel.style.color = "#2ecc71";
-                txtHpPercent.innerText = `200 / 200 HP`;
-                txtHpPercent.style.color = "#2ecc71";
-                barHpFill.style.width = `100%`;
-                barHpFill.style.background = "#2ecc71";
-
-                txtShieldPercent.innerText = `35 / 200 SHIELD (TELADAN)`;
-                barShieldFill.style.width = `17.5%`;
-
-                document.getElementById('txtCountPrestasi').innerText = `2 Kali`;
-                document.getElementById('txtTotalPlusHp').innerText = `+35 Shield Bonus`;
-                document.getElementById('txtCountPelanggaran').innerText = `0 Kali`;
-                document.getElementById('txtTotalMinHp').innerText = `-0 Poin`;
-
-                statusBadge.innerText = "🏆 MURID TELADAN (SHIELD ACTIVE)";
-                statusBadge.style.background = "#e7f5ff";
-                statusBadge.style.color = "#3498db";
-
-                document.getElementById('listRiwayatSiswa').innerHTML = `
-                    <div class="history-item shield">
-                        <strong style="color: #3498db;">🛡️ [+35 SHIELD] Juara Lomba Sekolah</strong><br>
-                        <span>Mendapatkan poin prestasi tambahan (Shield)</span><br>
-                        <small style="color: #888;">14 Aug 2026 @ Lapangan</small>
-                    </div>
-                `;
-            } else if (nisnInput === "1002") {
-                document.getElementById('hasilPoinSiswa').classList.remove('hidden');
-                document.getElementById('txtNamaSiswaHasil').innerText = "BUDI SETIAWAN";
-                document.getElementById('txtKelasSiswaHasil').innerText = "10 SMK | NISN: 1002";
-
-                txtHpLabel.innerText = "❤️ HEALTH POINT (HP)";
-                txtHpLabel.style.color = "#f39c12";
-                txtHpPercent.innerText = `80 / 200 HP`;
-                txtHpPercent.style.color = "#f39c12";
-                barHpFill.style.width = `40%`;
-                barHpFill.style.background = "#f39c12";
-
-                txtShieldPercent.innerText = `0 / 200 SHIELD`;
-                barShieldFill.style.width = `0%`;
-
-                document.getElementById('txtCountPrestasi').innerText = `0 Kali`;
-                document.getElementById('txtTotalPlusHp').innerText = `+0 Bonus`;
-                document.getElementById('txtCountPelanggaran').innerText = `3 Kali`;
-                document.getElementById('txtTotalMinHp').innerText = `-120 Poin`;
-
-                statusBadge.innerText = "PEMBINAAN INTENSIF BK & ORTU";
-                statusBadge.style.background = "#fff9db";
-                statusBadge.style.color = "#f39c12";
-
-                document.getElementById('listRiwayatSiswa').innerHTML = `
-                    <div class="history-item minus">
-                        <strong style="color: #e74c3c;">⚠️ [-100 HP] Pelanggaran Berat</strong><br>
-                        <span>Merokok / Vaping di lingkungan sekolah</span><br>
-                        <small style="color: #888;">12 Aug 2026 @ Toilet</small>
-                    </div>
-                `;
-            } else if (nisnInput === "1003") {
-                document.getElementById('hasilPoinSiswa').classList.remove('hidden');
-                document.getElementById('txtNamaSiswaHasil').innerText = "REZA MAHENDRA";
-                document.getElementById('txtKelasSiswaHasil').innerText = "10 SMK | NISN: 1003 (Status: Over-Penalty)";
-
-                let nilaiMinus = -40;
-                let persentaseMinus = Math.min(Math.abs(nilaiMinus), 100);
-
-                txtHpLabel.innerText = "🚨 HEALTH POINT (KRITIS)";
-                txtHpLabel.style.color = "#e74c3c";
-                txtHpPercent.innerText = `${nilaiMinus} / 200 HP (MINUS)`;
-                txtHpPercent.style.color = "#e74c3c";
-                
-                barHpFill.style.width = `${persentaseMinus}%`; 
-                barHpFill.style.background = "#e74c3c"; 
-
-                txtShieldPercent.innerText = `0 / 200 SHIELD`;
-                barShieldFill.style.width = `0%`;
-
-                document.getElementById('txtCountPrestasi').innerText = `0 Kali`;
-                document.getElementById('txtTotalPlusHp').innerText = `+0 Bonus`;
-                document.getElementById('txtCountPelanggaran').innerText = `4 Kali`;
-                document.getElementById('txtTotalMinHp').innerText = `-240 Poin`;
-
-                statusBadge.innerText = "🚨 REKOMENDASI SIDANG DEWAN GURU";
-                statusBadge.style.background = "#2c3e50";
-                statusBadge.style.color = "#ff6b6b";
-
-                document.getElementById('listRiwayatSiswa').innerHTML = `
-                    <div class="history-item minus">
-                        <strong style="color: #e74c3c;">⚠️ [-150 HP] Pelanggaran Berat Berulang</strong><br>
-                        <span>Akumulasi poin melebihi batas 200 Poin</span><br>
-                        <small style="color: #888;">15 Aug 2026 @ Parkir</small>
-                    </div>
-                `;
-            } else {
-                document.getElementById('hasilPoinSiswa').classList.add('hidden');
-                alert("⚠️ Nomor NIS / NISN tidak ditemukan!");
+            // Cek Speedrunner (< 2 detik sejak halaman dibuka)
+            const clickTime = Date.now();
+            const timeDiff = (clickTime - pageLoadTime) / 1000;
+            if (timeDiff < 2) {
+                localStorage.setItem('secret_gelar', '⚡ Speedrunner');
+                localStorage.setItem('gelar_time', Date.now());
             }
-        }
 
-        function prosesActionAdmin() {
-            const nisnSiswa = document.getElementById('adminSiswaSelect').value;
-            const tipe = document.getElementById('adminActionType').value;
-            const alasan = document.getElementById('adminNotes').value;
+            showGamePreloader("FETCHING CHARACTER DATA...", 900, () => {
+                const hasilBox = document.getElementById('hasilPoinSiswa');
+                const barHpFill = document.getElementById('barHpFill');
+                const txtHpPercent = document.getElementById('txtHpPercent');
+                const barShieldFill = document.getElementById('barShieldFill');
+                const txtShieldPercent = document.getElementById('txtShieldPercent');
+                const banner = document.getElementById('rpgStatusBanner');
+                const txtKondisi = document.getElementById('txtStatusKondisi');
+                const txtPenanganan = document.getElementById('txtStatusPenanganan');
 
-            if(!nisnSiswa) { alert("Pilih siswa terlebih dahulu!"); return; }
+                const siswa = masterDataSiswa.find(s => s.nisn === nisnInput);
 
-            alert(`👑 AKSI SUPER ADMIN BERHASIL!\n\nTarget NISN: ${nisnSiswa}\nTindakan: ${tipe}\nCatatan: ${alasan}\n\nSistem telah memperbarui data rekapitulasi siswa!`);
-            document.getElementById('formAdminAction').reset();
-            document.getElementById('adminSiswaSelect').innerHTML = `<option value="">-- Pilih Kelas Dulu --</option>`;
+                if (siswa) {
+                    hasilBox.classList.remove('hidden');
+
+                    // --- SISTEM GELAR RAHASIA (EASTER EGG) ---
+                    let displayGelar = "";
+                    const currentHour = new Date().getHours();
+
+                    if (currentHour >= 22 || currentHour < 4) {
+                        displayGelar = "🦉 The Night Owl";
+                    } else if (siswa.hp === 200 && siswa.shield === 200) {
+                        displayGelar = "🛡️ Perfect Defender";
+                    } else {
+                        const savedGelar = localStorage.getItem('secret_gelar');
+                        const savedTime = localStorage.getItem('gelar_time');
+                        if (savedGelar && (Date.now() - savedTime < 24 * 60 * 60 * 1000)) {
+                            displayGelar = savedGelar;
+                        }
+                    }
+
+                    const nameContainer = document.getElementById('txtNamaSiswaHasil');
+                    if (displayGelar) {
+                        nameContainer.innerHTML = `${siswa.nama.toUpperCase()} <span style="font-size:9px; background:#f1c40f; color:#1a2536; padding:2px 6px; border-radius:4px; margin-left:6px; vertical-align:middle; font-weight:700;">${displayGelar}</span>`;
+                    } else {
+                        nameContainer.innerText = siswa.nama.toUpperCase();
+                    }
+
+                    document.getElementById('txtKelasSiswaHasil').innerText = `Kelas: ${siswa.kelas} | NISN: ${siswa.nisn}`;
+
+                    // PERBAIKAN LOGIKA PROGRESS BAR HP & WARNA
+                    let hpPercentWidth;
+                    if (siswa.hp < 0) {
+                        hpPercentWidth = Math.min(100, Math.abs(siswa.hp) / 2); // Visual proporsi nilai minus
+                        barHpFill.style.width = `${hpPercentWidth}%`;
+                        barHpFill.style.background = "#e74c3c"; // Merah pekat untuk kritis/minus
+                        txtHpPercent.innerText = `${siswa.hp}/200 (KRITIS)`;
+                        txtHpPercent.style.color = "#e74c3c";
+                    } else {
+                        hpPercentWidth = Math.max(0, Math.min(100, (siswa.hp / 200) * 100));
+                        barHpFill.style.width = `${hpPercentWidth}%`;
+                        txtHpPercent.innerText = `${siswa.hp}/200`;
+                        
+                        if (siswa.hp < 100) {
+                            barHpFill.style.background = "#f39c12"; // Kuning/Oranye Waspada
+                            txtHpPercent.style.color = "#f39c12";
+                        } else {
+                            barHpFill.style.background = "#2ecc71"; // Hijau Normal
+                            txtHpPercent.style.color = "#2ecc71";
+                        }
+                    }
+
+                    let shieldPercentWidth = Math.min(100, (siswa.shield / 200) * 100);
+                    txtShieldPercent.innerText = `${siswa.shield}/200`;
+                    barShieldFill.style.width = `${shieldPercentWidth}%`;
+
+                    if (siswa.hp === 200 && siswa.shield > 0) {
+                        txtKondisi.innerText = "KONDISI: 🌟 BERPRESTASI (TELADAN)";
+                        txtPenanganan.innerText = "Status: Karakter stabil, mendapatkan bonus Shield dari prestasi.";
+                        banner.style.borderLeftColor = "#3498db";
+                    } else if (siswa.hp < 100 && siswa.hp >= 0) {
+                        txtKondisi.innerText = "KONDISI: ⚠️ WASPADA (SP 1)";
+                        txtPenanganan.innerText = "Status Penanganan: Dalam pengawasan intensif oleh Wali Kelas.";
+                        banner.style.borderLeftColor = "#f39c12";
+                    } else if (siswa.hp < 0) {
+                        txtKondisi.innerText = "KONDISI: 🚨 KRITIS (OVER-PENALTY)";
+                        txtPenanganan.innerText = "Status Penanganan: Dijadwalkan Sidang Pembinaan Guru & Pemanggilan Orang Tua.";
+                        banner.style.borderLeftColor = "#e74c3c";
+                    } else {
+                        txtKondisi.innerText = "KONDISI: NORMAL";
+                        txtPenanganan.innerText = "Status: Tidak ada penanganan khusus.";
+                        banner.style.borderLeftColor = "#f1c40f";
+                    }
+
+                    document.getElementById('txtCountPrestasi').innerText = `${siswa.shield > 0 ? '2' : '0'} Kali`;
+                    document.getElementById('txtCountPelanggaran').innerText = `${siswa.hp < 200 ? '1' : '0'} Kali`;
+
+                    document.getElementById('listRiwayatSiswa').innerHTML = `
+                        <div class="history-item ${siswa.shield > 0 ? 'shield' : 'minus'}" style="background: #111823; color: #fff;">
+                            <strong>${siswa.shield > 0 ? '🛡️ Catatan Prestasi / Bonus' : '⚠️ Catatan Pelanggaran Terakhir'}</strong><br>
+                            <span style="color: #ccc;">${siswa.shield > 0 ? 'Mendapatkan apresiasi kedisiplinan & prestasi' : 'Pengurangan poin berdasarkan catatan tata tertib'}</span><br>
+                            <small style="color: #888;">Agustus 2026</small>
+                        </div>
+                    `;
+
+                } else {
+                    hasilBox.classList.add('hidden');
+                    alert("⚠️ Nomor NIS / NISN tidak ditemukan di database!");
+                }
+            });
         }
 
         function initFormEntry() {
@@ -1044,6 +917,7 @@
             const minutes = String(now.getMinutes()).padStart(2, '0');
             document.getElementById('jam').value = `${hours}:${minutes}`;
             handleKategoriChange();
+            updateEntrySiswaList();
         }
 
         function handleKategoriChange() {
@@ -1094,21 +968,61 @@
             });
         }
 
+        function updateEntrySiswaList() {
+            const kelas = document.getElementById('kelas').value;
+            const singleSelect = document.getElementById('selectSingleSiswa');
+            const multiBox = document.getElementById('boxMultiSiswa');
+            
+            singleSelect.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+            multiBox.innerHTML = '';
+
+            if(!kelas) {
+                multiBox.innerHTML = '<span style="font-size:11px; color:#888;">Pilih kelas dulu...</span>';
+                return;
+            }
+            
+            const siswaInClass = masterDataSiswa.filter(s => s.kelas === kelas);
+            siswaInClass.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.nama; opt.innerText = s.nama;
+                singleSelect.appendChild(opt);
+                const lbl = document.createElement('label');
+                lbl.className = 'checkbox-item';
+                lbl.innerHTML = `<input type="checkbox" name="multiSiswa" value="${s.nama}"> ${s.nama}`;
+                multiBox.appendChild(lbl);
+            });
+        }
+
+        function toggleModeSiswa() {
+            isMultiMode = !isMultiMode;
+            const btnTxt = document.getElementById('txtModeSiswa');
+            const singleSelect = document.getElementById('selectSingleSiswa');
+            const multiBox = document.getElementById('boxMultiSiswa');
+
+            if(isMultiMode) {
+                btnTxt.innerText = "Mode: Satu Siswa";
+                singleSelect.classList.add('hidden'); singleSelect.required = false;
+                multiBox.classList.remove('hidden');
+            } else {
+                btnTxt.innerText = "Mode: Banyak Siswa";
+                singleSelect.classList.remove('hidden'); singleSelect.required = true;
+                multiBox.classList.add('hidden');
+            }
+        }
+
         function konfirmasiSimpan() {
             const selectedRadio = document.querySelector('input[name="opsiPoin"]:checked');
-            if(!selectedRadio) { alert("Pilih salah satu poin!"); return; }
+            if(!selectedRadio) { alert("Pilih detail jenis pelanggaran/prestasi terlebih dahulu!"); return; }
 
             let daftarSiswaDipilih = [];
-
             if(isMultiMode) {
                 const checkedBoxes = document.querySelectorAll('input[name="multiSiswa"]:checked');
                 checkedBoxes.forEach(cb => daftarSiswaDipilih.push(cb.value));
-                if(daftarSiswaDipilih.length === 0) {
-                    alert("Pilih minimal 1 siswa!");
-                    return;
-                }
+                if(daftarSiswaDipilih.length === 0) { alert("Pilih minimal 1 siswa di dalam box!"); return; }
             } else {
-                daftarSiswaDipilih.push(document.getElementById('selectSingleSiswa').value);
+                const val = document.getElementById('selectSingleSiswa').value;
+                if(!val) { alert("Pilih nama siswa terlebih dahulu!"); return; }
+                daftarSiswaDipilih.push(val);
             }
 
             const kat = document.getElementById('kategori').value;
@@ -1121,19 +1035,214 @@
                 <strong>Waktu & Tempat:</strong> ${document.getElementById('hari').value}, ${document.getElementById('jam').value} WIB @ ${document.getElementById('tempat').value}<br>
                 <strong>Guru Pelapor:</strong> ${document.getElementById('txtNamaGuru').innerText} (${currentRole})
             `;
-
             document.getElementById('modalKonfirmasi').classList.remove('hidden');
         }
 
-        function tutupModal() {
-            document.getElementById('modalKonfirmasi').classList.add('hidden');
+        function tutupModal() { document.getElementById('modalKonfirmasi').classList.add('hidden'); }
+
+        function eksekusiSimpanWithLoading() {
+            tutupModal();
+            showGamePreloader("SAVING TO CLOUD SHEET...", 900, () => {
+                alert("✅ Data Poin/HP berhasil dicatat dan disinkronkan ke database!");
+                document.getElementById('formEntry').reset();
+                initFormEntry();
+            });
         }
 
-        function eksekusiSimpan() {
-            tutupModal();
-            alert("✅ Data Poin/HP berhasil dicatat!");
-            document.getElementById('formEntry').reset();
-            initFormEntry();
+        function switchAdminTab(tabName) {
+            const tabRekap = document.getElementById('adminTabRekap');
+            const tabKontrol = document.getElementById('adminTabKontrol');
+            const tabCetak = document.getElementById('adminTabCetak');
+            const btnRekap = document.getElementById('navBtnRekap');
+            const btnKontrol = document.getElementById('navBtnKontrol');
+            const btnCetak = document.getElementById('navBtnCetak');
+
+            tabRekap.classList.add('hidden'); tabKontrol.classList.add('hidden'); tabCetak.classList.add('hidden');
+            btnRekap.className = "btn-outline"; btnKontrol.className = "btn-outline"; btnCetak.className = "btn-outline";
+            btnRekap.style.background = "transparent"; btnKontrol.style.background = "transparent"; btnCetak.style.background = "transparent";
+
+            if (tabName === 'rekap') {
+                showGamePreloader("FETCHING STUDENT RECORDS...", 600, () => {
+                    tabRekap.classList.remove('hidden'); btnRekap.className = ""; btnRekap.style.background = "#1e3c72";
+                    renderTabelRekap();
+                });
+            } else if (tabName === 'kontrol') {
+                tabKontrol.classList.remove('hidden'); btnKontrol.className = ""; btnKontrol.style.background = "#1e3c72";
+            } else if (tabName === 'cetak') {
+                tabCetak.classList.remove('hidden'); btnCetak.className = ""; btnCetak.style.background = "#1e3c72";
+                filterPilihanSiswaCetak();
+            }
+        }
+
+        function renderTabelRekap() {
+            const filterKelas = document.getElementById('filterKelasRekap').value;
+            const tbody = document.getElementById('tabelRekapBody');
+            tbody.innerHTML = "";
+
+            let filteredData = masterDataSiswa;
+            if (filterKelas !== "SEMUA") { filteredData = masterDataSiswa.filter(s => s.kelas === filterKelas); }
+
+            filteredData.forEach(s => {
+                let statusBadge = "Normal (200 HP)"; let badgeColor = "#2ecc71";
+                if (s.shield > 0) { statusBadge = `🛡️ Teladan`; badgeColor = "#3498db"; } 
+                else if (s.hp < 200 && s.hp >= 100) { statusBadge = "Peringatan"; badgeColor = "#f1c40f"; } 
+                else if (s.hp < 100 && s.hp >= 0) { statusBadge = "Waspada / SP 1"; badgeColor = "#e67e22"; } 
+                else if (s.hp < 0) { statusBadge = "🚨 Minus / Kritis"; badgeColor = "#e74c3c"; }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${s.nama}</strong></td>
+                    <td>${s.kelas}</td>
+                    <td>${s.hp} HP ${s.shield > 0 ? `<br><span style="color:#3498db; font-size:10px;">+${s.shield} Shield</span>` : ''}</td>
+                    <td><span style="font-size: 9px; padding: 3px 6px; background: ${badgeColor}; color: #fff; border-radius: 4px; font-weight: bold;">${statusBadge}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function handleAdminKelasChange() {
+            const kelas = document.getElementById('adminKelasSelect').value;
+            const selectSiswa = document.getElementById('adminSiswaSelect');
+            selectSiswa.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+
+            if (!kelas) return;
+            const siswaInClass = masterDataSiswa.filter(s => s.kelas === kelas);
+            siswaInClass.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.nisn; opt.innerText = s.nama;
+                selectSiswa.appendChild(opt);
+            });
+        }
+
+        function prosesActionAdminWithLoading() {
+            const nisnSiswa = document.getElementById('adminSiswaSelect').value;
+            if(!nisnSiswa) { alert("Pilih siswa terlebih dahulu!"); return; }
+            
+            showGamePreloader("UPDATING CLOUD DATABASE...", 900, () => {
+                alert(`👑 AKSI SUPER ADMIN BERHASIL!\nTarget NISN: ${nisnSiswa}\nSistem telah memperbarui data rekapitulasi siswa!`);
+                document.getElementById('formAdminAction').reset();
+                document.getElementById('adminSiswaSelect').innerHTML = `<option value="">-- Pilih Kelas Dulu --</option>`;
+            });
+        }
+
+        function handleCetakKategoriChange() {
+            const kat = document.getElementById('cetakKategori').value;
+            const boxKelas = document.getElementById('boxCetakKelas');
+            const boxSiswa = document.getElementById('boxCetakSiswa');
+            boxKelas.classList.add('hidden'); boxSiswa.classList.add('hidden');
+            if (kat === 'kelas') boxKelas.classList.remove('hidden');
+            if (kat === 'siswa') boxSiswa.classList.remove('hidden');
+        }
+
+        function filterPilihanSiswaCetak() {
+            const keyword = document.getElementById('searchSiswaInput') ? document.getElementById('searchSiswaInput').value.toLowerCase() : "";
+            const selectEl = document.getElementById('cetakSiswaSelect');
+            if(!selectEl) return;
+            selectEl.innerHTML = "";
+
+            const matchedSiswa = masterDataSiswa.filter(s => s.nama.toLowerCase().includes(keyword) || s.kelas.toLowerCase().includes(keyword));
+            if (matchedSiswa.length === 0) {
+                selectEl.innerHTML = `<option value="">-- Siswa tidak ditemukan --</option>`; return;
+            }
+            matchedSiswa.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.nisn; opt.innerText = `${s.nama} (${s.kelas})`;
+                selectEl.appendChild(opt);
+            });
+        }
+
+        function prosesCetakLaporanWithLoading() {
+            showGamePreloader("GENERATING REPORT DOCUMENT...", 1000, () => {
+                const kat = document.getElementById('cetakKategori').value;
+                if (kat === 'semua') { alert("🖨️ Laporan Rekapitulasi Keseluruhan Sekolah berhasil diunduh (Google Sheets)!"); } 
+                else if (kat === 'kelas') { alert(`🖨️ Laporan Rekapitulasi Kelas ${document.getElementById('cetakKelasSelect').value} berhasil diunduh!`); } 
+                else {
+                    const selectedNisn = document.getElementById('cetakSiswaSelect').value;
+                    if(!selectedNisn) { alert("Pilih siswa terlebih dahulu dari kolom pencarian!"); return; }
+                    alert(`🖨️ Dokumen Laporan Detail Siswa (NISN: ${selectedNisn}) berhasil diunduh!`);
+                }
+            });
+        }
+
+        function renderQuestUI(tipe) {
+            const btnPres = document.getElementById('tabQuestPrestasi');
+            const btnPelang = document.getElementById('tabQuestPelanggaran');
+            const container = document.getElementById('questContainerUI');
+
+            if (tipe === 'prestasi') {
+                btnPres.style.background = "#3498db"; btnPres.style.color = "white"; btnPres.className = "";
+                btnPelang.style.background = "transparent"; btnPelang.style.color = "#e74c3c"; btnPelang.className = "btn-outline";
+            } else {
+                btnPelang.style.background = "#e74c3c"; btnPelang.style.color = "white"; btnPelang.className = "";
+                btnPres.style.background = "transparent"; btnPres.style.color = "#3498db"; btnPres.className = "btn-outline";
+            }
+
+            const data = questDatabase[tipe];
+            let html = "";
+            data.forEach((kategori, idx) => {
+                html += `
+                <div class="accordion">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>${tipe === 'prestasi' ? '⭐' : '⚠️'} Kategori ${kategori.level}</span>
+                        <span>▼</span>
+                    </div>
+                    <div class="accordion-body ${idx === 0 ? 'active' : ''}">
+                `;
+                kategori.items.forEach(item => {
+                    const badgeClass = tipe === 'prestasi' ? 'badge-shield' : 'badge-hp';
+                    html += `
+                        <div class="q-item">
+                            <span style="flex-grow:1; padding-right:10px;">${item.t}</span>
+                            <span class="${badgeClass}">${item.p}</span>
+                        </div>
+                    `;
+                });
+                html += `</div></div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function toggleAccordion(header) {
+            const body = header.nextElementSibling;
+            if (body.classList.contains('active')) {
+                body.classList.remove('active');
+            } else {
+                const parent = header.parentElement.parentElement;
+                parent.querySelectorAll('.accordion-body').forEach(b => b.classList.remove('active'));
+                body.classList.add('active');
+            }
+        }
+
+        // --- EASTER EGG: TAHAN LOGO 10 DETIK ---
+        let logoTimer = null;
+        
+        document.addEventListener("DOMContentLoaded", () => {
+            const logoElement = document.querySelector('.logo');
+            if (logoElement) {
+                logoElement.addEventListener('touchstart', (e) => {
+                    logoTimer = setTimeout(() => { triggerSecretCoin(); }, 10000);
+                });
+                logoElement.addEventListener('touchend', () => {
+                    if (logoTimer) clearTimeout(logoTimer);
+                });
+
+                logoElement.addEventListener('mousedown', () => {
+                    logoTimer = setTimeout(() => { triggerSecretCoin(); }, 10000);
+                });
+                logoElement.addEventListener('mouseup', () => {
+                    if (logoTimer) clearTimeout(logoTimer);
+                });
+            }
+        });
+
+        function triggerSecretCoin() {
+            const modalCoin = document.getElementById('secretCoinModal');
+            modalCoin.classList.remove('hidden');
+            
+            // Otomatis hilangkan modal setelah animasi selesai (5 detik)
+            setTimeout(() => {
+                modalCoin.classList.add('hidden');
+            }, 5000);
         }
     </script>
 </body>
