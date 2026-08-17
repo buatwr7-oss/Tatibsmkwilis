@@ -9,8 +9,6 @@
     <title>Tatib SMK Wiraguna 🛡️</title>
     <!-- Menghubungkan Web App Manifest -->
     <link rel="manifest" href="manifest.json" />
-
-    <!-- Untuk dukungan tambahan di perangkat iOS (Apple) -->
     <link rel="apple-touch-icon" href="logo-512.png" />
     <link rel="icon" type="image/png" href="logo.ico" />
     <link
@@ -165,7 +163,6 @@
         object-fit: contain;
         filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
         cursor: pointer;
-
         /* Tambahan untuk mematikan menu download/save image di HP */
         -webkit-touch-callout: none;
         -webkit-user-select: none;
@@ -356,7 +353,71 @@
         display: none !important;
       }
 
-      /* --- STYLE RPG CLASSIC PROFILE (RAPI & PRESISI) --- */
+      /* --- STYLE SPESIAL EASTER EGG MODAL --- */
+      .easter-egg-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(8, 12, 24, 0.85);
+        backdrop-filter: blur(8px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 99999;
+        padding: 20px;
+        animation: fadeInModal 0.3s ease;
+      }
+      @keyframes fadeInModal {
+        from {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      .easter-egg-box {
+        background: #1a2536;
+        border: 3px solid #f1c40f;
+        border-radius: 20px;
+        padding: 25px 20px;
+        width: 100%;
+        max-width: 420px;
+        text-align: center;
+        color: #fff;
+        box-shadow:
+          0 0 30px rgba(241, 196, 15, 0.4),
+          inset 0 0 15px rgba(0, 0, 0, 0.8);
+      }
+      .easter-egg-icon {
+        font-size: 50px;
+        margin-bottom: 10px;
+        filter: drop-shadow(0 0 10px #f1c40f);
+      }
+      .easter-egg-title {
+        color: #f1c40f;
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .easter-egg-desc {
+        font-size: 12px;
+        color: #ecf0f1;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        background: #111823;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid #34495e;
+        text-align: left;
+      }
+
+      /* --- STYLE RPG CLASSIC PROFILE --- */
       .rpg-card-container {
         background: #1a2536;
         border: 3px solid #f1c40f;
@@ -367,7 +428,6 @@
         box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.6);
         margin-top: 15px;
       }
-
       .rpg-top-section {
         display: flex;
         gap: 12px;
@@ -432,7 +492,6 @@
         font-size: 10px;
         font-weight: bold;
       }
-
       .rpg-bar-outer {
         width: 100%;
         background: #2c3e50;
@@ -730,7 +789,7 @@
         box-shadow: 0 10px 25px rgba(52, 152, 219, 0.4);
       }
 
-      /* --- CSS ANIMASI EASTER EGG KOIN EMAS (DIPERPANJANG JADI 5 DETIK) --- */
+      /* --- CSS ANIMASI EASTER EGG KOIN EMAS --- */
       @keyframes coinSpinSlow {
         0% {
           transform: scale(0.3) rotateY(0deg);
@@ -780,6 +839,28 @@
           <div id="progressBarFill" class="progress-bar-fill"></div>
         </div>
         <div id="loadingPercentText" class="loading-percent-game">0%</div>
+      </div>
+    </div>
+
+    <!-- KONTENER MODAL EASTER EGG SPESIAL -->
+    <div id="easterEggModal" class="easter-egg-modal hidden">
+      <div class="easter-egg-box">
+        <div id="eggIcon" class="easter-egg-icon">🌟</div>
+        <h3 id="eggTitle" class="easter-egg-title">JUDUL ACHIEVEMENT</h3>
+        <div id="eggMessage" class="easter-egg-desc">
+          Isi pesan easter egg...
+        </div>
+        <button
+          onclick="tutupEasterEggModal()"
+          style="
+            margin-top: 0;
+            background: #f1c40f;
+            color: #1a2536;
+            font-weight: 700;
+          "
+        >
+          Lanjutkan ⚔️
+        </button>
       </div>
     </div>
 
@@ -851,7 +932,6 @@
         >
           SISTEM MANAJEMEN KARAKTER & KEDISIPLINAN SISWA
         </p>
-
         <button onclick="bukaPortal('guru')">👨‍🏫 Portal Guru</button>
         <button class="btn-outline" onclick="bukaPortal('siswa')">
           👨‍🎓 Portal Siswa
@@ -893,7 +973,7 @@
             <p
               style="font-size: 11px; color: #666; margin: 0; font-weight: 500"
             >
-              Jelajahi aturan poin & tata tertibnya!
+              Jelajahi aturan poin & tata tertib sekolah!
             </p>
           </div>
           <span style="font-size: 16px; color: #3498db; margin-left: auto"
@@ -1012,7 +1092,6 @@
                 ></div>
               </div>
             </div>
-
             <div class="rpg-bar-row" style="margin-top: 4px">
               <div class="rpg-bar-meta">
                 <span style="color: #3498db">🛡️ SHIELD POINT (BONUS)</span>
@@ -1178,11 +1257,9 @@
               🔄 <span id="txtModeSiswa">Mode: Banyak Siswa</span>
             </span>
           </div>
-
           <select id="selectSingleSiswa" required>
             <option value="">-- Pilih Kelas Dulu --</option>
           </select>
-
           <div id="boxMultiSiswa" class="checkbox-container hidden">
             <span style="font-size: 11px; color: #888"
               >Pilih kelas dulu...</span
@@ -1196,7 +1273,6 @@
             <!-- Opsi Dimuat via JS -->
           </div>
         </div>
-
         <button type="submit" id="btnSubmit">Proses Simpan Data</button>
       </form>
     </div>
@@ -1309,7 +1385,6 @@
               </select>
             </div>
           </div>
-
           <div class="row-group">
             <div class="input-box">
               <label>TINDAKAN *</label>
@@ -1324,7 +1399,6 @@
               <input type="number" id="adminPoinValue" value="200" />
             </div>
           </div>
-
           <div class="input-box">
             <label>ALASAN / CATATAN SIDANG *</label>
             <textarea
@@ -1334,7 +1408,6 @@
               required
             ></textarea>
           </div>
-
           <button type="submit" class="btn-danger" style="margin-top: 5px">
             Eksekusi Keputusan Admin
           </button>
@@ -1355,7 +1428,6 @@
           <h4 style="font-size: 13px; color: #1e3c72; margin-bottom: 10px">
             🖨️ Opsi Cetak & Ekspor Rekapitulasi
           </h4>
-
           <div class="input-box">
             <label>KATEGORI CETAK LAPORAN</label>
             <select id="cetakKategori" onchange="handleCetakKategoriChange()">
@@ -1366,7 +1438,6 @@
               <option value="siswa">Berdasarkan Siswa Perorangan</option>
             </select>
           </div>
-
           <div id="boxCetakKelas" class="input-box hidden">
             <label>PILIH KELAS</label>
             <select id="cetakKelasSelect">
@@ -1375,7 +1446,6 @@
               <option value="12 SMK">12 SMK</option>
             </select>
           </div>
-
           <div id="boxCetakSiswa" class="input-box hidden">
             <label>CARI NAMA SISWA</label>
             <input
@@ -1389,7 +1459,6 @@
               <!-- Opsi dimuat via JS -->
             </select>
           </div>
-
           <button
             type="button"
             onclick="prosesCetakLaporanWithLoading()"
@@ -1639,6 +1708,19 @@
       let currentRole = "";
       let isMultiMode = false;
 
+      // FUNGSI EASTER EGG MODAL SPESIAL
+      function tampilkanEasterEggModal(icon, title, message) {
+        document.getElementById("eggIcon").innerText = icon;
+        document.getElementById("eggTitle").innerText = title;
+        document.getElementById("eggMessage").innerHTML = message;
+        document.getElementById("easterEggModal").classList.remove("hidden");
+      }
+
+      function tutupEasterEggModal() {
+        document.getElementById("easterEggModal").classList.add("hidden");
+        kembaliKeMenu();
+      }
+
       // FUNGSI PRELOADER DINAMIS YANG BARU
       function showGamePreloader(customTitle = "SYNCHRONIZING...", callback) {
         const preloader = document.getElementById("gamePreloader");
@@ -1651,7 +1733,6 @@
         fillEl.style.width = "0%";
         percentEl.innerText = "0%";
 
-        // Simulasi progress naik perlahan sampai 85%
         let progressInterval = setInterval(() => {
           if (currentPercent < 85) {
             currentPercent += 5;
@@ -1660,7 +1741,6 @@
           }
         }, 100);
 
-        // Fungsi penutup loading saat data sudah tiba
         const finishLoading = () => {
           clearInterval(progressInterval);
           fillEl.style.width = "100%";
@@ -1686,6 +1766,7 @@
 
       function bukaPortal(tipe) {
         document.getElementById("menuWrapper").classList.add("hidden");
+
         if (tipe === "guru") {
           document.getElementById("loginCard").classList.remove("hidden");
           document.getElementById("password").value = "";
@@ -1696,8 +1777,15 @@
           document.getElementById("hasilPoinSiswa").classList.add("hidden");
           document.getElementById("nisnSiswaInput").value = "";
         } else if (tipe === "quest") {
-          document.getElementById("questBoardCard").classList.remove("hidden");
-          renderQuestUI("prestasi");
+          showGamePreloader("LOADING QUEST BOARD...", (done) => {
+            setTimeout(() => {
+              document
+                .getElementById("questBoardCard")
+                .classList.remove("hidden");
+              renderQuestUI("prestasi");
+              done();
+            }, 1000);
+          });
         }
       }
 
@@ -1714,7 +1802,6 @@
         location.reload();
       }
 
-      // FUNGSI LOGIN DINAMIS KE DATABASE
       function login() {
         const usernameIn = document
           .getElementById("namaGuruInput")
@@ -1726,7 +1813,7 @@
           return;
         }
 
-        // --- EASTER EGG GURU ---
+        // --- EASTER EGG GURU DENGAN PRELOADER ---
         if (
           usernameIn.toLowerCase() === "akuguru" &&
           passIn === "smkwiraguna"
@@ -1734,11 +1821,18 @@
           document.getElementById("pesanEror").style.display = "none";
           document.getElementById("loginCard").classList.add("hidden");
 
-          alert(
-            '🌟 ACHIEVEMENT UNLOCKED: THE MENTOR\'S BLESSING\n\n"Terima kasih, Pahlawan Tanpa Tanda Jasa. Mengajar bukan sekadar mengisi gelas yang kosong, tapi menyalakan api pengetahuan di dalam diri setiap siswa.\n\nKesabaranmu hari ini adalah fondasi akhlak mereka esok hari. Tetaplah ikhlas membimbing SMK Wiraguna menuju generasi yang hebat! \nKami sayang kalian" ❤️',
-          );
-
-          kembaliKeMenu();
+          showGamePreloader("UNLOCKING MENTOR'S BLESSING...", (done) => {
+            setTimeout(() => {
+              done();
+              tampilkanEasterEggModal(
+                "🌟",
+                "ACHIEVEMENT UNLOCKED: THE MENTOR'S BLESSING",
+                "Terima kasih, Pahlawan Tanpa Tanda Jasa. Mengajar bukan sekadar mengisi gelas yang kosong, tapi menyalakan api pengetahuan di dalam diri setiap siswa.<br><br>Kesabaranmu hari ini adalah fondasi akhlak mereka esok hari. Tetaplah ikhlas membimbing SMK Wiraguna menuju generasi yang hebat! Kami sayang kalian ❤️",
+              );
+              document.getElementById("namaGuruInput").value = "";
+              document.getElementById("password").value = "";
+            }, 1000);
+          });
           return;
         }
         // -----------------------
@@ -1752,15 +1846,10 @@
         };
 
         showGamePreloader("VERIFYING CREDENTIALS...", (done) => {
-          fetch(scriptURL, {
-            method: "POST",
-            body: JSON.stringify(payload),
-          })
+          fetch(scriptURL, { method: "POST", body: JSON.stringify(payload) })
             .then((response) => response.json())
             .then((res) => {
-              // Selesaikan loading bar ke 100% dan tutup preloader
               done();
-
               if (res.status === "success") {
                 currentRole = res.user.role;
                 document.getElementById("pesanEror").style.display = "none";
@@ -1789,14 +1878,13 @@
               }
             })
             .catch((error) => {
-              done(); // Tetap tutup preloader meski error
+              done();
               console.error("Error:", error);
               document.getElementById("pesanEror").style.display = "block";
             });
         });
       }
 
-      // PENYESUAIAN FUNGSI LAIN AGAR PRELOADER TIDAK ERROR (SIMULASI DELAY 2 DETIK)
       function cariPoinSiswaWithLoading() {
         const nisnInput = document
           .getElementById("nisnSiswaInput")
@@ -1811,8 +1899,10 @@
           showGamePreloader("UNLOCKING SECRET MISSION...", (done) => {
             setTimeout(() => {
               done();
-              alert(
-                '🛡️ MISSION QUEST: BECOMING THE CHOSEN ONE\n\n"Untuk kamu, Sang Penentu Masa Depan! Gurumu adalah mentor terbaik yang membantumu tumbuh setiap hari. Jangan ciderai potensimu dengan sikap bandel atau malas belajar. Mengajar dan belajar itu sama-sama butuh energi besar; jadilah alasan gurumu tersenyum bangga hari ini. Kejarlah impianmu, patuhi nasehatnya, dan buktikan murid SMK Wiraguna adalah generasi berilmu, kompeten, dan berakhlak mulia!" 📚⚔️🔥',
+              tampilkanEasterEggModal(
+                "🛡️",
+                "MISSION QUEST: BECOMING THE CHOSEN ONE",
+                "Untuk kamu, Sang Penentu Masa Depan! Gurumu adalah mentor terbaik yang membantumu tumbuh setiap hari. Jangan ciderai potensimu dengan sikap bandel atau malas belajar.<br><br>Mengajar dan belajar itu sama-sama butuh energi besar; jadilah alasan gurumu tersenyum bangga hari ini. Kejarlah impianmu, patuhi nasehatnya, dan buktikan murid SMK Wiraguna adalah generasi berilmu, kompeten, dan berakhlak mulia! 📚⚔️🔥",
               );
               document.getElementById("nisnSiswaInput").value = "";
             }, 1000);
@@ -1846,7 +1936,6 @@
 
             if (siswa) {
               hasilBox.classList.remove("hidden");
-
               let displayGelar = "";
               const currentHour = new Date().getHours();
 
@@ -1926,39 +2015,33 @@
                 banner.style.borderLeftColor = "#f1c40f";
               }
 
-              // --- UPDATE STATISTIK PRESTASI & PELANGGARAN ---
-              // Nanti saat pakai database asli, variabel ini diambil dari hasil query ke sheet
               const totalKaliPrestasi = siswa.shield > 0 ? 1 : 0;
               const totalPoinPrestasi = siswa.shield > 0 ? siswa.shield : 0;
-
               const totalKaliPelanggaran = siswa.hp < 200 ? 1 : 0;
               const totalPoinPelanggaran = siswa.hp < 200 ? 200 - siswa.hp : 0;
 
-              // Mengisi elemen baru yang kita buat tadi
               document.getElementById("txtCountPrestasi").innerText =
                 `${totalKaliPrestasi} Kali`;
               document.getElementById("txtPoinPrestasi").innerText =
                 `(+${totalPoinPrestasi} Poin)`;
-
               document.getElementById("txtCountPelanggaran").innerText =
                 `${totalKaliPelanggaran} Kali`;
               document.getElementById("txtPoinPelanggaran").innerText =
                 `(-${totalPoinPelanggaran} Poin)`;
 
-              // Update bagian Riwayat Kejadian
               document.getElementById("listRiwayatSiswa").innerHTML = `
-                            <div class="history-item ${siswa.shield > 0 ? "shield" : "minus"}" style="background: #111823; color: #fff;">
-                                <strong>${siswa.shield > 0 ? "🛡️ Catatan Prestasi" : "⚠️ Catatan Pelanggaran"}</strong><br>
-                                <span style="color: #ccc;">${siswa.shield > 0 ? "Apresiasi kedisiplinan" : "Pengurangan poin tatib"}</span><br>
-                                <small style="color: #888;">Agustus 2026</small>
-                            </div>
-                        `;
+                <div class="history-item ${siswa.shield > 0 ? "shield" : "minus"}" style="background: #111823; color: #fff;">
+                  <strong>${siswa.shield > 0 ? "🛡️ Catatan Prestasi" : "⚠️ Catatan Pelanggaran"}</strong><br>
+                  <span style="color: #ccc;">${siswa.shield > 0 ? "Apresiasi kedisiplinan" : "Pengurangan poin tatib"}</span><br>
+                  <small style="color: #888;">Agustus 2026</small>
+                </div>
+              `;
             } else {
               hasilBox.classList.add("hidden");
               alert("⚠️ Nomor NIS / NISN tidak ditemukan di database!");
             }
-            done(); // Tutup preloader
-          }, 2000); // Simulasi tunggu 2 detik
+            done();
+          }, 2000);
         });
       }
 
@@ -2026,9 +2109,9 @@
           const div = document.createElement("label");
           div.className = "option-item";
           div.innerHTML = `
-                    <input type="radio" name="opsiPoin" value="${item.teks}" data-poin="${item.poin}" required>
-                    <span><strong>${letter}.</strong> ${item.teks} (${kat === "Prestasi" ? "+" : "-"}${item.poin} Poin)</span>
-                `;
+            <input type="radio" name="opsiPoin" value="${item.teks}" data-poin="${item.poin}" required>
+            <span><strong>${letter}.</strong> ${item.teks} (${kat === "Prestasi" ? "+" : "-"}${item.poin} Poin)</span>
+          `;
           container.appendChild(div);
         });
       }
@@ -2053,6 +2136,7 @@
           opt.value = s.nama;
           opt.innerText = s.nama;
           singleSelect.appendChild(opt);
+
           const lbl = document.createElement("label");
           lbl.className = "checkbox-item";
           lbl.innerHTML = `<input type="checkbox" name="multiSiswa" value="${s.nama}"> ${s.nama}`;
@@ -2114,12 +2198,12 @@
             : `-${selectedRadio.getAttribute("data-poin")} Poin Pelanggaran`;
 
         document.getElementById("modalDetailContent").innerHTML = `
-                <strong>Target Siswa (${daftarSiswaDipilih.length}):</strong><br> ${daftarSiswaDipilih.join(", ")}<br><br>
-                <strong>Dampak Poin:</strong> ${efekHp}<br>
-                <strong>Kejadian:</strong> ${selectedRadio.value}<br>
-                <strong>Waktu & Tempat:</strong> ${document.getElementById("hari").value}, ${document.getElementById("jam").value} WIB @ ${document.getElementById("tempat").value}<br>
-                <strong>Guru Pelapor:</strong> ${document.getElementById("txtNamaGuru").innerText} (${currentRole})
-            `;
+          <strong>Target Siswa (${daftarSiswaDipilih.length}):</strong><br> ${daftarSiswaDipilih.join(", ")}<br><br>
+          <strong>Dampak Poin:</strong> ${efekHp}<br>
+          <strong>Kejadian:</strong> ${selectedRadio.value}<br>
+          <strong>Waktu & Tempat:</strong> ${document.getElementById("hari").value}, ${document.getElementById("jam").value} WIB @ ${document.getElementById("tempat").value}<br>
+          <strong>Guru Pelapor:</strong> ${document.getElementById("txtNamaGuru").innerText} (${currentRole})
+        `;
         document.getElementById("modalKonfirmasi").classList.remove("hidden");
       }
 
@@ -2136,8 +2220,8 @@
             );
             document.getElementById("formEntry").reset();
             initFormEntry();
-            done(); // Tutup preloader
-          }, 2000); // Simulasi tunggu 2 detik
+            done();
+          }, 2000);
         });
       }
 
@@ -2152,9 +2236,11 @@
         tabRekap.classList.add("hidden");
         tabKontrol.classList.add("hidden");
         tabCetak.classList.add("hidden");
+
         btnRekap.className = "btn-outline";
         btnKontrol.className = "btn-outline";
         btnCetak.className = "btn-outline";
+
         btnRekap.style.background = "transparent";
         btnKontrol.style.background = "transparent";
         btnCetak.style.background = "transparent";
@@ -2166,7 +2252,7 @@
               btnRekap.className = "";
               btnRekap.style.background = "#1e3c72";
               renderTabelRekap();
-              done(); // Tutup preloader
+              done();
             }, 2000);
           });
         } else if (tabName === "kontrol") {
@@ -2210,11 +2296,11 @@
 
           const tr = document.createElement("tr");
           tr.innerHTML = `
-                    <td><strong>${s.nama}</strong></td>
-                    <td>${s.kelas}</td>
-                    <td>${s.hp} HP ${s.shield > 0 ? `<br><span style="color:#3498db; font-size:10px;">+${s.shield}</span>` : ""}</td>
-                    <td><span style="font-size: 9px; padding: 3px 6px; background: ${badgeColor}; color: #fff; border-radius: 4px; font-weight: bold;">${statusBadge}</span></td>
-                `;
+            <td><strong>${s.nama}</strong></td>
+            <td>${s.kelas}</td>
+            <td>${s.hp} HP ${s.shield > 0 ? `<br><span style="color:#3498db; font-size:10px;">+${s.shield}</span>` : ""}</td>
+            <td><span style="font-size: 9px; padding: 3px 6px; background: ${badgeColor}; color: #fff; border-radius: 4px; font-weight: bold;">${statusBadge}</span></td>
+          `;
           tbody.appendChild(tr);
         });
       }
@@ -2249,7 +2335,7 @@
             document.getElementById("formAdminAction").reset();
             document.getElementById("adminSiswaSelect").innerHTML =
               `<option value="">-- Pilih Kelas Dulu --</option>`;
-            done(); // Tutup preloader
+            done();
           }, 2000);
         });
       }
@@ -2258,8 +2344,10 @@
         const kat = document.getElementById("cetakKategori").value;
         const boxKelas = document.getElementById("boxCetakKelas");
         const boxSiswa = document.getElementById("boxCetakSiswa");
+
         boxKelas.classList.add("hidden");
         boxSiswa.classList.add("hidden");
+
         if (kat === "kelas") boxKelas.classList.remove("hidden");
         if (kat === "siswa") boxSiswa.classList.remove("hidden");
       }
@@ -2313,7 +2401,7 @@
                 `🖨️ Dokumen Laporan Detail Siswa (NISN: ${selectedNisn}) berhasil diunduh!`,
               );
             }
-            done(); // Tutup preloader
+            done();
           }, 2000);
         });
       }
@@ -2341,33 +2429,33 @@
 
         const data = questDatabase[tipe];
         let html = "";
+
         data.forEach((kategori, idx) => {
           html += `
-                <div class="accordion">
-                    <div class="accordion-header" onclick="toggleAccordion(this)">
-                        <span>${tipe === "prestasi" ? "⭐" : "⚠️"} Kategori ${kategori.level}</span>
-                        <span>▼</span>
-                    </div>
-                    <div class="accordion-body ${idx === 0 ? "active" : ""}">
-                `;
+            <div class="accordion">
+              <div class="accordion-header" onclick="toggleAccordion(this)">
+                <span>${tipe === "prestasi" ? "⭐" : "⚠️"} Kategori ${kategori.level}</span>
+                <span>▼</span>
+              </div>
+              <div class="accordion-body ${idx === 0 ? "active" : ""}">
+          `;
           kategori.items.forEach((item) => {
             const badgeClass =
               tipe === "prestasi" ? "badge-shield" : "badge-hp";
             html += `
-                        <div class="q-item">
-                            <span style="flex-grow:1; padding-right:10px;">${item.t}</span>
-                            <span class="${badgeClass}">${item.p}</span>
-                        </div>
-                    `;
+                <div class="q-item">
+                  <span style="flex-grow:1; padding-right:10px;">${item.t}</span>
+                  <span class="${badgeClass}">${item.p}</span>
+                </div>
+            `;
           });
           html += `</div></div>`;
         });
 
-        // clue ditaruh di sini (di luar loop data.forEach)
         html += `
-            <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #cbd5e1; margin-bottom: -5px;">
-                <span style="font-size: 9px; color: #94a3b8; font-style: italic;">kamu mungkin bisa menemukan sesuatu yang menarik diweb ini!</span>
-            </div>
+          <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #cbd5e1; margin-bottom: -4px;">
+            <span style="font-size: 9px; color: #94a3b8; font-style: italic;">kamu mungkin bisa menemukan sesuatu yang menarik di web ini!</span>
+          </div>
         `;
 
         container.innerHTML = html;
@@ -2416,7 +2504,6 @@
         const modalCoin = document.getElementById("secretCoinModal");
         modalCoin.classList.remove("hidden");
 
-        // Otomatis hilangkan modal setelah animasi selesai (5 detik)
         setTimeout(() => {
           modalCoin.classList.add("hidden");
         }, 5000);
