@@ -7,6 +7,7 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>Tatib SMK Wiraguna 🛡️</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Menghubungkan Web App Manifest -->
     <link rel="manifest" href="manifest.json" />
     <link rel="apple-touch-icon" href="logo-512.png" />
@@ -76,7 +77,6 @@
         animation: floatUp 12s linear infinite;
         bottom: -20px;
       }
-
       .particle:nth-child(1) {
         left: 10%;
         width: 5px;
@@ -151,7 +151,6 @@
         display: flex;
         flex-direction: column;
       }
-
       .text-center {
         text-align: center;
       }
@@ -163,13 +162,11 @@
         object-fit: contain;
         filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
         cursor: pointer;
-        /* Tambahan untuk mematikan menu download/save image di HP */
         -webkit-touch-callout: none;
         -webkit-user-select: none;
         user-select: none;
         pointer-events: auto;
       }
-
       h2 {
         color: #1e3c72;
         margin-bottom: 3px;
@@ -232,7 +229,6 @@
         margin-bottom: 4px;
         text-transform: uppercase;
       }
-
       input,
       select,
       textarea {
@@ -245,8 +241,7 @@
         background: #fff;
         transition: 0.3s;
       }
-      input[type="password"],
-      input[type="text"].pwd-visible {
+      input[type="password"] {
         padding-right: 40px;
       }
       input:focus,
@@ -291,13 +286,15 @@
         border-radius: 12px;
         cursor: pointer;
         transition: 0.2s;
-        font-size: 12px;
+        font-size: 11px;
         color: #444;
+        line-height: 1.4;
       }
       .option-item input[type="radio"] {
         width: auto;
         margin-right: 10px;
         accent-color: #1e3c72;
+        flex-shrink: 0;
       }
       .option-item:hover {
         border-color: #1e3c72;
@@ -342,6 +339,7 @@
         background: #e74c3c;
         box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
       }
+
       #pesanEror {
         color: #e74c3c;
         font-size: 13px;
@@ -353,7 +351,7 @@
         display: none !important;
       }
 
-      /* --- STYLE SPESIAL EASTER EGG MODAL --- */
+      /* --- STYLE EASTER EGG MODAL --- */
       .easter-egg-modal {
         position: fixed;
         top: 0;
@@ -504,7 +502,9 @@
       .rpg-hp-fill {
         height: 100%;
         background: #2ecc71;
-        transition: width 0.4s;
+        transition:
+          width 0.4s,
+          background-color 0.4s;
       }
       .rpg-shield-fill {
         height: 100%;
@@ -519,6 +519,7 @@
         border-radius: 0 6px 6px 0;
         font-size: 11px;
         margin-bottom: 10px;
+        line-height: 1.4;
       }
       .rpg-status-banner strong {
         color: #f1c40f;
@@ -537,42 +538,10 @@
       .rpg-stat-item {
         background: #111823;
         border: 1px solid #34495e;
-        padding: 6px;
+        padding: 8px;
         border-radius: 6px;
         text-align: center;
         font-size: 10px;
-      }
-
-      .history-title {
-        font-size: 11px;
-        color: #f1c40f;
-        margin-bottom: 8px;
-        font-weight: 700;
-        text-transform: uppercase;
-      }
-      .history-list {
-        max-height: 120px;
-        overflow-y: auto;
-      }
-      .history-item {
-        background: #fff;
-        border-left: 3px solid #1e3c72;
-        padding: 8px 10px;
-        margin-bottom: 6px;
-        border-radius: 0 8px 8px 0;
-        font-size: 11px;
-        border-top: 1px solid #eee;
-        border-right: 1px solid #eee;
-        border-bottom: 1px solid #eee;
-      }
-      .history-item.plus {
-        border-left-color: #2ecc71;
-      }
-      .history-item.minus {
-        border-left-color: #e74c3c;
-      }
-      .history-item.shield {
-        border-left-color: #3498db;
       }
 
       /* TABEL REKAPITULASI ADMIN */
@@ -699,7 +668,7 @@
         color: #1e3c72;
       }
       .modal-detail {
-        font-size: 13px;
+        font-size: 12px;
         color: #555;
         line-height: 1.6;
         margin-bottom: 15px;
@@ -727,7 +696,7 @@
       }
       .accordion-header {
         padding: 10px 12px;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 700;
         background: #f8f9fa;
         color: #1e3c72;
@@ -755,7 +724,7 @@
         align-items: center;
         padding: 8px 12px;
         border-top: 1px solid #eee;
-        font-size: 11px;
+        font-size: 10.5px;
       }
       .q-item:nth-child(even) {
         background: #fafafa;
@@ -768,6 +737,7 @@
         font-weight: bold;
         font-size: 10px;
         white-space: nowrap;
+        flex-shrink: 0;
       }
       .badge-shield {
         background: #3498db;
@@ -777,6 +747,7 @@
         font-weight: bold;
         font-size: 10px;
         white-space: nowrap;
+        flex-shrink: 0;
       }
 
       .quest-card-btn {
@@ -789,7 +760,7 @@
         box-shadow: 0 10px 25px rgba(52, 152, 219, 0.4);
       }
 
-      /* --- CSS ANIMASI EASTER EGG KOIN EMAS --- */
+      /* CSS ANIMASI EASTER EGG KOIN EMAS */
       @keyframes coinSpinSlow {
         0% {
           transform: scale(0.3) rotateY(0deg);
@@ -829,7 +800,7 @@
     </style>
   </head>
   <body>
-    <!-- FULL-SCREEN GAME PROGRESS BAR PRELOADER -->
+    <!-- PRELOADER -->
     <div id="gamePreloader" class="game-preloader hidden">
       <div class="loading-box-game">
         <div id="loadingTitleText" class="loading-title-game">
@@ -842,7 +813,7 @@
       </div>
     </div>
 
-    <!-- KONTENER MODAL EASTER EGG SPESIAL -->
+    <!-- EASTER EGG MODAL SPESIAL -->
     <div id="easterEggModal" class="easter-egg-modal hidden">
       <div class="easter-egg-box">
         <div id="eggIcon" class="easter-egg-icon">🌟</div>
@@ -890,12 +861,12 @@
     </div>
 
     <div class="particles-container">
-      <span class="particle"></span><span class="particle"></span
-      ><span class="particle"></span> <span class="particle"></span
-      ><span class="particle"></span><span class="particle"></span>
+      <span class="particle"></span><span class="particle"></span>
+      <span class="particle"></span> <span class="particle"></span>
+      <span class="particle"></span><span class="particle"></span>
     </div>
 
-    <!-- WRAPPER UNTUK MENU UTAMA -->
+    <!-- MENU UTAMA -->
     <div
       id="menuWrapper"
       style="
@@ -968,12 +939,12 @@
                 font-weight: 700;
               "
             >
-              Papan Quest
+              Papan Quest / Tatib Lengkap
             </h3>
             <p
               style="font-size: 11px; color: #666; margin: 0; font-weight: 500"
             >
-              Jelajahi aturan poin & tata tertib sekolah!
+              Panduan resmi poin kedisiplinan & prestasi sekolah.
             </p>
           </div>
           <span style="font-size: 16px; color: #3498db; margin-left: auto"
@@ -983,7 +954,7 @@
       </div>
     </div>
 
-    <!-- HALAMAN LOGIN GURU / SUPER ADMIN -->
+    <!-- HALAMAN LOGIN GURU -->
     <div id="loginCard" class="card text-center hidden">
       <img
         src="logo.png"
@@ -1029,7 +1000,7 @@
       <p id="pesanEror">Nama atau Password salah!</p>
     </div>
 
-    <!-- PORTAL CEK SISWA (RPG CLASSIC STYLE - RAPI & PRESISI) -->
+    <!-- PORTAL SISWA -->
     <div id="siswaCard" class="card hidden">
       <div class="header-app">
         <div class="user-info">
@@ -1045,7 +1016,7 @@
           type="text"
           id="nisnSiswaInput"
           inputmode="numeric"
-          placeholder="Ketik NISN (Coba: 1001, 1003 [Minus])"
+          placeholder="Ketik NISN Kamu"
           required
           autocomplete="off"
         />
@@ -1057,17 +1028,20 @@
       <!-- KONTENER HASIL RPG PROFILE -->
       <div id="hasilPoinSiswa" class="hidden">
         <div class="rpg-card-container">
-          <!-- BAGIAN ATAS: AVATAR & NAMA / KELAS -->
           <div class="rpg-top-section">
             <div class="rpg-avatar-box" style="padding: 0; overflow: hidden">
               <img
                 src="assets/foto_siswa/avatar.png"
-                alt="Avatar Siswa"
+                alt="Avatar"
                 style="
                   width: 100%;
                   height: 100%;
                   object-fit: cover;
                   border-radius: 4px;
+                "
+                onerror="
+                  this.src =
+                    'https://cdn-icons-png.flaticon.com/512/1490/149071.png'
                 "
               />
             </div>
@@ -1077,7 +1051,6 @@
             </div>
           </div>
 
-          <!-- BAGIAN TENGAH: BAR HP & SHIELD DIBAWAH (RAPI & FULL WIDTH) -->
           <div class="rpg-bar-group">
             <div class="rpg-bar-row">
               <div class="rpg-bar-meta">
@@ -1095,7 +1068,7 @@
             <div class="rpg-bar-row" style="margin-top: 4px">
               <div class="rpg-bar-meta">
                 <span style="color: #3498db">🛡️ SHIELD POINT (BONUS)</span>
-                <span id="txtShieldPercent" style="color: #3498db">0/200</span>
+                <span id="txtShieldPercent" style="color: #3498db">0 Pts</span>
               </div>
               <div class="rpg-bar-outer">
                 <div
@@ -1107,48 +1080,93 @@
             </div>
           </div>
 
-          <!-- BANNER KONDISI & STATUS PENANGANAN -->
+          <!-- BANNER STATUS PEMBINAAN HUKUM -->
           <div id="rpgStatusBanner" class="rpg-status-banner">
-            <strong id="txtStatusKondisi">KONDISI: NORMAL</strong>
+            <strong id="txtStatusKondisi">STATUS: NORMAL</strong>
             <span id="txtStatusPenanganan" style="color: #ecf0f1"
-              >Status: Tidak ada penanganan khusus.</span
+              >Tidak ada catatan pelanggaran.</span
             >
           </div>
 
-          <!-- STATISTIK RINGKAS DENGAN POIN -->
           <div class="rpg-stats-mini">
             <div class="rpg-stat-item">
               <span
-                style="color: #2ecc71; display: block; font-weight: bold"
+                style="
+                  color: #2ecc71;
+                  display: block;
+                  font-weight: bold;
+                  font-size: 14px;
+                "
                 id="txtCountPrestasi"
-                >0 Kali</span
+                >0 Pts</span
               >
               <span
-                style="color: #f1c40f; display: block; font-size: 10px"
-                id="txtPoinPrestasi"
-                >(+0 Poin)</span
+                style="
+                  color: #95a5a6;
+                  display: block;
+                  font-size: 9px;
+                  margin-top: 2px;
+                "
+                >TOTAL PRESTASI (Murni)</span
               >
-              <span style="color: #95a5a6">Total Prestasi</span>
             </div>
             <div class="rpg-stat-item">
               <span
-                style="color: #e74c3c; display: block; font-weight: bold"
+                style="
+                  color: #e74c3c;
+                  display: block;
+                  font-weight: bold;
+                  font-size: 14px;
+                "
                 id="txtCountPelanggaran"
-                >0 Kali</span
+                >0 Pts</span
               >
               <span
-                style="color: #e74c3c; display: block; font-size: 10px"
-                id="txtPoinPelanggaran"
-                >(-0 Poin)</span
+                style="
+                  color: #95a5a6;
+                  display: block;
+                  font-size: 9px;
+                  margin-top: 2px;
+                "
+                >TOTAL PELANGGARAN (Murni)</span
               >
-              <span style="color: #95a5a6">Total Pelanggaran</span>
             </div>
           </div>
 
-          <!-- RIWAYAT KEJADIAN -->
-          <div class="history-title">Riwayat Catatan Kejadian:</div>
-          <div id="listRiwayatSiswa" class="history-list">
-            <!-- Log Dimuat di Sini -->
+          <!-- RIWAYAT KEJADIAN & POIN -->
+          <div
+            class="history-container"
+            style="
+              margin-top: 15px;
+              background: #111823;
+              border: 1px solid #34495e;
+              border-radius: 8px;
+              padding: 10px;
+            "
+          >
+            <div
+              class="history-title"
+              style="
+                font-size: 11px;
+                color: #f1c40f;
+                margin-bottom: 8px;
+                font-weight: 700;
+                text-transform: uppercase;
+              "
+            >
+              📜 Riwayat Kejadian & Poin:
+            </div>
+            <div
+              id="historyListSiswa"
+              class="history-list"
+              style="
+                max-height: 140px;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+              "
+            ></div>
           </div>
         </div>
       </div>
@@ -1217,12 +1235,7 @@
 
         <div id="boxSubKategori" class="input-box hidden">
           <label>TINGKAT PELANGGARAN *</label>
-          <select id="subKategori" onchange="renderOpsiPoin()">
-            <option value="">-- Pilih Tingkat --</option>
-            <option value="Ringan">Pelanggaran Ringan</option>
-            <option value="Sedang">Pelanggaran Sedang</option>
-            <option value="Berat">Pelanggaran Berat</option>
-          </select>
+          <select id="subKategori" onchange="renderOpsiPoin()"></select>
         </div>
 
         <div class="input-box">
@@ -1257,10 +1270,10 @@
               🔄 <span id="txtModeSiswa">Mode: Banyak Siswa</span>
             </span>
           </div>
-          <select id="selectSingleSiswa" required>
+          <select id="selectSingleSiswa" required class="hidden">
             <option value="">-- Pilih Kelas Dulu --</option>
           </select>
-          <div id="boxMultiSiswa" class="checkbox-container hidden">
+          <div id="boxMultiSiswa" class="checkbox-container">
             <span style="font-size: 11px; color: #888"
               >Pilih kelas dulu...</span
             >
@@ -1269,9 +1282,7 @@
 
         <div class="input-box" style="margin-top: 10px">
           <label id="lblDetailOpsi">DETAIL DAMPAK POIN *</label>
-          <div id="containerOpsi" class="options-container">
-            <!-- Opsi Dimuat via JS -->
-          </div>
+          <div id="containerOpsi" class="options-container"></div>
         </div>
         <button type="submit" id="btnSubmit">Proses Simpan Data</button>
       </form>
@@ -1307,7 +1318,7 @@
           onclick="switchAdminTab('cetak')"
           class="btn-outline"
         >
-          🖨️ Cetak Laporan
+          🖨️ Cetak Lap.
         </button>
       </div>
 
@@ -1335,6 +1346,22 @@
             <option value="12 SMK">12 SMK</option>
           </select>
         </div>
+
+        <div
+          style="
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #e2e8f0;
+          "
+        >
+          <canvas
+            id="statistikChart"
+            style="max-height: 160px; width: 100%"
+          ></canvas>
+        </div>
+
         <div
           class="rekap-container"
           style="max-height: 380px; overflow-y: auto"
@@ -1344,13 +1371,11 @@
               <tr>
                 <th>Nama Siswa</th>
                 <th>Kelas</th>
-                <th>HP / Shield</th>
-                <th>Status Penilaian</th>
+                <th>HP/Shield</th>
+                <th>Total Pelanggaran</th>
               </tr>
             </thead>
-            <tbody id="tabelRekapBody">
-              <!-- Data dimuat via JS -->
-            </tbody>
+            <tbody id="tabelRekapBody"></tbody>
           </table>
         </div>
       </div>
@@ -1387,30 +1412,41 @@
           </div>
           <div class="row-group">
             <div class="input-box">
-              <label>TINDAKAN *</label>
+              <label>TINDAKAN SAKTI *</label>
               <select id="adminActionType" required>
-                <option value="RESET_FULL">🔄 Reset Penuh (200 HP)</option>
-                <option value="ADD_CUSTOM">➕ Tambah Poin HP</option>
-                <option value="SUBTRACT_CUSTOM">➖ Potong Poin HP</option>
+                <option value="RESET_FULL">
+                  🔄 RESET PENUH (Pemutihan 100%)
+                </option>
+                <option value="ADD_CUSTOM">➕ Tambah Poin HP Manual</option>
+                <option value="SUBTRACT_CUSTOM">
+                  ➖ Potong Poin HP Manual
+                </option>
               </select>
             </div>
             <div class="input-box">
-              <label>JUMLAH POIN</label>
-              <input type="number" id="adminPoinValue" value="200" />
+              <label>CATATAN SIDANG *</label>
+              <input
+                type="text"
+                id="adminNotes"
+                placeholder="Contoh: Pemutihan akhir semester"
+                required
+              />
             </div>
-          </div>
-          <div class="input-box">
-            <label>ALASAN / CATATAN SIDANG *</label>
-            <textarea
-              id="adminNotes"
-              rows="2"
-              placeholder="Contoh: Selesai pembinaan BK"
-              required
-            ></textarea>
           </div>
           <button type="submit" class="btn-danger" style="margin-top: 5px">
             Eksekusi Keputusan Admin
           </button>
+          <p
+            style="
+              font-size: 10px;
+              color: #888;
+              text-align: center;
+              margin-top: 10px;
+            "
+          >
+            *Tindakan Reset Penuh akan mengembalikan HP menjadi 200, Shield 0,
+            dan menghapus seluruh catatan.
+          </p>
         </form>
       </div>
 
@@ -1426,14 +1462,12 @@
           "
         >
           <h4 style="font-size: 13px; color: #1e3c72; margin-bottom: 10px">
-            🖨️ Opsi Cetak & Ekspor Rekapitulasi
+            🖨️ Ekspor Laporan Kedisiplinan
           </h4>
           <div class="input-box">
-            <label>KATEGORI CETAK LAPORAN</label>
+            <label>KATEGORI CETAK</label>
             <select id="cetakKategori" onchange="handleCetakKategoriChange()">
-              <option value="semua">
-                Semua Siswa (Rekap Keseluruhan Sekolah)
-              </option>
+              <option value="semua">Semua Siswa (Rekap Keseluruhan)</option>
               <option value="kelas">Berdasarkan Kelas Tertentu</option>
               <option value="siswa">Berdasarkan Siswa Perorangan</option>
             </select>
@@ -1455,16 +1489,18 @@
               oninput="filterPilihanSiswaCetak()"
               style="margin-bottom: 6px"
             />
-            <select id="cetakSiswaSelect" size="3" style="height: 80px">
-              <!-- Opsi dimuat via JS -->
-            </select>
+            <select
+              id="cetakSiswaSelect"
+              size="3"
+              style="height: 80px"
+            ></select>
           </div>
           <button
             type="button"
             onclick="prosesCetakLaporanWithLoading()"
             style="margin-top: 10px"
           >
-            Download / Cetak Dokumen
+            Download Dokumen Laporan
           </button>
         </div>
       </div>
@@ -1478,8 +1514,8 @@
     >
       <div class="header-app" style="margin-bottom: 5px">
         <div class="user-info">
-          <h3>📜 Papan Quest / Tatib</h3>
-          <p>Panduan Lengkap Prestasi & Pelanggaran</p>
+          <h3>📜 Papan Quest / Tatib Lengkap</h3>
+          <p>Sistem Poin Prestasi & Pelanggaran</p>
         </div>
         <button class="btn-logout" onclick="kembaliKeMenu()">Tutup</button>
       </div>
@@ -1490,7 +1526,7 @@
           onclick="renderQuestUI('prestasi')"
           style="background: #3498db; color: white"
         >
-          🛡️ Prestasi (+HP/Shield)
+          🛡️ Prestasi (+Poin)
         </button>
         <button
           id="tabQuestPelanggaran"
@@ -1498,7 +1534,7 @@
           class="btn-outline"
           style="color: #e74c3c; border-color: #e74c3c"
         >
-          ⚠️ Pelanggaran (-HP)
+          ⚠️ Pelanggaran (-Poin)
         </button>
       </div>
 
@@ -1511,18 +1547,14 @@
           padding-right: 5px;
           margin-top: 5px;
         "
-      >
-        <!-- Konten Tatib Dimuat via JS -->
-      </div>
+      ></div>
     </div>
 
     <!-- MODAL KONFIRMASI -->
     <div id="modalKonfirmasi" class="modal-overlay hidden">
       <div class="modal-box">
         <h4>📌 Konfirmasi Input Poin</h4>
-        <div id="modalDetailContent" class="modal-detail">
-          <!-- Detail Ringkasan Dimuat via JS -->
-        </div>
+        <div id="modalDetailContent" class="modal-detail"></div>
         <button onclick="eksekusiSimpanWithLoading()">Ya, Simpan Data</button>
         <button
           type="button"
@@ -1535,194 +1567,285 @@
       </div>
     </div>
 
-    <!-- SCRIPT UTAMA -->
+    <!-- JAVASCRIPT UTAMA -->
     <script>
-      // --- EASTER EGG: SECRET CONSOLE LOG ---
       console.log(
-        "%cHalo, Player! 🎮 Selamat datang di balik layar sistem Tatib SMK Wiraguna Limbangan. Tetaplah jadi siswa teladan dan jangan coba-coba cheat database ya! - Ahmad Qabil",
-        "color: #f1c40f; font-size: 14px; font-weight: bold; background: #1e3c72; padding: 10px; border-radius: 5px;",
+        "%cTatib SMK Wiraguna - Logic V3 Powered by System",
+        "color: #f1c40f; font-weight: bold; background: #1e3c72; padding: 10px; border-radius: 5px;",
       );
 
-      const pageLoadTime = Date.now(); // Patokan waktu untuk Speedrunner
+      const SCRIPT_URL =
+        "https://script.google.com/macros/s/AKfycbxqfVUxa7o_4CmYN4AB8shVK1Im-KZcgs4csQqp9LUh8IsvcP_KBepsGnQa9b70HIdl/exec";
 
+      const pageLoadTime = Date.now();
+
+      let currentRole = "";
+      let isMultiMode = true;
+
+      // DATA GURU LENGKAP
       const daftarGuru = [
-        { nama: "Budi Santoso", pass: "wiraguna123", role: "Guru Mapel" },
-        { nama: "Siti Rahma", pass: "wiraguna123", role: "Wali Kelas" },
-        { nama: "Ahmad Jaelani", pass: "wiraguna123", role: "Kesiswaan" },
-        { nama: "ahmad qabil", pass: "ahmadqabil123", role: "Super Admin" },
+        {
+          nama: "Neneng Teti Cahyani",
+          usernama: "nenengcahyani",
+          pass: "wiraguna123",
+          role: "Kesiswaan",
+        },
+        {
+          nama: "ADE YUNIATI",
+          usernama: "adeyuniati",
+          pass: "wiraguna124",
+          role: "Wali Kelas",
+        },
+        {
+          nama: "Aulia Rahmi Sanfitriani",
+          usernama: "auliarahmi",
+          pass: "wiraguna125",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Dhillah Karina",
+          usernama: "dhillahkarina",
+          pass: "wiraguna126",
+          role: "Kesiswaan",
+        },
+        {
+          nama: "Dian Asri Paturrohmah",
+          usernama: "dianasri",
+          pass: "wiraguna127",
+          role: "Wali Kelas",
+        },
+        {
+          nama: "Dian Herdiana",
+          usernama: "dianherdiana",
+          pass: "wiraguna128",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Eneng Resti Kulsum",
+          usernama: "restikulsum",
+          pass: "wiraguna129",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Iwan Setiawan",
+          usernama: "iwansetiawan",
+          pass: "wiraguna130",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Livia Amalia",
+          usernama: "liviaamalia",
+          pass: "wiraguna131",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Rinrin Suryanti",
+          usernama: "rinrinsuryanti",
+          pass: "wiraguna132",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Silma Salsabila",
+          usernama: "silmasalsabila",
+          pass: "wiraguna133",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Tanjung Lis Nurdian",
+          usernama: "tanjunglisnurdian",
+          pass: "wiraguna134",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Widi Triandiani",
+          usernama: "widitriandiani",
+          pass: "wiraguna135",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Wini Asiyah Nurwalifah",
+          usernama: "winiasiyah",
+          pass: "wiraguna136",
+          role: "Wali Kelas",
+        },
+        {
+          nama: "Yusuf Karisma",
+          usernama: "yusufkarisma",
+          pass: "wiraguna137",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Rismayanti",
+          usernama: "rismayanti",
+          pass: "wiraguna138",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Ahmad Qabil Jaelani",
+          usernama: "ahmadqabil",
+          pass: "wiraguna139",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Ahmad Jauhari",
+          usernama: "ahmadjauhari",
+          pass: "wiraguna140",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Super Admin",
+          usernama: "AdminS",
+          pass: "admins123",
+          role: "Super Admin",
+        },
       ];
 
-      const masterDataSiswa = [
-        {
-          nisn: "1001",
-          nama: "Ahmad Daniel",
-          kelas: "10 SMK",
-          hp: 200,
-          shield: 200,
-        },
-        {
-          nisn: "1002",
-          nama: "Budi Setiawan",
-          kelas: "10 SMK",
-          hp: 80,
-          shield: 0,
-        },
-        {
-          nisn: "1003",
-          nama: "Reza Mahendra",
-          kelas: "10 SMK",
-          hp: -40,
-          shield: 0,
-        },
-        {
-          nisn: "2001",
-          nama: "Andi Pratama",
-          kelas: "11 SMK",
-          hp: 200,
-          shield: 50,
-        },
-        {
-          nisn: "2002",
-          nama: "Dewi Sartika",
-          kelas: "11 SMK",
-          hp: 180,
-          shield: 0,
-        },
-        {
-          nisn: "3001",
-          nama: "Muhammad Rizky",
-          kelas: "12 SMK",
-          hp: 200,
-          shield: 15,
-        },
-      ];
+      // MASTER DATA SISWA
+      let masterDataSiswa = [];
 
+      function loadMasterSiswaFromCloud(callback) {
+        fetch(`${SCRIPT_URL}?action=getAllSiswa`)
+          .then((res) => res.json())
+          .then((res) => {
+            if (res.status === "success") {
+              masterDataSiswa = res.data;
+            }
+            if (callback) callback();
+          })
+          .catch((err) => {
+            console.error("Gagal memuat data siswa:", err);
+            if (callback) callback();
+          });
+      }
+
+      // KUMPULAN DATA POIN LENGKAP DARI KITAB SUCI
       const dataPilihan = {
         Prestasi: [
-          { id: "p1", teks: "Hadir 100% tanpa terlambat 1 semester", poin: 20 },
-          {
-            id: "p2",
-            teks: "Mengenakan seragam & atribut super lengkap",
-            poin: 15,
-          },
-          { id: "p3", teks: "Juara Lomba / Kompetisi Sekolah", poin: 35 },
+          { t: "Juara tingkat Nasional", p: 30 },
+          { t: "Juara tingkat Provinsi", p: 25 },
+          { t: "Juara tingkat Kabupaten/Kota", p: 20 },
+          { t: "Juara tingkat Sekolah", p: 10 },
+          { t: "Menjadi Petugas Upacara terbaik", p: 5 },
+          { t: "Menjadi Penggerak Kebersihan perminggu", p: 5 },
+          { t: "Menjadi peserta didik teladan perminggu", p: 10 },
+          { t: "Tidak melakukan pelanggaran selama 1 semester", p: 20 },
+          { t: "Tidak melakukan pelanggaran selama 1 tahun", p: 40 },
+          { t: "Kehadiran 100% di semua pelajaran", p: 10 },
+          { t: "Aktif berpartisipasi dalam pembelajaran di kelas", p: 5 },
+          { t: "Menerapkan 5S (Senyum, Salam, Sapa, Sopan, Santun)", p: 5 },
+          { t: "Melaksanakan kegiatan pengabdian kepada masyarakat", p: 10 },
+          { t: "Menjadi imam shalat di masjid", p: 5 },
+          { t: "Mengumandangkan azan di masjid", p: 3 },
         ],
         Pelanggaran: {
           Ringan: [
-            { id: "l1", teks: "Terlambat masuk sekolah < 15 menit", poin: 5 },
+            { t: "Terlambat datang ke sekolah", p: 5 },
+            { t: "Tidak memakai atribut lengkap", p: 5 },
+            { t: "Tidak memakai kartu identitas", p: 5 },
+            { t: "Seragam tidak sesuai ketentuan", p: 5 },
+            { t: "Tidak memakai sepatu", p: 5 },
+            { t: "Memainkan ponsel di jam pelajaran", p: 5 },
+            { t: "Rambut tidak rapi", p: 5 },
+            { t: "Kuku panjang/kotor", p: 5 },
+            { t: "Membuang sampah sembarangan", p: 5 },
+            { t: "Tidak mengikuti piket kelas", p: 10 },
+            { t: "Tidak membawa perlengkapan belajar", p: 5 },
+            { t: "Tidur saat pembelajaran", p: 5 },
+            { t: "Makan/minum saat pembelajaran tanpa izin", p: 5 },
+            { t: "Berbicara saat guru menjelaskan", p: 5 },
+            { t: "Keluar kelas tanpa izin", p: 10 },
+            { t: "Tidak mengikuti apel/upacara tanpa alasan", p: 10 },
+            { t: "Bercanda berlebihan saat pembelajaran", p: 5 },
+            { t: "Tidak menjaga kebersihan kelas", p: 10 },
+            { t: "Telat memasuki kelas tanpa izin", p: 10 },
+            { t: "Keluar lingkungan sekolah tanpa izin", p: 10 },
+            { t: "Tidak membawa alat shalat", p: 5 },
+            { t: "Memakai riasan berlebihan", p: 5 },
+            { t: "Tidak melakukan shalat Dhuha", p: 10 },
+            { t: "Tidak melakukan shalat Dzuhur", p: 10 },
+            { t: "Tidak melakukan shalat Ashar", p: 10 },
             {
-              id: "l2",
-              teks: "Atribut seragam tidak lengkap / Sepatu bebas",
-              poin: 5,
-            },
-            {
-              id: "l3",
-              teks: "Tidak mengikuti apel/upacara tanpa alasan",
-              poin: 10,
+              t: "Melakukan live streaming / bermain game setelah pukul 21.00",
+              p: 5,
             },
           ],
           Sedang: [
-            { id: "l4", teks: "Membolos 1 jam pelajaran", poin: 25 },
-            {
-              id: "l5",
-              teks: "Merokok / Vape di lingkungan sekolah",
-              poin: 40,
-            },
-            {
-              id: "l6",
-              teks: "Berkata kasar kepada teman / Menghina",
-              poin: 30,
-            },
+            { t: "Membolos 1 jam pelajaran", p: 25 },
+            { t: "Membawa aksesoris berlebihan", p: 25 },
+            { t: "Merokok di lingkungan sekolah", p: 40 },
+            { t: "Vape/Rokok elektrik", p: 40 },
+            { t: "Berkata kasar kepada teman", p: 30 },
+            { t: "Menghina teman", p: 30 },
+            { t: "Body shaming", p: 30 },
+            { t: "Mencoret meja/kursi", p: 30 },
+            { t: "Merusak tanaman", p: 25 },
+            { t: "Memalsukan tanda tangan", p: 50 },
+            { t: "Menyontek", p: 40 },
+            { t: "Membantu teman menyontek", p: 40 },
+            { t: "Mengganggu ketertiban kelas", p: 30 },
+            { t: "Mengunggah konten sekolah tanpa izin", p: 40 },
           ],
           Berat: [
-            { id: "l7", teks: "Bullying fisik / Perkelahian", poin: 100 },
-            {
-              id: "l8",
-              teks: "Membawa senjata tajam / Minuman Keras",
-              poin: 150,
-            },
-            { id: "l9", teks: "Pornografi / Pelecehan Seksual", poin: 200 },
+            { t: "Bullying verbal", p: 75 },
+            { t: "Cyberbullying", p: 100 },
+            { t: "Bullying fisik", p: 100 },
+            { t: "Perpeloncoan", p: 100 },
+            { t: "Pemalakan", p: 100 },
+            { t: "Perkelahian", p: 100 },
+            { t: "Membawa senjata tajam/berbahaya", p: 150 },
+            { t: "Mengancam guru/karyawan", p: 150 },
+            { t: "Mengancam teman", p: 100 },
+            { t: "Mencuri", p: 200 },
+            { t: "Merusak fasilitas secara sengaja", p: 100 },
+            { t: "Pornografi", p: 200 },
+            { t: "Pelecehan seksual", p: 200 },
+            { t: "Minuman keras", p: 200 },
+            { t: "Narkoba", p: 200 },
+            { t: "Judi", p: 200 },
+            { t: "Pemalsuan dokumen sekolah", p: 200 },
+            { t: "Provokasi/hasutan yang menyebabkan kerusuhan", p: 200 },
+            { t: "Menyebarkan berita bohong yang merugikan sekolah", p: 100 },
+            { t: "Tindakan yang mencemarkan nama baik sekolah", p: 100 },
+            { t: "Tawuran", p: 150 },
+            { t: "Meninggalkan Shalat", p: 150 },
           ],
         },
       };
 
-      const questDatabase = {
-        prestasi: [
-          {
-            level: "Ringan (5 - 20 Poin)",
-            items: [
-              { t: "Hadir tepat waktu 1 bulan konsisten", p: "+10" },
-              { t: "Menjaga kebersihan luar jadwal piket", p: "+5" },
-              { t: "Tugas tepat waktu 1 bulan penuh", p: "+10" },
-              { t: "Shalat jamaah aktif (Dhuha/Dzuhur/Ashar)", p: "+10" },
-              { t: "Membantu guru/teman", p: "+10" },
-            ],
-          },
-          {
-            level: "Sedang (25 - 50 Poin)",
-            items: [
-              { t: "Peringkat 1-3 PTS / Sumatif", p: "+30" },
-              { t: "Ketua Kelas/OSIS kinerja baik", p: "+40" },
-              { t: "Petugas upacara inti sekolah", p: "+25" },
-              { t: "Kejujuran luar biasa (uang/dompet)", p: "+50" },
-            ],
-          },
-          {
-            level: "Tinggi (75 - 200 Poin)",
-            items: [
-              { t: "Juara 1-3 Lomba Kab/Kota", p: "+75" },
-              { t: "Juara 1-3 Lomba Provinsi", p: "+100" },
-              { t: "Siswa Teladan (Student of the Year)", p: "+100" },
-              { t: "Juara Umum Sekolah 1 Tahun", p: "+200" },
-            ],
-          },
-        ],
-        pelanggaran: [
-          {
-            level: "Ringan (5 - 20 Poin)",
-            items: [
-              { t: "Terlambat datang sekolah", p: "-5" },
-              { t: "Atribut / Seragam tidak sesuai", p: "-5" },
-              { t: "Tidak ikut piket kelas / Upacara", p: "-10" },
-            ],
-          },
-          {
-            level: "Sedang (25 - 50 Poin)",
-            items: [
-              { t: "Membolos 1 jam pelajaran", p: "-25" },
-              { t: "Merokok / Vape di sekolah", p: "-40" },
-              { t: "Menyontek / Bantu teman menyontek", p: "-40" },
-            ],
-          },
-          {
-            level: "Berat (75 - 200 Poin)",
-            items: [
-              { t: "Bullying Verbal / Fisik", p: "-100" },
-              { t: "Tawuran / Membawa senjata tajam", p: "-150" },
-              { t: "Miras / Narkoba / Judi / Mencuri", p: "-200" },
-            ],
-          },
-        ],
-      };
+      // FUNGSI NAVIGASI TERPUSAT
+      function showScreen(screenId) {
+        document.getElementById("menuWrapper").classList.add("hidden");
+        document.getElementById("mainMenuCard").classList.add("hidden");
+        document.getElementById("questTriggerCard").classList.add("hidden");
+        document.getElementById("loginCard").classList.add("hidden");
+        document.getElementById("siswaCard").classList.add("hidden");
+        document.getElementById("entryCard").classList.add("hidden");
+        document.getElementById("adminCard").classList.add("hidden");
+        document.getElementById("questBoardCard").classList.add("hidden");
 
-      let currentRole = "";
-      let isMultiMode = false;
-
-      // FUNGSI EASTER EGG MODAL SPESIAL
-      function tampilkanEasterEggModal(icon, title, message) {
-        document.getElementById("eggIcon").innerText = icon;
-        document.getElementById("eggTitle").innerText = title;
-        document.getElementById("eggMessage").innerHTML = message;
-        document.getElementById("easterEggModal").classList.remove("hidden");
+        if (screenId === "menu") {
+          document.getElementById("menuWrapper").classList.remove("hidden");
+          document.getElementById("mainMenuCard").classList.remove("hidden");
+          document
+            .getElementById("questTriggerCard")
+            .classList.remove("hidden");
+        } else if (screenId === "login") {
+          document.getElementById("loginCard").classList.remove("hidden");
+        } else if (screenId === "siswa") {
+          document.getElementById("siswaCard").classList.remove("hidden");
+          document.getElementById("hasilPoinSiswa").classList.add("hidden");
+          document.getElementById("nisnSiswaInput").value = "";
+        } else if (screenId === "quest") {
+          document.getElementById("questBoardCard").classList.remove("hidden");
+          renderQuestUI("prestasi");
+        } else if (screenId === "entry") {
+          document.getElementById("entryCard").classList.remove("hidden");
+        } else if (screenId === "admin") {
+          document.getElementById("adminCard").classList.remove("hidden");
+        }
       }
 
-      function tutupEasterEggModal() {
-        document.getElementById("easterEggModal").classList.add("hidden");
-        kembaliKeMenu();
-      }
-
-      // FUNGSI PRELOADER DINAMIS YANG BARU
-      function showGamePreloader(customTitle = "SYNCHRONIZING...", callback) {
+      function showGamePreloader(customTitle, callback) {
         const preloader = document.getElementById("gamePreloader");
         document.getElementById("loadingTitleText").innerText = customTitle;
         const fillEl = document.getElementById("progressBarFill");
@@ -1735,11 +1858,11 @@
 
         let progressInterval = setInterval(() => {
           if (currentPercent < 85) {
-            currentPercent += 5;
+            currentPercent += 15;
             fillEl.style.width = currentPercent + "%";
             percentEl.innerText = currentPercent + "%";
           }
-        }, 100);
+        }, 80);
 
         const finishLoading = () => {
           clearInterval(progressInterval);
@@ -1747,304 +1870,359 @@
           percentEl.innerText = "100%";
           setTimeout(() => {
             preloader.classList.add("hidden");
-          }, 200);
+          }, 300);
         };
-
-        if (callback) {
-          callback(finishLoading);
-        }
+        if (callback) callback(finishLoading);
       }
 
       function togglePassword() {
-        const pwdInput = document.getElementById("password");
-        if (pwdInput.type === "password") {
-          pwdInput.type = "text";
-        } else {
-          pwdInput.type = "password";
-        }
+        const pwd = document.getElementById("password");
+        pwd.type = pwd.type === "password" ? "text" : "password";
       }
 
       function bukaPortal(tipe) {
-        document.getElementById("menuWrapper").classList.add("hidden");
-
         if (tipe === "guru") {
-          document.getElementById("loginCard").classList.remove("hidden");
-          document.getElementById("password").value = "";
-          document.getElementById("namaGuruInput").value = "";
-          document.getElementById("pesanEror").style.display = "none";
+          showScreen("login");
         } else if (tipe === "siswa") {
-          document.getElementById("siswaCard").classList.remove("hidden");
-          document.getElementById("hasilPoinSiswa").classList.add("hidden");
-          document.getElementById("nisnSiswaInput").value = "";
+          showScreen("siswa");
         } else if (tipe === "quest") {
-          showGamePreloader("LOADING QUEST BOARD...", (done) => {
+          showGamePreloader("LOADING KODE ETIK & TATIB...", (done) => {
             setTimeout(() => {
-              document
-                .getElementById("questBoardCard")
-                .classList.remove("hidden");
-              renderQuestUI("prestasi");
+              showScreen("quest");
               done();
-            }, 1000);
+            }, 600);
           });
         }
       }
 
       function kembaliKeMenu() {
-        document
-          .querySelectorAll(".card")
-          .forEach((c) => c.classList.add("hidden"));
-        document.getElementById("menuWrapper").classList.remove("hidden");
-        document.getElementById("mainMenuCard").classList.remove("hidden");
-        document.getElementById("questTriggerCard").classList.remove("hidden");
+        showScreen("menu");
       }
-
       function logout() {
-        location.reload();
+        showScreen("menu");
       }
 
+      // EASTER EGG MODAL
+      function tampilkanEasterEggModal(icon, title, message) {
+        document.getElementById("eggIcon").innerText = icon;
+        document.getElementById("eggTitle").innerText = title;
+        document.getElementById("eggMessage").innerHTML = message;
+        document.getElementById("easterEggModal").classList.remove("hidden");
+      }
+      function tutupEasterEggModal() {
+        document.getElementById("easterEggModal").classList.add("hidden");
+        showScreen("menu");
+      }
+
+      let logoTimer = null;
+      document.addEventListener("DOMContentLoaded", () => {
+        const logoElement = document.querySelector(".logo");
+        if (logoElement) {
+          logoElement.addEventListener("touchstart", () => {
+            logoTimer = setTimeout(triggerSecretCoin, 10000);
+          });
+          logoElement.addEventListener("touchend", () => {
+            if (logoTimer) clearTimeout(logoTimer);
+          });
+          logoElement.addEventListener("mousedown", () => {
+            logoTimer = setTimeout(triggerSecretCoin, 10000);
+          });
+          logoElement.addEventListener("mouseup", () => {
+            if (logoTimer) clearTimeout(logoTimer);
+          });
+        }
+      });
+      function triggerSecretCoin() {
+        const modal = document.getElementById("secretCoinModal");
+        modal.classList.remove("hidden");
+        setTimeout(() => {
+          modal.classList.add("hidden");
+        }, 5000);
+      }
+
+      // LOGIKA LOGIN (BERSIH & TEPAT)
       function login() {
         const usernameIn = document
           .getElementById("namaGuruInput")
           .value.trim();
         const passIn = document.getElementById("password").value.trim();
 
-        if (!usernameIn || !passIn) {
-          alert("Username dan Password wajib diisi!");
-          return;
-        }
-
-        // --- EASTER EGG GURU DENGAN PRELOADER ---
         if (
           usernameIn.toLowerCase() === "akuguru" &&
           passIn === "smkwiraguna"
         ) {
-          document.getElementById("pesanEror").style.display = "none";
-          document.getElementById("loginCard").classList.add("hidden");
-
           showGamePreloader("UNLOCKING MENTOR'S BLESSING...", (done) => {
             setTimeout(() => {
               done();
               tampilkanEasterEggModal(
                 "🌟",
                 "ACHIEVEMENT UNLOCKED: THE MENTOR'S BLESSING",
-                "Terima kasih, Pahlawan Tanpa Tanda Jasa. Mengajar bukan sekadar mengisi gelas yang kosong, tapi menyalakan api pengetahuan di dalam diri setiap siswa.<br><br>Kesabaranmu hari ini adalah fondasi akhlak mereka esok hari. Tetaplah ikhlas membimbing SMK Wiraguna menuju generasi yang hebat! Kami sayang kalian ❤️",
+                "Terima kasih, Pahlawan Tanpa Tanda Jasa. Mengajar bukan sekadar mengisi gelas yang kosong, tapi menyalakan api pengetahuan di dalam diri setiap siswa.<br><br>Kesabaranmu hari ini adalah fondasi akhlak mereka esok hari. Tetaplah semangat membimbing siswa SMK Wiraguna! <br>Kami Sayang Kalian ❤️🥰",
               );
-              document.getElementById("namaGuruInput").value = "";
-              document.getElementById("password").value = "";
-            }, 1000);
+            }, 800);
           });
           return;
         }
-        // -----------------------
-
-        const scriptURL =
-          "https://script.google.com/macros/s/AKfycbwcycYo1id85poz4B_-WyNL8TPpFpQL3z4u9uRpu582v2aqnjJMsV18aMNUE0jFckRG/exec";
-        const payload = {
-          action: "loginGuru",
-          username: usernameIn,
-          pass: passIn,
-        };
 
         showGamePreloader("VERIFYING CREDENTIALS...", (done) => {
-          fetch(scriptURL, { method: "POST", body: JSON.stringify(payload) })
-            .then((response) => response.json())
-            .then((res) => {
-              done();
-              if (res.status === "success") {
-                currentRole = res.user.role;
-                document.getElementById("pesanEror").style.display = "none";
-                document.getElementById("loginCard").classList.add("hidden");
+          const user = daftarGuru.find(
+            (u) =>
+              u.usernama.toLowerCase() === usernameIn.toLowerCase() &&
+              u.pass === passIn,
+          );
 
-                if (res.user.role === "Super Admin") {
-                  document.getElementById("txtNamaAdmin").innerText =
-                    res.user.nama;
-                  document
-                    .getElementById("adminCard")
-                    .classList.remove("hidden");
-                  switchAdminTab("rekap");
-                } else {
-                  document.getElementById("txtNamaGuru").innerText =
-                    res.user.nama;
-                  document.getElementById("txtRoleGuru").innerText =
-                    "Jabatan: " + res.user.role;
-                  document
-                    .getElementById("entryCard")
-                    .classList.remove("hidden");
-                  initFormEntry();
-                }
-              } else {
-                document.getElementById("pesanEror").style.display = "block";
-                document.getElementById("loginCard").classList.remove("hidden");
-              }
-            })
-            .catch((error) => {
+          if (user) {
+            currentRole = user.role;
+            document.getElementById("pesanEror").style.display = "none";
+
+            if (user.role === "Super Admin") {
+              setTimeout(() => {
+                done();
+                document.getElementById("txtNamaAdmin").innerText = user.nama;
+                showScreen("admin");
+                switchAdminTab("rekap");
+              }, 600);
+            } else {
+              document.getElementById("txtNamaGuru").innerText = user.nama;
+              document.getElementById("txtRoleGuru").innerText =
+                "Jabatan: " + user.role;
+
+              loadMasterSiswaFromCloud(() => {
+                done();
+                showScreen("entry");
+                initFormEntry();
+              });
+            }
+          } else {
+            setTimeout(() => {
               done();
-              console.error("Error:", error);
               document.getElementById("pesanEror").style.display = "block";
-            });
+            }, 500);
+          }
         });
       }
 
+      // STATUS PEMBINAAN TIERED
+      function getStatusPembinaan(tp) {
+        if (tp < 10)
+          return {
+            title: "NORMAL",
+            desc: "Tidak ada catatan pelanggaran.",
+            color: "#2ecc71",
+          };
+        if (tp <= 20)
+          return {
+            title: "TEGURAN LISAN",
+            desc: "Sanksi: Teguran lisan langsung oleh guru.",
+            color: "#f1c40f",
+          };
+        if (tp <= 40)
+          return {
+            title: "TEGURAN TERTULIS",
+            desc: "Sanksi: Teguran tertulis peringatan kedisiplinan.",
+            color: "#e67e22",
+          };
+        if (tp <= 60)
+          return {
+            title: "PEMBINAAN WALI KELAS",
+            desc: "Sanksi: Pembinaan khusus dan teguran oleh Wali Kelas.",
+            color: "#e67e22",
+          };
+        if (tp <= 80)
+          return {
+            title: "KONSELING BK",
+            desc: "Sanksi: Pemanggilan untuk konseling dan pemantauan Guru BK.",
+            color: "#e74c3c",
+          };
+        if (tp <= 100)
+          return {
+            title: "PANGGILAN ORTU/WALI",
+            desc: "Sanksi: Pemanggilan orang tua/wali ke sekolah.",
+            color: "#e74c3c",
+          };
+        if (tp <= 125)
+          return {
+            title: "SURAT PERNYATAAN I",
+            desc: "Sanksi: Penandatanganan Surat Pernyataan I (Peringatan Keras).",
+            color: "#c0392b",
+          };
+        if (tp <= 150)
+          return {
+            title: "PEMBINAAN KHUSUS & MONITORING",
+            desc: "Sanksi: Pembinaan khusus dan monitoring oleh Tim Sekolah.",
+            color: "#c0392b",
+          };
+        if (tp <= 175)
+          return {
+            title: "SP II & SIDANG TIM",
+            desc: "Sanksi: Surat Pernyataan II dan diproses Sidang Tim Pembinaan.",
+            color: "#8e44ad",
+          };
+        if (tp <= 199)
+          return {
+            title: "SIDANG DEWAN GURU",
+            desc: "Sanksi: Proses evaluasi Sidang Dewan Guru secara keseluruhan.",
+            color: "#8e44ad",
+          };
+        return {
+          title: "TINDAKAN KEPALA SEKOLAH",
+          desc: "Sanksi: Keputusan mutlak Kepala Sekolah (Ancaman Dikeluarkan).",
+          color: "#2c3e50",
+        };
+      }
+
+      // PENCARIAN SISWA TERHUBUNG CLOUD
       function cariPoinSiswaWithLoading() {
         const nisnInput = document
           .getElementById("nisnSiswaInput")
           .value.trim();
-        if (!nisnInput) {
-          alert("Silakan ketik nomor NIS / NISN kamu!");
-          return;
-        }
+        if (!nisnInput) return alert("Silakan ketik nomor NIS / NISN kamu!");
 
-        // --- EASTER EGG SISWA ---
         if (nisnInput.toLowerCase() === "akusiswasmkwiraguna") {
           showGamePreloader("UNLOCKING SECRET MISSION...", (done) => {
             setTimeout(() => {
               done();
               tampilkanEasterEggModal(
                 "🛡️",
-                "MISSION QUEST: BECOMING THE CHOSEN ONE",
-                "Untuk kamu, Sang Penentu Masa Depan! Gurumu adalah mentor terbaik yang membantumu tumbuh setiap hari. Jangan ciderai potensimu dengan sikap bandel atau malas belajar.<br><br>Mengajar dan belajar itu sama-sama butuh energi besar; jadilah alasan gurumu tersenyum bangga hari ini. Kejarlah impianmu, patuhi nasehatnya, dan buktikan murid SMK Wiraguna adalah generasi berilmu, kompeten, dan berakhlak mulia! 📚⚔️🔥",
+                "MISSION: THE CHOSEN ONE",
+                "Mengajar dan belajar sama-sama butuh energi besar; jadilah alasan gurumu tersenyum bangga hari ini. Kejarlah impianmu, patuhi nasehatnya, dan buktikan kamu adalah generasi hebat SMK Wiraguna! 📚⚔️🔥",
               );
               document.getElementById("nisnSiswaInput").value = "";
-            }, 1000);
+            }, 800);
           });
           return;
         }
-        // --------------------------
 
         const clickTime = Date.now();
-        const timeDiff = (clickTime - pageLoadTime) / 1000;
-        if (timeDiff < 1) {
-          localStorage.setItem("secret_gelar", "⚡ Speedrunner");
+        if ((clickTime - pageLoadTime) / 1000 < 1) {
+          localStorage.setItem("secret_gelar", "⚡ SPEEDRUNNER");
           localStorage.setItem("gelar_time", Date.now());
         }
 
-        showGamePreloader("FETCHING CHARACTER DATA...", (done) => {
-          setTimeout(() => {
-            const hasilBox = document.getElementById("hasilPoinSiswa");
-            const barHpFill = document.getElementById("barHpFill");
-            const txtHpPercent = document.getElementById("txtHpPercent");
-            const barShieldFill = document.getElementById("barShieldFill");
-            const txtShieldPercent =
-              document.getElementById("txtShieldPercent");
-            const banner = document.getElementById("rpgStatusBanner");
-            const txtKondisi = document.getElementById("txtStatusKondisi");
-            const txtPenanganan = document.getElementById(
-              "txtStatusPenanganan",
-            );
+        showGamePreloader("FETCHING CLOUD DATABASE...", (done) => {
+          fetch(`${SCRIPT_URL}?action=getSiswa&nisn=${nisnInput}`)
+            .then((res) => res.json())
+            .then((res) => {
+              done();
+              if (res.status === "success") {
+                const siswa = res.data;
+                document
+                  .getElementById("hasilPoinSiswa")
+                  .classList.remove("hidden");
 
-            const siswa = masterDataSiswa.find((s) => s.nisn === nisnInput);
-
-            if (siswa) {
-              hasilBox.classList.remove("hidden");
-              let displayGelar = "";
-              const currentHour = new Date().getHours();
-
-              if (currentHour >= 22 || currentHour < 4) {
-                displayGelar = "🦉 The Night Owl";
-              } else if (siswa.hp === 200 && siswa.shield === 200) {
-                displayGelar = "🛡️ Perfect Defender";
-              } else {
-                const savedGelar = localStorage.getItem("secret_gelar");
-                const savedTime = localStorage.getItem("gelar_time");
-                if (savedGelar && Date.now() - savedTime < 6 * 60 * 60 * 1000) {
-                  displayGelar = savedGelar;
+                const avatarImg = document.querySelector(".rpg-avatar-box img");
+                if (avatarImg) {
+                  if (siswa.jk && siswa.jk.toUpperCase() === "P") {
+                    avatarImg.src =
+                      "https://cdn-icons-png.flaticon.com/512/2922/2922561.png";
+                  } else {
+                    avatarImg.src =
+                      "https://cdn-icons-png.flaticon.com/512/2922/2922510.png";
+                  }
                 }
-              }
 
-              const nameContainer =
-                document.getElementById("txtNamaSiswaHasil");
-              if (displayGelar) {
-                nameContainer.innerHTML = `${siswa.nama.toUpperCase()} <span style="font-size:9px; background:#f1c40f; color:#1a2536; padding:2px 6px; border-radius:4px; margin-left:6px; vertical-align:middle; font-weight:700;">${displayGelar}</span>`;
-              } else {
-                nameContainer.innerText = siswa.nama.toUpperCase();
-              }
+                let badgesHtml = "";
+                const currentHour = new Date().getHours();
+                if (currentHour >= 0 && currentHour < 2) {
+                  badgesHtml += `<span style="background:#9b59b6; color:white; padding:2px 6px; border-radius:4px; font-size:8px; margin-left:5px;">🦉 NIGHT OWL</span>`;
+                }
+                if (siswa.hp === 200 && siswa.shield >= 50) {
+                  badgesHtml += `<span style="background:#3498db; color:white; padding:2px 6px; border-radius:4px; font-size:8px; margin-left:5px;">🛡️ DEFENDER</span>`;
+                }
+                const savedGelar = localStorage.getItem("secret_gelar");
+                const savedTime = parseInt(
+                  localStorage.getItem("gelar_time") || 0,
+                );
+                if (savedGelar && Date.now() - savedTime < 6 * 60 * 60 * 1000) {
+                  badgesHtml += `<span style="background:#f1c40f; color:#1a2536; padding:2px 6px; border-radius:4px; font-size:8px; margin-left:5px;">${savedGelar}</span>`;
+                }
 
-              document.getElementById("txtKelasSiswaHasil").innerText =
-                `Kelas: ${siswa.kelas} | NISN: ${siswa.nisn}`;
+                document.getElementById("txtNamaSiswaHasil").innerHTML =
+                  siswa.nama.toUpperCase() + badgesHtml;
+                document.getElementById("txtKelasSiswaHasil").innerText =
+                  `Kelas: ${siswa.kelas} | NISN: ${siswa.nisn}`;
 
-              let hpPercentWidth;
-              if (siswa.hp < 0) {
-                hpPercentWidth = Math.min(100, Math.abs(siswa.hp) / 2);
-                barHpFill.style.width = `${hpPercentWidth}%`;
-                barHpFill.style.background = "#e74c3c";
-                txtHpPercent.innerText = `${siswa.hp}/200 (KRITIS)`;
-                txtHpPercent.style.color = "#e74c3c";
-              } else {
-                hpPercentWidth = Math.max(
+                const barHpFill = document.getElementById("barHpFill");
+                const txtHpPercent = document.getElementById("txtHpPercent");
+                const barShieldFill = document.getElementById("barShieldFill");
+
+                let hpWidth = Math.max(
                   0,
                   Math.min(100, (siswa.hp / 200) * 100),
                 );
-                barHpFill.style.width = `${hpPercentWidth}%`;
-                txtHpPercent.innerText = `${siswa.hp}/200`;
+                barHpFill.style.width = `${hpWidth}%`;
+                txtHpPercent.innerText = `${Math.max(0, siswa.hp)}/200`;
 
-                if (siswa.hp < 100) {
+                if (siswa.hp <= 50) {
+                  barHpFill.style.background = "#e74c3c";
+                  txtHpPercent.style.color = "#e74c3c";
+                } else if (siswa.hp < 150) {
                   barHpFill.style.background = "#f39c12";
                   txtHpPercent.style.color = "#f39c12";
                 } else {
                   barHpFill.style.background = "#2ecc71";
                   txtHpPercent.style.color = "#2ecc71";
                 }
-              }
 
-              let shieldPercentWidth = Math.min(
-                100,
-                (siswa.shield / 200) * 100,
-              );
-              txtShieldPercent.innerText = `${siswa.shield}/200`;
-              barShieldFill.style.width = `${shieldPercentWidth}%`;
+                let shieldWidth = Math.min(100, (siswa.shield / 100) * 100);
+                document.getElementById("txtShieldPercent").innerText =
+                  `${siswa.shield} Pts`;
+                barShieldFill.style.width = `${shieldWidth}%`;
 
-              if (siswa.hp === 200 && siswa.shield > 0) {
-                txtKondisi.innerText = "KONDISI: 🌟 BERPRESTASI (TELADAN)";
-                txtPenanganan.innerText =
-                  "Status: Karakter stabil, mendapatkan bonus Shield dari prestasi.";
-                banner.style.borderLeftColor = "#3498db";
-              } else if (siswa.hp < 100 && siswa.hp >= 0) {
-                txtKondisi.innerText = "KONDISI: ⚠️ WASPADA (SP 1)";
-                txtPenanganan.innerText =
-                  "Status Penanganan: Dalam pengawasan intensif oleh Wali Kelas.";
-                banner.style.borderLeftColor = "#f39c12";
-              } else if (siswa.hp < 0) {
-                txtKondisi.innerText = "KONDISI: 🚨 KRITIS (OVER-PENALTY)";
-                txtPenanganan.innerText =
-                  "Status Penanganan: Dijadwalkan Sidang Pembinaan Guru & Pemanggilan Orang Tua.";
-                banner.style.borderLeftColor = "#e74c3c";
+                const statusHukum = getStatusPembinaan(siswa.totalPelanggaran);
+                document.getElementById("txtStatusKondisi").innerText =
+                  `STATUS: ${statusHukum.title}`;
+                document.getElementById("txtStatusPenanganan").innerText =
+                  statusHukum.desc;
+                document.getElementById(
+                  "rpgStatusBanner",
+                ).style.borderLeftColor = statusHukum.color;
+                document.getElementById("txtStatusKondisi").style.color =
+                  statusHukum.color;
+
+                document.getElementById("txtCountPrestasi").innerText =
+                  `${siswa.totalPrestasi} Pts`;
+                document.getElementById("txtCountPelanggaran").innerText =
+                  `${siswa.totalPelanggaran} Pts`;
+
+                let historyListContainer =
+                  document.getElementById("historyListSiswa");
+                historyListContainer.innerHTML = "";
+                if (!siswa.riwayat || siswa.riwayat.length === 0) {
+                  historyListContainer.innerHTML = `<div style="font-size: 10px; color: #95a5a6; text-align: center; padding: 6px;">Belum ada catatan riwayat.</div>`;
+                } else {
+                  siswa.riwayat.forEach((r) => {
+                    let isPlus = Number(r.p) > 0;
+                    let borderColor = isPlus ? "#2ecc71" : "#e74c3c";
+                    historyListContainer.innerHTML += `
+                      <div style="background: #1a2536; border-left: 3px solid ${borderColor}; padding: 8px 10px; border-radius: 0 6px 6px 0; font-size: 10.5px; color: #ecf0f1; border-top: 1px solid #34495e; border-right: 1px solid #34495e; border-bottom: 1px solid #34495e;">
+                        <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 2px;">
+                          <span style="color: ${borderColor};">${r.t}</span>
+                          <span style="color: ${borderColor};">${Number(r.p) > 0 ? "+" + r.p : r.p} Pts</span>
+                        </div>
+                        <div style="font-size: 9.5px; color: #bdc3c7; display: flex; justify-content: space-between;">
+                          <span>📍 ${r.loc}</span>
+                          <span>📅 ${r.d}</span>
+                        </div>
+                      </div>
+                    `;
+                  });
+                }
               } else {
-                txtKondisi.innerText = "KONDISI: NORMAL";
-                txtPenanganan.innerText =
-                  "Status: Tidak ada penanganan khusus.";
-                banner.style.borderLeftColor = "#f1c40f";
+                alert(
+                  "⚠️ Nomor NIS / NISN tidak ditemukan di database Spreadsheet!",
+                );
               }
-
-              const totalKaliPrestasi = siswa.shield > 0 ? 1 : 0;
-              const totalPoinPrestasi = siswa.shield > 0 ? siswa.shield : 0;
-              const totalKaliPelanggaran = siswa.hp < 200 ? 1 : 0;
-              const totalPoinPelanggaran = siswa.hp < 200 ? 200 - siswa.hp : 0;
-
-              document.getElementById("txtCountPrestasi").innerText =
-                `${totalKaliPrestasi} Kali`;
-              document.getElementById("txtPoinPrestasi").innerText =
-                `(+${totalPoinPrestasi} Poin)`;
-              document.getElementById("txtCountPelanggaran").innerText =
-                `${totalKaliPelanggaran} Kali`;
-              document.getElementById("txtPoinPelanggaran").innerText =
-                `(-${totalPoinPelanggaran} Poin)`;
-
-              document.getElementById("listRiwayatSiswa").innerHTML = `
-                <div class="history-item ${siswa.shield > 0 ? "shield" : "minus"}" style="background: #111823; color: #fff;">
-                  <strong>${siswa.shield > 0 ? "🛡️ Catatan Prestasi" : "⚠️ Catatan Pelanggaran"}</strong><br>
-                  <span style="color: #ccc;">${siswa.shield > 0 ? "Apresiasi kedisiplinan" : "Pengurangan poin tatib"}</span><br>
-                  <small style="color: #888;">Agustus 2026</small>
-                </div>
-              `;
-            } else {
-              hasilBox.classList.add("hidden");
-              alert("⚠️ Nomor NIS / NISN tidak ditemukan di database!");
-            }
-            done();
-          }, 2000);
+            })
+            .catch((err) => {
+              done();
+              console.error(err);
+              alert("Gagal terhubung ke cloud database.");
+            });
         });
       }
 
+      // ENTRY GURU & SECURITY ROLE
       function initFormEntry() {
         const now = new Date();
         const namaHari = [
@@ -2060,9 +2238,9 @@
         document.getElementById("tanggal").value = now
           .toISOString()
           .split("T")[0];
-        const hours = String(now.getHours()).padStart(2, "0");
-        const minutes = String(now.getMinutes()).padStart(2, "0");
-        document.getElementById("jam").value = `${hours}:${minutes}`;
+        document.getElementById("jam").value =
+          `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
         handleKategoriChange();
         updateEntrySiswaList();
       }
@@ -2070,10 +2248,19 @@
       function handleKategoriChange() {
         const kat = document.getElementById("kategori").value;
         const boxSub = document.getElementById("boxSubKategori");
+        const subKategori = document.getElementById("subKategori");
 
-        if (kat === "Pelanggaran" && currentRole !== "Guru Mapel") {
+        if (kat === "Pelanggaran") {
           boxSub.classList.remove("hidden");
-          document.getElementById("subKategori").value = "";
+          subKategori.innerHTML =
+            '<option value="">-- Pilih Tingkat --</option><option value="Ringan">Pelanggaran Ringan (5-20 Pts)</option>';
+
+          if (currentRole !== "Guru Mapel") {
+            subKategori.innerHTML +=
+              '<option value="Sedang">Pelanggaran Sedang (25-50 Pts)</option><option value="Berat">Pelanggaran Berat (75-200 Pts)</option>';
+          }
+
+          subKategori.value = "";
           document.getElementById("containerOpsi").innerHTML = "";
           document.getElementById("lblDetailOpsi").innerText =
             "PILIH TINGKAT PELANGGARAN DI ATAS";
@@ -2095,23 +2282,16 @@
           label.innerText = "OPSI PRESTASI (+ HP / SHIELD) *";
           listTampil = dataPilihan.Prestasi;
         } else {
+          if (!sub) return;
           label.innerText = "DETAIL PELANGGARAN (- HP) *";
-          if (currentRole === "Guru Mapel") {
-            listTampil = dataPilihan.Pelanggaran.Ringan;
-          } else {
-            if (!sub) return;
-            listTampil = dataPilihan.Pelanggaran[sub];
-          }
+          listTampil = dataPilihan.Pelanggaran[sub];
         }
 
-        listTampil.forEach((item, index) => {
-          const letter = String.fromCharCode(65 + index);
+        listTampil.forEach((item) => {
           const div = document.createElement("label");
           div.className = "option-item";
-          div.innerHTML = `
-            <input type="radio" name="opsiPoin" value="${item.teks}" data-poin="${item.poin}" required>
-            <span><strong>${letter}.</strong> ${item.teks} (${kat === "Prestasi" ? "+" : "-"}${item.poin} Poin)</span>
-          `;
+          div.innerHTML = `<input type="radio" name="opsiPoin" value="${item.t}" data-poin="${item.p}" required>
+                             <span>${item.t} <strong>(${kat === "Prestasi" ? "+" : "-"}${item.p} Pts)</strong></span>`;
           container.appendChild(div);
         });
       }
@@ -2129,18 +2309,10 @@
             '<span style="font-size:11px; color:#888;">Pilih kelas dulu...</span>';
           return;
         }
-
         const siswaInClass = masterDataSiswa.filter((s) => s.kelas === kelas);
         siswaInClass.forEach((s) => {
-          const opt = document.createElement("option");
-          opt.value = s.nama;
-          opt.innerText = s.nama;
-          singleSelect.appendChild(opt);
-
-          const lbl = document.createElement("label");
-          lbl.className = "checkbox-item";
-          lbl.innerHTML = `<input type="checkbox" name="multiSiswa" value="${s.nama}"> ${s.nama}`;
-          multiBox.appendChild(lbl);
+          singleSelect.innerHTML += `<option value="${s.nama}">${s.nama}</option>`;
+          multiBox.innerHTML += `<label class="checkbox-item"><input type="checkbox" name="multiSiswa" value="${s.nama}"> ${s.nama}</label>`;
         });
       }
 
@@ -2151,12 +2323,12 @@
         const multiBox = document.getElementById("boxMultiSiswa");
 
         if (isMultiMode) {
-          btnTxt.innerText = "Mode: Satu Siswa";
+          btnTxt.innerText = "Mode: Banyak Siswa";
           singleSelect.classList.add("hidden");
           singleSelect.required = false;
           multiBox.classList.remove("hidden");
         } else {
-          btnTxt.innerText = "Mode: Banyak Siswa";
+          btnTxt.innerText = "Mode: Satu Siswa";
           singleSelect.classList.remove("hidden");
           singleSelect.required = true;
           multiBox.classList.add("hidden");
@@ -2167,41 +2339,32 @@
         const selectedRadio = document.querySelector(
           'input[name="opsiPoin"]:checked',
         );
-        if (!selectedRadio) {
-          alert("Pilih detail jenis pelanggaran/prestasi terlebih dahulu!");
-          return;
-        }
+        if (!selectedRadio)
+          return alert("Pilih detail jenis kejadian terlebih dahulu!");
 
         let daftarSiswaDipilih = [];
         if (isMultiMode) {
-          const checkedBoxes = document.querySelectorAll(
-            'input[name="multiSiswa"]:checked',
-          );
-          checkedBoxes.forEach((cb) => daftarSiswaDipilih.push(cb.value));
-          if (daftarSiswaDipilih.length === 0) {
-            alert("Pilih minimal 1 siswa di dalam box!");
-            return;
-          }
+          document
+            .querySelectorAll('input[name="multiSiswa"]:checked')
+            .forEach((cb) => daftarSiswaDipilih.push(cb.value));
+          if (daftarSiswaDipilih.length === 0)
+            return alert("Pilih minimal 1 siswa!");
         } else {
           const val = document.getElementById("selectSingleSiswa").value;
-          if (!val) {
-            alert("Pilih nama siswa terlebih dahulu!");
-            return;
-          }
+          if (!val) return alert("Pilih nama siswa terlebih dahulu!");
           daftarSiswaDipilih.push(val);
         }
 
         const kat = document.getElementById("kategori").value;
-        const efekHp =
+        const efekPoin =
           kat === "Prestasi"
-            ? `+${selectedRadio.getAttribute("data-poin")} HP / Shield Bonus`
-            : `-${selectedRadio.getAttribute("data-poin")} Poin Pelanggaran`;
+            ? `+${selectedRadio.getAttribute("data-poin")} Prestasi / Heal`
+            : `-${selectedRadio.getAttribute("data-poin")} Pelanggaran`;
 
         document.getElementById("modalDetailContent").innerHTML = `
           <strong>Target Siswa (${daftarSiswaDipilih.length}):</strong><br> ${daftarSiswaDipilih.join(", ")}<br><br>
-          <strong>Dampak Poin:</strong> ${efekHp}<br>
           <strong>Kejadian:</strong> ${selectedRadio.value}<br>
-          <strong>Waktu & Tempat:</strong> ${document.getElementById("hari").value}, ${document.getElementById("jam").value} WIB @ ${document.getElementById("tempat").value}<br>
+          <strong>Dampak Kalkulasi:</strong> ${efekPoin}<br>
           <strong>Guru Pelapor:</strong> ${document.getElementById("txtNamaGuru").innerText} (${currentRole})
         `;
         document.getElementById("modalKonfirmasi").classList.remove("hidden");
@@ -2211,254 +2374,395 @@
         document.getElementById("modalKonfirmasi").classList.add("hidden");
       }
 
+      // SIMPAN POIN KE CLOUD DATABASE
       function eksekusiSimpanWithLoading() {
         tutupModal();
-        showGamePreloader("SAVING TO CLOUD SHEET...", (done) => {
-          setTimeout(() => {
-            alert(
-              "✅ Data Poin/HP berhasil dicatat dan disinkronkan ke database!",
-            );
-            document.getElementById("formEntry").reset();
-            initFormEntry();
-            done();
-          }, 2000);
+        const selectedRadio = document.querySelector(
+          'input[name="opsiPoin"]:checked',
+        );
+        if (!selectedRadio) return;
+        const desc = selectedRadio.value;
+        const poin = parseInt(selectedRadio.getAttribute("data-poin"));
+        const kat = document.getElementById("kategori").value;
+        const tempat = document.getElementById("tempat").value || "Sekolah";
+        const tanggal = document.getElementById("tanggal").value;
+
+        let daftarSiswaDipilih = [];
+        if (isMultiMode) {
+          document
+            .querySelectorAll('input[name="multiSiswa"]:checked')
+            .forEach((cb) => daftarSiswaDipilih.push(cb.value));
+        } else {
+          const val = document.getElementById("selectSingleSiswa").value;
+          if (val) daftarSiswaDipilih.push(val);
+        }
+
+        if (daftarSiswaDipilih.length === 0)
+          return alert("Pilih minimal 1 siswa!");
+
+        showGamePreloader("SAVING TO CLOUD DB...", (done) => {
+          const payload = {
+            action: "simpanPoin",
+            siswaList: daftarSiswaDipilih,
+            kategori: kat,
+            poin: poin,
+            desc: desc,
+            tempat: tempat,
+            tanggal: tanggal,
+          };
+
+          fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+              "Content-Type": "text/plain;charset=utf-8",
+            },
+            body: JSON.stringify(payload),
+          })
+            .then(() => {
+              done();
+              alert(
+                "✅ Data Poin berhasil dicatat dan disinkronkan ke Google Spreadsheet!",
+              );
+              document.getElementById("formEntry").reset();
+              initFormEntry();
+            })
+            .catch((err) => {
+              done();
+              console.error(err);
+              alert("Gagal menyimpan data ke cloud database.");
+            });
         });
       }
 
+      // SUPER ADMIN TABS
       function switchAdminTab(tabName) {
-        const tabRekap = document.getElementById("adminTabRekap");
-        const tabKontrol = document.getElementById("adminTabKontrol");
-        const tabCetak = document.getElementById("adminTabCetak");
-        const btnRekap = document.getElementById("navBtnRekap");
-        const btnKontrol = document.getElementById("navBtnKontrol");
-        const btnCetak = document.getElementById("navBtnCetak");
+        ["Rekap", "Kontrol", "Cetak"].forEach((n) => {
+          document.getElementById("adminTab" + n).classList.add("hidden");
+          document.getElementById("navBtn" + n).className = "btn-outline";
+          document.getElementById("navBtn" + n).style.background =
+            "transparent";
+        });
 
-        tabRekap.classList.add("hidden");
-        tabKontrol.classList.add("hidden");
-        tabCetak.classList.add("hidden");
+        const actTab = document.getElementById(
+          "adminTab" + tabName.charAt(0).toUpperCase() + tabName.slice(1),
+        );
+        const actBtn = document.getElementById(
+          "navBtn" + tabName.charAt(0).toUpperCase() + tabName.slice(1),
+        );
 
-        btnRekap.className = "btn-outline";
-        btnKontrol.className = "btn-outline";
-        btnCetak.className = "btn-outline";
-
-        btnRekap.style.background = "transparent";
-        btnKontrol.style.background = "transparent";
-        btnCetak.style.background = "transparent";
+        actTab.classList.remove("hidden");
+        actBtn.className = "";
+        actBtn.style.background = "#1e3c72";
 
         if (tabName === "rekap") {
-          showGamePreloader("FETCHING STUDENT RECORDS...", (done) => {
-            setTimeout(() => {
-              tabRekap.classList.remove("hidden");
-              btnRekap.className = "";
-              btnRekap.style.background = "#1e3c72";
-              renderTabelRekap();
-              done();
-            }, 2000);
-          });
-        } else if (tabName === "kontrol") {
-          tabKontrol.classList.remove("hidden");
-          btnKontrol.className = "";
-          btnKontrol.style.background = "#1e3c72";
-        } else if (tabName === "cetak") {
-          tabCetak.classList.remove("hidden");
-          btnCetak.className = "";
-          btnCetak.style.background = "#1e3c72";
+          renderTabelRekap();
+        }
+        if (tabName === "cetak") {
           filterPilihanSiswaCetak();
         }
       }
 
+      let myChartInstance = null; // Variabel penyimpan objek chart
+
       function renderTabelRekap() {
-        const filterKelas = document.getElementById("filterKelasRekap").value;
+        const filter = document.getElementById("filterKelasRekap").value;
         const tbody = document.getElementById("tabelRekapBody");
         tbody.innerHTML = "";
 
-        let filteredData = masterDataSiswa;
-        if (filterKelas !== "SEMUA") {
-          filteredData = masterDataSiswa.filter((s) => s.kelas === filterKelas);
-        }
+        const data =
+          filter === "SEMUA"
+            ? masterDataSiswa
+            : masterDataSiswa.filter((s) => s.kelas === filter);
 
-        filteredData.forEach((s) => {
-          let statusBadge = "Normal (200 HP)";
-          let badgeColor = "#2ecc71";
-          if (s.shield > 0) {
-            statusBadge = `🛡️ Teladan`;
-            badgeColor = "#3498db";
-          } else if (s.hp < 200 && s.hp >= 100) {
-            statusBadge = "Peringatan";
-            badgeColor = "#f1c40f";
-          } else if (s.hp < 100 && s.hp >= 0) {
-            statusBadge = "Waspada / SP 1";
-            badgeColor = "#e67e22";
-          } else if (s.hp < 0) {
-            statusBadge = "🚨 Minus / Kritis";
-            badgeColor = "#e74c3c";
-          }
+        data.forEach((s) => {
+          let badge = `<span style="color:#2ecc71; font-weight:bold">${s.hp} HP</span>`;
+          if (s.shield > 0)
+            badge += ` <span style="color:#3498db; font-size:9px">+${s.shield} Shld</span>`;
 
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
+          let hukum = getStatusPembinaan(s.totalPelanggaran);
+
+          tbody.innerHTML += `<tr>
             <td><strong>${s.nama}</strong></td>
             <td>${s.kelas}</td>
-            <td>${s.hp} HP ${s.shield > 0 ? `<br><span style="color:#3498db; font-size:10px;">+${s.shield}</span>` : ""}</td>
-            <td><span style="font-size: 9px; padding: 3px 6px; background: ${badgeColor}; color: #fff; border-radius: 4px; font-weight: bold;">${statusBadge}</span></td>
-          `;
-          tbody.appendChild(tr);
+            <td>${badge}</td>
+            <td><span style="font-size: 9px; padding: 3px 6px; background: ${hukum.color}; color: #fff; border-radius: 4px; font-weight: bold;">${s.totalPelanggaran} Pts (${hukum.title})</span></td>
+          </tr>`;
+        });
+
+        // --- RENDER GRAFIK STATISTIK CHART.JS ---
+        updateStatistikChart();
+      }
+
+      function updateStatistikChart() {
+        // Hitung total akumulasi poin pelanggaran per kelas secara otomatis
+        let totalPelanggaran10 = 0;
+        let totalPelanggaran11 = 0;
+        let totalPelanggaran12 = 0;
+
+        masterDataSiswa.forEach((s) => {
+          if (s.kelas === "10 SMK")
+            totalPelanggaran10 += Number(s.totalPelanggaran || 0);
+          if (s.kelas === "11 SMK")
+            totalPelanggaran11 += Number(s.totalPelanggaran || 0);
+          if (s.kelas === "12 SMK")
+            totalPelanggaran12 += Number(s.totalPelanggaran || 0);
+        });
+
+        const ctx = document.getElementById("statistikChart").getContext("2d");
+
+        // Hapus chart lama jika sudah ada agar tidak numpuk saat direfresh
+        if (myChartInstance) {
+          myChartInstance.destroy();
+        }
+
+        myChartInstance = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: ["10 SMK", "11 SMK", "12 SMK"],
+            datasets: [
+              {
+                label: "Akumulasi Poin Pelanggaran",
+                data: [
+                  totalPelanggaran10,
+                  totalPelanggaran11,
+                  totalPelanggaran12,
+                ],
+                backgroundColor: ["#3498db", "#f39c12", "#e74c3c"],
+                borderWidth: 1,
+                borderRadius: 6,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              title: {
+                display: true,
+                text: "Grafik Total Pelanggaran per Tingkat Kelas",
+                font: { size: 11, family: "Poppins" },
+                color: "#1e3c72",
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { font: { size: 9 } },
+              },
+              x: {
+                ticks: { font: { size: 10 } },
+              },
+            },
+          },
         });
       }
 
       function handleAdminKelasChange() {
         const kelas = document.getElementById("adminKelasSelect").value;
-        const selectSiswa = document.getElementById("adminSiswaSelect");
-        selectSiswa.innerHTML = '<option value="">-- Pilih Siswa --</option>';
-
+        const sel = document.getElementById("adminSiswaSelect");
+        sel.innerHTML = '<option value="">-- Pilih Siswa --</option>';
         if (!kelas) return;
-        const siswaInClass = masterDataSiswa.filter((s) => s.kelas === kelas);
-        siswaInClass.forEach((s) => {
-          const opt = document.createElement("option");
-          opt.value = s.nisn;
-          opt.innerText = s.nama;
-          selectSiswa.appendChild(opt);
-        });
+        masterDataSiswa
+          .filter((s) => s.kelas === kelas)
+          .forEach((s) => {
+            sel.innerHTML += `<option value="${s.nisn}">${s.nama} (${s.hp} HP)</option>`;
+          });
       }
 
       function prosesActionAdminWithLoading() {
-        const nisnSiswa = document.getElementById("adminSiswaSelect").value;
-        if (!nisnSiswa) {
-          alert("Pilih siswa terlebih dahulu!");
-          return;
-        }
+        const nisn = document.getElementById("adminSiswaSelect").value;
+        const act = document.getElementById("adminActionType").value;
+        const notes = document.getElementById("adminNotes").value.trim();
+        if (!nisn) return alert("Pilih siswa!");
+        if (!notes) return alert("Catatan sidang wajib diisi!");
 
-        showGamePreloader("UPDATING CLOUD DATABASE...", (done) => {
-          setTimeout(() => {
-            alert(
-              `👑 AKSI SUPER ADMIN BERHASIL!\nTarget NISN: ${nisnSiswa}\nSistem telah memperbarui data rekapitulasi siswa!`,
-            );
-            document.getElementById("formAdminAction").reset();
-            document.getElementById("adminSiswaSelect").innerHTML =
-              `<option value="">-- Pilih Kelas Dulu --</option>`;
-            done();
-          }, 2000);
+        showGamePreloader("EXECUTING ADMIN OVERRIDE...", (done) => {
+          if (act === "RESET_FULL") {
+            const payload = {
+              action: "resetSiswa",
+              nisn: nisn,
+              notes: notes,
+            };
+
+            fetch(SCRIPT_URL, {
+              method: "POST",
+              mode: "no-cors",
+              headers: {
+                "Content-Type": "text/plain;charset=utf-8",
+              },
+              body: JSON.stringify(payload),
+            })
+              .then(() => {
+                done();
+                alert(
+                  `👑 PEMUTIHAN BERHASIL & TERSIMPAN KE CLOUD!\nTarget NISN: ${nisn}\nHP dikembalikan ke 200, Shield 0, Total Pelanggaran & Prestasi 0.`,
+                );
+                document.getElementById("formAdminAction").reset();
+                document.getElementById("adminSiswaSelect").innerHTML =
+                  `<option value="">-- Pilih Kelas Dulu --</option>`;
+
+                // Refresh data lokal supaya tabel rekap ikut terupdate
+                loadMasterSiswaFromCloud();
+              })
+              .catch((err) => {
+                done();
+                console.error(err);
+                alert("Gagal mengeksekusi reset ke cloud database.");
+              });
+          } else {
+            // Untuk aksi manual lain jika nanti dibutuhkan
+            setTimeout(() => {
+              done();
+              alert(`👑 AKSI BERHASIL DIEKSEKUSI PADA NISN: ${nisn}`);
+              document.getElementById("formAdminAction").reset();
+              document.getElementById("adminSiswaSelect").innerHTML =
+                `<option value="">-- Pilih Kelas Dulu --</option>`;
+            }, 1000);
+          }
         });
       }
 
       function handleCetakKategoriChange() {
         const kat = document.getElementById("cetakKategori").value;
-        const boxKelas = document.getElementById("boxCetakKelas");
-        const boxSiswa = document.getElementById("boxCetakSiswa");
-
-        boxKelas.classList.add("hidden");
-        boxSiswa.classList.add("hidden");
-
-        if (kat === "kelas") boxKelas.classList.remove("hidden");
-        if (kat === "siswa") boxSiswa.classList.remove("hidden");
+        document
+          .getElementById("boxCetakKelas")
+          .classList.toggle("hidden", kat !== "kelas");
+        document
+          .getElementById("boxCetakSiswa")
+          .classList.toggle("hidden", kat !== "siswa");
       }
-
       function filterPilihanSiswaCetak() {
-        const keyword = document.getElementById("searchSiswaInput")
+        const kw = document.getElementById("searchSiswaInput")
           ? document.getElementById("searchSiswaInput").value.toLowerCase()
           : "";
-        const selectEl = document.getElementById("cetakSiswaSelect");
-        if (!selectEl) return;
-        selectEl.innerHTML = "";
-
-        const matchedSiswa = masterDataSiswa.filter(
+        const sel = document.getElementById("cetakSiswaSelect");
+        if (!sel) return;
+        sel.innerHTML = "";
+        const m = masterDataSiswa.filter(
           (s) =>
-            s.nama.toLowerCase().includes(keyword) ||
-            s.kelas.toLowerCase().includes(keyword),
+            s.nama.toLowerCase().includes(kw) ||
+            s.kelas.toLowerCase().includes(kw),
         );
-        if (matchedSiswa.length === 0) {
-          selectEl.innerHTML = `<option value="">-- Siswa tidak ditemukan --</option>`;
-          return;
-        }
-        matchedSiswa.forEach((s) => {
-          const opt = document.createElement("option");
-          opt.value = s.nisn;
-          opt.innerText = `${s.nama} (${s.kelas})`;
-          selectEl.appendChild(opt);
-        });
+        m.forEach(
+          (s) =>
+            (sel.innerHTML += `<option value="${s.nisn}">${s.nama} (${s.kelas})</option>`),
+        );
       }
 
       function prosesCetakLaporanWithLoading() {
-        showGamePreloader("GENERATING REPORT DOCUMENT...", (done) => {
+        const kategori = document.getElementById("cetakKategori").value;
+        let dataToExport = [];
+        let filename = "Laporan_Tatib_SMK_Wiraguna.csv";
+
+        if (kategori === "semua") {
+          dataToExport = masterDataSiswa;
+          filename = "Laporan_Semua_Siswa.csv";
+        } else if (kategori === "kelas") {
+          const kelasDipilih =
+            document.getElementById("cetakKelasSelect").value;
+          dataToExport = masterDataSiswa.filter(
+            (s) => s.kelas === kelasDipilih,
+          );
+          filename = `Laporan_Kelas_${kelasDipilih.replace(/\s+/g, "_")}.csv`;
+        } else if (kategori === "siswa") {
+          const nisnDipilih = document.getElementById("cetakSiswaSelect").value;
+          const siswaDitemukan = masterDataSiswa.find(
+            (s) => s.nisn === nisnDipilih,
+          );
+          if (!siswaDitemukan) return alert("Pilih siswa terlebih dahulu!");
+          dataToExport = [siswaDitemukan];
+          filename = `Laporan_Siswa_${siswaDitemukan.nama.replace(/\s+/g, "_")}.csv`;
+        }
+
+        if (dataToExport.length === 0) {
+          return alert("Tidak ada data untuk diekspor!");
+        }
+
+        showGamePreloader("GENERATING REPORT...", (done) => {
           setTimeout(() => {
-            const kat = document.getElementById("cetakKategori").value;
-            if (kat === "semua") {
-              alert(
-                "🖨️ Laporan Rekapitulasi Keseluruhan Sekolah berhasil diunduh (Google Sheets)!",
-              );
-            } else if (kat === "kelas") {
-              alert(
-                `🖨️ Laporan Rekapitulasi Kelas ${document.getElementById("cetakKelasSelect").value} berhasil diunduh!`,
-              );
-            } else {
-              const selectedNisn =
-                document.getElementById("cetakSiswaSelect").value;
-              if (!selectedNisn) {
-                alert("Pilih siswa terlebih dahulu dari kolom pencarian!");
-                done();
-                return;
-              }
-              alert(
-                `🖨️ Dokumen Laporan Detail Siswa (NISN: ${selectedNisn}) berhasil diunduh!`,
-              );
-            }
+            // Buat isi file berformat CSV yang kompatibel dengan Excel
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent +=
+              "NISN,Nama Siswa,Kelas,Jenis Kelamin,HP,Shield,Total Prestasi,Total Pelanggaran\r\n";
+
+            dataToExport.forEach((s) => {
+              let row = `"${s.nisn}","${s.nama}","${s.kelas}","${s.jk || "-"}","${s.hp}","${s.shield}","${s.totalPrestasi}","${s.totalPelanggaran}"`;
+              csvContent += row + "\r\n";
+            });
+
+            // Trigger otomatis download file di browser
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
             done();
-          }, 2000);
+            alert(
+              "🖨️ Laporan Berhasil Diunduh! Silakan buka file dengan Microsoft Excel.",
+            );
+          }, 1000);
         });
       }
 
+      // PAPAN QUEST RENDER
       function renderQuestUI(tipe) {
         const btnPres = document.getElementById("tabQuestPrestasi");
         const btnPelang = document.getElementById("tabQuestPelanggaran");
         const container = document.getElementById("questContainerUI");
 
         if (tipe === "prestasi") {
+          btnPres.className = "";
           btnPres.style.background = "#3498db";
           btnPres.style.color = "white";
-          btnPres.className = "";
+          btnPelang.className = "btn-outline";
           btnPelang.style.background = "transparent";
           btnPelang.style.color = "#e74c3c";
-          btnPelang.className = "btn-outline";
-        } else {
-          btnPelang.style.background = "#e74c3c";
-          btnPelang.style.color = "white";
-          btnPelang.className = "";
-          btnPres.style.background = "transparent";
-          btnPres.style.color = "#3498db";
-          btnPres.className = "btn-outline";
-        }
 
-        const data = questDatabase[tipe];
-        let html = "";
-
-        data.forEach((kategori, idx) => {
-          html += `
-            <div class="accordion">
-              <div class="accordion-header" onclick="toggleAccordion(this)">
-                <span>${tipe === "prestasi" ? "⭐" : "⚠️"} Kategori ${kategori.level}</span>
-                <span>▼</span>
-              </div>
-              <div class="accordion-body ${idx === 0 ? "active" : ""}">
-          `;
-          kategori.items.forEach((item) => {
-            const badgeClass =
-              tipe === "prestasi" ? "badge-shield" : "badge-hp";
-            html += `
-                <div class="q-item">
-                  <span style="flex-grow:1; padding-right:10px;">${item.t}</span>
-                  <span class="${badgeClass}">${item.p}</span>
-                </div>
-            `;
+          let html = `<div class="accordion">
+                        <div class="accordion-header" onclick="toggleAccordion(this)"><span>⭐ Daftar Penghargaan (Reward)</span><span>▼</span></div>
+                        <div class="accordion-body active">`;
+          dataPilihan.Prestasi.forEach((item) => {
+            html += `<div class="q-item"><span>${item.t}</span> <span class="badge-shield">+${item.p}</span></div>`;
           });
           html += `</div></div>`;
-        });
 
-        html += `
-          <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #cbd5e1; margin-bottom: -4px;">
-            <span style="font-size: 9px; color: #94a3b8; font-style: italic;">kamu mungkin bisa menemukan sesuatu yang menarik di web ini!</span>
-          </div>
-        `;
+          html += `
+            <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #cbd5e1; margin-bottom: -4px;">
+              <span style="font-size: 9px; color: #94a3b8; font-style: italic;">kamu mungkin bisa menemukan sesuatu yang menarik di web ini!</span>
+            </div>
+          `;
+          container.innerHTML = html;
+        } else {
+          btnPelang.className = "";
+          btnPelang.style.background = "#e74c3c";
+          btnPelang.style.color = "white";
+          btnPres.className = "btn-outline";
+          btnPres.style.background = "transparent";
+          btnPres.style.color = "#3498db";
 
-        container.innerHTML = html;
+          let html = "";
+          ["Ringan", "Sedang", "Berat"].forEach((k, idx) => {
+            html += `<div class="accordion">
+                        <div class="accordion-header" onclick="toggleAccordion(this)"><span>⚠️ Pelanggaran ${k}</span><span>▼</span></div>
+                        <div class="accordion-body ${idx === 0 ? "active" : ""}">`;
+            dataPilihan.Pelanggaran[k].forEach((item) => {
+              html += `<div class="q-item"><span>${item.t}</span> <span class="badge-hp">-${item.p}</span></div>`;
+            });
+            html += `</div></div>`;
+          });
+
+          html += `
+            <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #cbd5e1; margin-bottom: -4px;">
+              <span style="font-size: 9px; color: #94a3b8; font-style: italic;">kamu mungkin bisa menemukan sesuatu yang menarik di web ini!</span>
+            </div>
+          `;
+          container.innerHTML = html;
+        }
       }
 
       function toggleAccordion(header) {
@@ -2466,47 +2770,11 @@
         if (body.classList.contains("active")) {
           body.classList.remove("active");
         } else {
-          const parent = header.parentElement.parentElement;
-          parent
+          header.parentElement.parentElement
             .querySelectorAll(".accordion-body")
             .forEach((b) => b.classList.remove("active"));
           body.classList.add("active");
         }
-      }
-
-      // --- EASTER EGG: TAHAN LOGO 10 DETIK ---
-      let logoTimer = null;
-
-      document.addEventListener("DOMContentLoaded", () => {
-        const logoElement = document.querySelector(".logo");
-        if (logoElement) {
-          logoElement.addEventListener("touchstart", (e) => {
-            logoTimer = setTimeout(() => {
-              triggerSecretCoin();
-            }, 10000);
-          });
-          logoElement.addEventListener("touchend", () => {
-            if (logoTimer) clearTimeout(logoTimer);
-          });
-
-          logoElement.addEventListener("mousedown", () => {
-            logoTimer = setTimeout(() => {
-              triggerSecretCoin();
-            }, 10000);
-          });
-          logoElement.addEventListener("mouseup", () => {
-            if (logoTimer) clearTimeout(logoTimer);
-          });
-        }
-      });
-
-      function triggerSecretCoin() {
-        const modalCoin = document.getElementById("secretCoinModal");
-        modalCoin.classList.remove("hidden");
-
-        setTimeout(() => {
-          modalCoin.classList.add("hidden");
-        }, 5000);
       }
     </script>
   </body>
