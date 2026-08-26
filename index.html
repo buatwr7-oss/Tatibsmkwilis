@@ -1031,7 +1031,7 @@
           <div class="rpg-top-section">
             <div class="rpg-avatar-box" style="padding: 0; overflow: hidden">
               <img
-                src="assets/foto_siswa/avatar.png"
+                src="assets/foto_siswa/avatar.webp"
                 alt="Avatar"
                 style="
                   width: 100%;
@@ -1039,7 +1039,7 @@
                   object-fit: cover;
                   border-radius: 4px;
                 "
-                onerror="this.src = 'assets/foto_siswa/avatar.png'"
+                onerror="this.src = 'assets/foto_siswa/avatar.webp'"
               />
             </div>
             <div class="rpg-info-box">
@@ -1729,12 +1729,24 @@
       // MASTER DATA SISWA
       let masterDataSiswa = [];
 
+      // FUNGSI MEMUAT DATA DENGAN SISTEM CACHING (SESSIONSTORAGE)
       function loadMasterSiswaFromCloud(callback) {
+        const cachedData = sessionStorage.getItem("master_siswa_cache");
+        if (cachedData) {
+          masterDataSiswa = JSON.parse(cachedData);
+          if (callback) callback();
+          return;
+        }
+
         fetch(`${SCRIPT_URL}?action=getAllSiswa`)
           .then((res) => res.json())
           .then((res) => {
             if (res.status === "success") {
               masterDataSiswa = res.data;
+              sessionStorage.setItem(
+                "master_siswa_cache",
+                JSON.stringify(res.data),
+              );
             }
             if (callback) callback();
           })
@@ -2228,9 +2240,9 @@
                 const avatarImg = document.querySelector(".rpg-avatar-box img");
                 if (avatarImg) {
                   if (siswa.jk && siswa.jk.toUpperCase() === "P") {
-                    avatarImg.src = "assets/foto_siswa/avatar_p.png";
+                    avatarImg.src = "assets/foto_siswa/avatar_p.webp";
                   } else {
-                    avatarImg.src = "assets/foto_siswa/avatar_l.png";
+                    avatarImg.src = "assets/foto_siswa/avatar_l.webp";
                   }
                 }
 
@@ -2509,7 +2521,7 @@
         document.getElementById("modalKonfirmasi").classList.add("hidden");
       }
 
-      // SIMPAN POIN KE CLOUD DATABASE
+      // SIMPAN POIN KE CLOUD DATABASE DENGAN PEMBERSIHAN CACHE
       function eksekusiSimpanWithLoading() {
         tutupModal();
         const selectedRadio = document.querySelector(
@@ -2559,6 +2571,9 @@
           })
             .then(() => {
               done();
+              // Hapus cache agar data terbaru ditarik ulang dari cloud pada sesi berikutnya
+              sessionStorage.removeItem("master_siswa_cache");
+
               alert(
                 "✅ Data Poin berhasil dicatat dan disinkronkan ke Database!",
               );
@@ -2731,6 +2746,9 @@
             })
               .then(() => {
                 done();
+                // Hapus cache agar data terbaru ditarik ulang dari cloud
+                sessionStorage.removeItem("master_siswa_cache");
+
                 alert(
                   `👑 PEMUTIHAN BERHASIL & TERSIMPAN KE CLOUD!\nTarget NISN: ${nisn}\nHP dikembalikan ke 200, Shield 0, Total Pelanggaran & Prestasi 0.`,
                 );
