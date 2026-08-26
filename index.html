@@ -1,0 +1,3091 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Tatib SMK Wiraguna 🛡️</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Menghubungkan Web App Manifest -->
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="logo-512.png" />
+    <link rel="icon" type="image/png" href="logo.ico" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Poppins", sans-serif;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(
+          135deg,
+          #1e3c72 0%,
+          #2a5298 50%,
+          #f1c40f 100%
+        );
+        background-size: 400% 400%;
+        animation: gradientMove 15s ease infinite;
+        padding: 15px;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      @keyframes gradientMove {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      .particles-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .particle {
+        position: absolute;
+        display: block;
+        pointer-events: none;
+        background: rgba(255, 215, 0, 0.7);
+        border-radius: 50%;
+        box-shadow: 0 0 8px rgba(255, 215, 0, 0.9);
+        animation: floatUp 12s linear infinite;
+        bottom: -20px;
+      }
+      .particle:nth-child(1) {
+        left: 10%;
+        width: 5px;
+        height: 5px;
+        animation-duration: 8s;
+        animation-delay: 0s;
+      }
+      .particle:nth-child(2) {
+        left: 25%;
+        width: 8px;
+        height: 8px;
+        animation-duration: 12s;
+        animation-delay: 2s;
+      }
+      .particle:nth-child(3) {
+        left: 40%;
+        width: 4px;
+        height: 4px;
+        animation-duration: 10s;
+        animation-delay: 4s;
+      }
+      .particle:nth-child(4) {
+        left: 60%;
+        width: 7px;
+        height: 7px;
+        animation-duration: 14s;
+        animation-delay: 1s;
+      }
+      .particle:nth-child(5) {
+        left: 75%;
+        width: 5px;
+        height: 5px;
+        animation-duration: 9s;
+        animation-delay: 3s;
+      }
+      .particle:nth-child(6) {
+        left: 90%;
+        width: 6px;
+        height: 6px;
+        animation-duration: 11s;
+        animation-delay: 5s;
+      }
+
+      @keyframes floatUp {
+        0% {
+          transform: translateY(0) rotate(0deg);
+          opacity: 0;
+        }
+        20% {
+          opacity: 0.8;
+        }
+        80% {
+          opacity: 0.8;
+        }
+        100% {
+          transform: translateY(-100vh) rotate(360deg);
+          opacity: 0;
+        }
+      }
+
+      .card {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 25px 20px;
+        border-radius: 25px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        width: 100%;
+        max-width: 480px;
+        backdrop-filter: blur(15px);
+        position: relative;
+        z-index: 2;
+        border: 2px solid rgba(255, 215, 0, 0.4);
+        display: flex;
+        flex-direction: column;
+      }
+      .text-center {
+        text-align: center;
+      }
+      .logo {
+        width: 85px;
+        height: 85px;
+        margin: 0 auto 10px auto;
+        display: block;
+        object-fit: contain;
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
+        cursor: pointer;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+        pointer-events: auto;
+      }
+      h2 {
+        color: #1e3c72;
+        margin-bottom: 3px;
+        font-size: 19px;
+        font-weight: 700;
+        line-height: 1.3;
+      }
+
+      .header-app {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid rgba(30, 60, 114, 0.15);
+      }
+      .header-app .user-info h3 {
+        font-size: 14px;
+        color: #1e3c72;
+        margin: 0;
+      }
+      .header-app .user-info p {
+        font-size: 11px;
+        color: #b7950b;
+        font-weight: 600;
+        margin: 0;
+      }
+
+      .input-box {
+        margin-bottom: 12px;
+        text-align: left;
+      }
+      .row-group {
+        display: flex;
+        gap: 8px;
+      }
+      .row-group .input-box {
+        flex: 1;
+      }
+
+      .password-container {
+        position: relative;
+      }
+      .eye-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #666;
+        font-size: 16px;
+        user-select: none;
+      }
+
+      label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        color: #444;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 11px 13px;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        outline: none;
+        font-size: 13px;
+        background: #fff;
+        transition: 0.3s;
+      }
+      input[type="password"] {
+        padding-right: 40px;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: #1e3c72;
+        box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.15);
+      }
+
+      .checkbox-container {
+        max-height: 120px;
+        overflow-y: auto;
+        border: 2px solid #eee;
+        border-radius: 12px;
+        padding: 8px 12px;
+        background: #fff;
+      }
+      .checkbox-item {
+        display: flex;
+        align-items: center;
+        font-size: 12px;
+        padding: 4px 0;
+        color: #444;
+      }
+      .checkbox-item input {
+        width: auto;
+        margin-right: 8px;
+      }
+
+      .options-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 5px;
+      }
+      .option-item {
+        display: flex;
+        align-items: center;
+        background: #fff;
+        border: 2px solid #eee;
+        padding: 10px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: 0.2s;
+        font-size: 11px;
+        color: #444;
+        line-height: 1.4;
+      }
+      .option-item input[type="radio"] {
+        width: auto;
+        margin-right: 10px;
+        accent-color: #1e3c72;
+        flex-shrink: 0;
+      }
+      .option-item:hover {
+        border-color: #1e3c72;
+        background: rgba(30, 60, 114, 0.05);
+      }
+
+      button {
+        width: 100%;
+        padding: 12px;
+        background: #1e3c72;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.3s;
+        margin-top: 10px;
+        box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
+      }
+      button:active {
+        transform: scale(0.98);
+        background: #162b52;
+      }
+      .btn-outline {
+        background: transparent;
+        color: #1e3c72;
+        border: 2px solid #1e3c72;
+        box-shadow: none;
+      }
+      .btn-logout {
+        width: auto;
+        padding: 6px 12px;
+        font-size: 11px;
+        background: #e74c3c;
+        margin-top: 0;
+        box-shadow: none;
+        color: white;
+        border: none;
+      }
+      .btn-danger {
+        background: #e74c3c;
+        box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+      }
+
+      #pesanEror {
+        color: #e74c3c;
+        font-size: 13px;
+        margin-top: 15px;
+        display: none;
+        font-weight: 600;
+      }
+      .hidden {
+        display: none !important;
+      }
+
+      /* --- STYLE EASTER EGG MODAL --- */
+      .easter-egg-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(8, 12, 24, 0.85);
+        backdrop-filter: blur(8px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 99999;
+        padding: 20px;
+        animation: fadeInModal 0.3s ease;
+      }
+      @keyframes fadeInModal {
+        from {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      .easter-egg-box {
+        background: #1a2536;
+        border: 3px solid #f1c40f;
+        border-radius: 20px;
+        padding: 25px 20px;
+        width: 100%;
+        max-width: 420px;
+        text-align: center;
+        color: #fff;
+        box-shadow:
+          0 0 30px rgba(241, 196, 15, 0.4),
+          inset 0 0 15px rgba(0, 0, 0, 0.8);
+      }
+      .easter-egg-icon {
+        font-size: 50px;
+        margin-bottom: 10px;
+        filter: drop-shadow(0 0 10px #f1c40f);
+      }
+      .easter-egg-title {
+        color: #f1c40f;
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .easter-egg-desc {
+        font-size: 12px;
+        color: #ecf0f1;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        background: #111823;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid #34495e;
+        text-align: left;
+      }
+
+      /* --- STYLE RPG CLASSIC PROFILE --- */
+      .rpg-card-container {
+        background: #1a2536;
+        border: 3px solid #f1c40f;
+        border-radius: 16px;
+        padding: 15px;
+        color: #fff;
+        text-align: left;
+        box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.6);
+        margin-top: 15px;
+      }
+      .rpg-top-section {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        border-bottom: 2px solid #2c3e50;
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+      }
+      .rpg-avatar-box {
+        width: 65px;
+        height: 65px;
+        background: #2c3e50;
+        border: 2px solid #f1c40f;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        flex-shrink: 0;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+      }
+      .rpg-info-box {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        overflow: hidden;
+      }
+      .rpg-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: #f1c40f;
+        text-transform: uppercase;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .rpg-class-lvl {
+        font-size: 11px;
+        color: #bdc3c7;
+        font-weight: 500;
+      }
+
+      .rpg-bar-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 12px;
+        background: #111823;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #34495e;
+      }
+      .rpg-bar-row {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .rpg-bar-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        font-weight: bold;
+      }
+      .rpg-bar-outer {
+        width: 100%;
+        background: #2c3e50;
+        height: 10px;
+        border-radius: 5px;
+        overflow: hidden;
+        position: relative;
+        border: 1px solid #1a2536;
+      }
+      .rpg-hp-fill {
+        height: 100%;
+        background: #2ecc71;
+        transition:
+          width 0.4s,
+          background-color 0.4s;
+      }
+      .rpg-shield-fill {
+        height: 100%;
+        background: #3498db;
+        transition: width 0.4s;
+      }
+
+      .rpg-status-banner {
+        background: #2c3e50;
+        border-left: 4px solid #f1c40f;
+        padding: 8px 10px;
+        border-radius: 0 6px 6px 0;
+        font-size: 11px;
+        margin-bottom: 10px;
+        line-height: 1.4;
+      }
+      .rpg-status-banner strong {
+        color: #f1c40f;
+        display: block;
+        margin-bottom: 2px;
+        font-size: 10px;
+        text-transform: uppercase;
+      }
+
+      .rpg-stats-mini {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+      .rpg-stat-item {
+        background: #111823;
+        border: 1px solid #34495e;
+        padding: 8px;
+        border-radius: 6px;
+        text-align: center;
+        font-size: 10px;
+      }
+
+      /* TABEL REKAPITULASI ADMIN */
+      .rekap-container {
+        margin-top: 10px;
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        padding: 10px;
+        text-align: left;
+      }
+      .rekap-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11px;
+        margin-top: 8px;
+      }
+      .rekap-table th,
+      .rekap-table td {
+        padding: 8px 6px;
+        border-bottom: 1px solid #eee;
+        text-align: left;
+      }
+      .rekap-table th {
+        background: #f8f9fa;
+        color: #1e3c72;
+        font-weight: 700;
+      }
+      .admin-nav {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+      .admin-nav button {
+        margin-top: 0;
+        padding: 8px 10px;
+        font-size: 11px;
+      }
+      .admin-tab-content {
+        width: 100%;
+      }
+
+      /* GAME PRELOADER */
+      .game-preloader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(8, 12, 24, 0.94);
+        backdrop-filter: blur(8px);
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+        transition: opacity 0.3s ease;
+      }
+      .loading-box-game {
+        width: 80%;
+        max-width: 320px;
+        text-align: center;
+      }
+      .loading-title-game {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #f1c40f;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        text-shadow: 0 0 8px rgba(241, 196, 15, 0.6);
+      }
+      .progress-bar-bg {
+        width: 100%;
+        height: 16px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(241, 196, 15, 0.5);
+        border-radius: 10px;
+        overflow: hidden;
+        padding: 2px;
+        box-shadow: 0 0 15px rgba(241, 196, 15, 0.2);
+      }
+      .progress-bar-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #f39c12, #f1c40f);
+        border-radius: 6px;
+        box-shadow: 0 0 10px #f1c40f;
+        transition: width 0.1s linear;
+      }
+      .loading-percent-game {
+        font-size: 14px;
+        font-weight: bold;
+        color: #fff;
+        margin-top: 8px;
+        letter-spacing: 1px;
+      }
+
+      /* MODAL */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 999;
+        padding: 20px;
+      }
+      .modal-box {
+        background: #fff;
+        padding: 20px;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 350px;
+        text-align: left;
+      }
+      .modal-box h4 {
+        margin-bottom: 10px;
+        color: #1e3c72;
+      }
+      .modal-detail {
+        font-size: 12px;
+        color: #555;
+        line-height: 1.6;
+        margin-bottom: 15px;
+      }
+
+      /* QUEST BOARD (TATIB) STYLES */
+      .quest-tabs {
+        display: flex;
+        gap: 5px;
+        margin-bottom: 10px;
+      }
+      .quest-tabs button {
+        margin-top: 0;
+        padding: 8px;
+        font-size: 11px;
+        flex: 1;
+        border: 2px solid transparent;
+      }
+      .accordion {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        overflow: hidden;
+        background: #fff;
+      }
+      .accordion-header {
+        padding: 10px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        background: #f8f9fa;
+        color: #1e3c72;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .accordion-header:hover {
+        background: #e2e8f0;
+      }
+      .accordion-body {
+        display: none;
+        padding: 0;
+        max-height: 250px;
+        overflow-y: auto;
+        background: #fff;
+      }
+      .accordion-body.active {
+        display: block;
+      }
+      .q-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        border-top: 1px solid #eee;
+        font-size: 10.5px;
+      }
+      .q-item:nth-child(even) {
+        background: #fafafa;
+      }
+      .badge-hp {
+        background: #e74c3c;
+        color: #fff;
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 10px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .badge-shield {
+        background: #3498db;
+        color: #fff;
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 10px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .quest-card-btn {
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+      }
+      .quest-card-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(52, 152, 219, 0.4);
+      }
+
+      /* CSS ANIMASI EASTER EGG KOIN EMAS */
+      @keyframes coinSpinSlow {
+        0% {
+          transform: scale(0.3) rotateY(0deg);
+          opacity: 0;
+        }
+        20% {
+          transform: scale(1.3) rotateY(360deg);
+          opacity: 1;
+        }
+        80% {
+          transform: scale(1) rotateY(1080deg);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(0.8) rotateY(1440deg);
+          opacity: 0;
+        }
+      }
+      .secret-coin-popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(6px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 99999;
+      }
+      .coin-icon {
+        font-size: 100px;
+        animation: coinSpinSlow 5s ease-in-out forwards;
+        filter: drop-shadow(0 0 25px #f1c40f);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- PRELOADER -->
+    <div id="gamePreloader" class="game-preloader hidden">
+      <div class="loading-box-game">
+        <div id="loadingTitleText" class="loading-title-game">
+          SYNCHRONIZING DATABASE...
+        </div>
+        <div class="progress-bar-bg">
+          <div id="progressBarFill" class="progress-bar-fill"></div>
+        </div>
+        <div id="loadingPercentText" class="loading-percent-game">0%</div>
+      </div>
+    </div>
+
+    <!-- EASTER EGG MODAL SPESIAL -->
+    <div id="easterEggModal" class="easter-egg-modal hidden">
+      <div class="easter-egg-box">
+        <div id="eggIcon" class="easter-egg-icon">🌟</div>
+        <h3 id="eggTitle" class="easter-egg-title">JUDUL ACHIEVEMENT</h3>
+        <div id="eggMessage" class="easter-egg-desc">
+          Isi pesan easter egg...
+        </div>
+        <button
+          onclick="tutupEasterEggModal()"
+          style="
+            margin-top: 0;
+            background: #f1c40f;
+            color: #1a2536;
+            font-weight: 700;
+          "
+        >
+          Lanjutkan ⚔️
+        </button>
+      </div>
+    </div>
+
+    <!-- KONTENER RAHASIA KOIN EMAS -->
+    <div id="secretCoinModal" class="secret-coin-popup hidden">
+      <div style="text-align: center">
+        <img
+          src="https://cdn-icons-png.flaticon.com/512/1490/1490853.png"
+          class="coin-icon"
+          style="width: 90px; height: 90px; object-fit: contain"
+        />
+        <h3
+          style="
+            color: #f1c40f;
+            margin-top: 15px;
+            font-size: 18px;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+            letter-spacing: 1px;
+          "
+        >
+          KAMU BERHASIL MENEMUKAN EASTER EGGS!
+        </h3>
+        <p style="color: #fff; font-size: 13px; margin-top: 5px">
+          "Ini salah satu dari beberapa easter eggs yang ada di web ini!"
+        </p>
+      </div>
+    </div>
+
+    <div class="particles-container">
+      <span class="particle"></span><span class="particle"></span>
+      <span class="particle"></span> <span class="particle"></span>
+      <span class="particle"></span><span class="particle"></span>
+    </div>
+
+    <!-- MENU UTAMA -->
+    <div
+      id="menuWrapper"
+      style="
+        width: 100%;
+        max-width: 480px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+        z-index: 2;
+      "
+    >
+      <div id="mainMenuCard" class="card text-center" style="width: 100%">
+        <img
+          src="logo.png"
+          alt="Logo SMK Wiraguna"
+          class="logo"
+          onerror="
+            this.src = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
+          "
+        />
+        <h2 style="margin-bottom: 0">TATA TERTIB</h2>
+        <h2 style="color: #1e3c72; margin-top: 0">SMK WIRAGUNA LIMBANGAN</h2>
+        <p
+          style="
+            font-size: 9px;
+            color: #b7950b;
+            margin-top: -2px;
+            margin-bottom: 15px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+          "
+        >
+          SISTEM MANAJEMEN KARAKTER & KEDISIPLINAN SISWA
+        </p>
+        <button onclick="bukaPortal('guru')">👨‍🏫 Portal Guru</button>
+        <button class="btn-outline" onclick="bukaPortal('siswa')">
+          👨‍🎓 Portal Siswa
+        </button>
+      </div>
+
+      <div
+        id="questTriggerCard"
+        class="card text-center quest-card-btn"
+        style="
+          width: 100%;
+          padding: 13px 20px;
+          cursor: pointer;
+          border-color: #3498db;
+          background: rgba(255, 255, 255, 0.95);
+        "
+        onclick="bukaPortal('quest')"
+      >
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+          "
+        >
+          <span style="font-size: 28px">📜</span>
+          <div style="text-align: left">
+            <h3
+              style="
+                font-size: 14px;
+                color: #1e3c72;
+                margin: 0;
+                font-weight: 700;
+              "
+            >
+              Papan Quest
+            </h3>
+            <p
+              style="font-size: 11px; color: #666; margin: 0; font-weight: 500"
+            >
+              Panduan poin kedisiplinan & prestasi sekolah.
+            </p>
+          </div>
+          <span style="font-size: 16px; color: #3498db; margin-left: auto"
+            >▶</span
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- HALAMAN LOGIN GURU -->
+    <div id="loginCard" class="card text-center hidden">
+      <img
+        src="logo.png"
+        alt="Logo SMK"
+        class="logo"
+        onerror="
+          this.src = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
+        "
+      />
+      <h2>Login Petugas</h2>
+      <form
+        id="formLogin"
+        onsubmit="
+          event.preventDefault();
+          login();
+        "
+      >
+        <div class="input-box">
+          <input
+            type="text"
+            id="namaGuruInput"
+            placeholder="Nama Guru / Pengguna"
+            required
+            autocomplete="off"
+          />
+        </div>
+        <div class="input-box password-container">
+          <input
+            type="password"
+            id="password"
+            placeholder="Password"
+            required
+          />
+          <span id="eyeIcon" class="eye-icon" onclick="togglePassword()"
+            >👁️</span
+          >
+        </div>
+        <button type="submit">Masuk Halaman</button>
+        <button type="button" class="btn-outline" onclick="kembaliKeMenu()">
+          Kembali
+        </button>
+      </form>
+      <p id="pesanEror">Nama atau Password salah!</p>
+    </div>
+
+    <!-- PORTAL SISWA -->
+    <div id="siswaCard" class="card hidden">
+      <div class="header-app">
+        <div class="user-info">
+          <h3>Portal Siswa</h3>
+          <p>Status Karakter & Kedisiplinan</p>
+        </div>
+        <button class="btn-logout" onclick="kembaliKeMenu()">Keluar</button>
+      </div>
+
+      <div class="input-box">
+        <label>NOMOR NISN *</label>
+        <input
+          type="text"
+          id="nisnSiswaInput"
+          inputmode="numeric"
+          placeholder="Ketik NISN Kamu"
+          required
+          autocomplete="off"
+        />
+      </div>
+      <button onclick="cariPoinSiswaWithLoading()">
+        Tampilkan Status Saya
+      </button>
+
+      <!-- KONTENER HASIL RPG PROFILE -->
+      <div id="hasilPoinSiswa" class="hidden">
+        <div class="rpg-card-container">
+          <div class="rpg-top-section">
+            <div class="rpg-avatar-box" style="padding: 0; overflow: hidden">
+              <img
+                src="assets/foto_siswa/avatar.webp"
+                alt="Avatar"
+                style="
+                  width: 100%;
+                  height: 100%;
+                  object-fit: cover;
+                  border-radius: 4px;
+                "
+                onerror="this.src = 'assets/foto_siswa/avatar.webp'"
+              />
+            </div>
+            <div class="rpg-info-box">
+              <div id="txtNamaSiswaHasil" class="rpg-name">-</div>
+              <div id="txtKelasSiswaHasil" class="rpg-class-lvl">-</div>
+              <!-- TIER RANK CONTAINER -->
+              <div id="txtTierRankContainer" style="margin-top: 1px"></div>
+            </div>
+          </div>
+
+          <div class="rpg-bar-group">
+            <div class="rpg-bar-row">
+              <div class="rpg-bar-meta">
+                <span style="color: #2ecc71">❤️ HEALTH POINT (HP)</span>
+                <span id="txtHpPercent" style="color: #2ecc71">200/200</span>
+              </div>
+              <div class="rpg-bar-outer">
+                <div
+                  id="barHpFill"
+                  class="rpg-hp-fill"
+                  style="width: 100%"
+                ></div>
+              </div>
+            </div>
+            <div class="rpg-bar-row" style="margin-top: 4px">
+              <div class="rpg-bar-meta">
+                <span style="color: #3498db">🛡️ SHIELD POINT (BONUS)</span>
+                <span id="txtShieldPercent" style="color: #3498db">0 Pts</span>
+              </div>
+              <div class="rpg-bar-outer">
+                <div
+                  id="barShieldFill"
+                  class="rpg-shield-fill"
+                  style="width: 0%"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BANNER STATUS PEMBINAAN HUKUM -->
+          <div id="rpgStatusBanner" class="rpg-status-banner">
+            <strong id="txtStatusKondisi">STATUS: NORMAL</strong>
+            <span id="txtStatusPenanganan" style="color: #ecf0f1"
+              >Tidak ada catatan pelanggaran.</span
+            >
+          </div>
+
+          <div class="rpg-stats-mini">
+            <div class="rpg-stat-item">
+              <span
+                style="
+                  color: #2ecc71;
+                  display: block;
+                  font-weight: bold;
+                  font-size: 14px;
+                "
+                id="txtCountPrestasi"
+                >0 Pts</span
+              >
+              <span
+                style="
+                  color: #95a5a6;
+                  display: block;
+                  font-size: 9px;
+                  margin-top: 2px;
+                "
+                >TOTAL PRESTASI</span
+              >
+            </div>
+            <div class="rpg-stat-item">
+              <span
+                style="
+                  color: #e74c3c;
+                  display: block;
+                  font-weight: bold;
+                  font-size: 14px;
+                "
+                id="txtCountPelanggaran"
+                >0 Pts</span
+              >
+              <span
+                style="
+                  color: #95a5a6;
+                  display: block;
+                  font-size: 9px;
+                  margin-top: 2px;
+                "
+                >TOTAL PELANGGARAN</span
+              >
+            </div>
+          </div>
+
+          <!-- RIWAYAT KEJADIAN & POIN -->
+          <div
+            class="history-container"
+            style="
+              margin-top: 15px;
+              background: #111823;
+              border: 1px solid #34495e;
+              border-radius: 8px;
+              padding: 10px;
+            "
+          >
+            <div
+              class="history-title"
+              style="
+                font-size: 11px;
+                color: #f1c40f;
+                margin-bottom: 8px;
+                font-weight: 700;
+                text-transform: uppercase;
+              "
+            >
+              📜 Riwayat Kejadian & Poin:
+            </div>
+            <div
+              id="historyListSiswa"
+              class="history-list"
+              style="
+                max-height: 140px;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+              "
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HALAMAN ENTRY GURU -->
+    <div id="entryCard" class="card hidden">
+      <div class="header-app">
+        <div class="user-info">
+          <h3 id="txtNamaGuru">Nama Guru</h3>
+          <p id="txtRoleGuru">Role Guru</p>
+        </div>
+        <button class="btn-logout" onclick="logout()">Keluar</button>
+      </div>
+
+      <form
+        id="formEntry"
+        onsubmit="
+          event.preventDefault();
+          konfirmasiSimpan();
+        "
+      >
+        <div class="row-group">
+          <div class="input-box" style="flex: 1.2">
+            <label>HARI *</label>
+            <select id="hari" required>
+              <option value="Senin">Senin</option>
+              <option value="Selasa">Selasa</option>
+              <option value="Rabu">Rabu</option>
+              <option value="Kamis">Kamis</option>
+              <option value="Jum'at">Jum'at</option>
+              <option value="Sabtu">Sabtu</option>
+            </select>
+          </div>
+          <div class="input-box" style="flex: 1.5">
+            <label>TANGGAL *</label>
+            <input type="date" id="tanggal" required />
+          </div>
+          <div class="input-box" style="flex: 1.1">
+            <label>JAM *</label>
+            <input type="time" id="jam" required />
+          </div>
+        </div>
+
+        <div class="row-group">
+          <div class="input-box">
+            <label>TEMPAT *</label>
+            <select id="tempat" required>
+              <option value="">-- Lokasi --</option>
+              <option value="Ruang Kelas">Ruang Kelas</option>
+              <option value="Lapangan">Lapangan</option>
+              <option value="Toilet">Toilet</option>
+              <option value="Masjid">Masjid</option>
+              <option value="Kantin">Kantin</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div class="input-box">
+            <label>KATEGORI *</label>
+            <select id="kategori" onchange="handleKategoriChange()" required>
+              <option value="Prestasi">🏆 Prestasi (+HP/Shield)</option>
+              <option value="Pelanggaran">⚠️ Pelanggaran (-HP)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="boxSubKategori" class="input-box hidden">
+          <label>TINGKAT PELANGGARAN *</label>
+          <select id="subKategori" onchange="renderOpsiPoin()"></select>
+        </div>
+
+        <div class="input-box">
+          <label>KELAS *</label>
+          <select id="kelas" onchange="updateEntrySiswaList()" required>
+            <option value="">-- Pilih Kelas --</option>
+            <option value="10 SMK">10 SMK</option>
+            <option value="11 SMK">11 SMK</option>
+            <option value="12 SMK">12 SMK</option>
+          </select>
+        </div>
+
+        <div class="input-box">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 4px;
+            "
+          >
+            <label style="margin: 0">TARGET SISWA *</label>
+            <span
+              style="
+                font-size: 10px;
+                color: #1e3c72;
+                cursor: pointer;
+                font-weight: bold;
+              "
+              onclick="toggleModeSiswa()"
+            >
+              🔄 <span id="txtModeSiswa">Mode: Banyak Siswa</span>
+            </span>
+          </div>
+          <select id="selectSingleSiswa" required class="hidden">
+            <option value="">-- Pilih Kelas Dulu --</option>
+          </select>
+          <div id="boxMultiSiswa" class="checkbox-container">
+            <span style="font-size: 11px; color: #888"
+              >Pilih kelas dulu...</span
+            >
+          </div>
+        </div>
+
+        <div class="input-box" style="margin-top: 10px">
+          <label id="lblDetailOpsi">DETAIL DAMPAK POIN *</label>
+          <div id="containerOpsi" class="options-container"></div>
+        </div>
+        <button type="submit" id="btnSubmit">Proses Simpan Data</button>
+      </form>
+    </div>
+
+    <!-- HALAMAN SUPER ADMIN -->
+    <div id="adminCard" class="card hidden" style="max-width: 520px">
+      <div class="header-app">
+        <div class="user-info">
+          <h3 id="txtNamaAdmin">Ahmad Qabil</h3>
+          <p>Super Admin / BK</p>
+        </div>
+        <button class="btn-logout" onclick="logout()">Keluar</button>
+      </div>
+
+      <div class="admin-nav">
+        <button
+          id="navBtnRekap"
+          onclick="switchAdminTab('rekap')"
+          style="background: #1e3c72"
+        >
+          📊 Rekapitulasi
+        </button>
+        <button
+          id="navBtnKontrol"
+          onclick="switchAdminTab('kontrol')"
+          class="btn-outline"
+        >
+          👑 Kontrol Siswa
+        </button>
+        <button
+          id="navBtnCetak"
+          onclick="switchAdminTab('cetak')"
+          class="btn-outline"
+        >
+          🖨️ Cetak Laporan
+        </button>
+      </div>
+
+      <!-- TAB 1: REKAPITULASI -->
+      <div id="adminTabRekap" class="admin-tab-content">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+          "
+        >
+          <h4 style="font-size: 12px; color: #1e3c72; margin: 0">
+            Data Terbaru Siswa
+          </h4>
+          <select
+            id="filterKelasRekap"
+            onchange="renderTabelRekap()"
+            style="width: auto; padding: 4px 8px; font-size: 10px"
+          >
+            <option value="SEMUA">Semua Kelas</option>
+            <option value="10 SMK">10 SMK</option>
+            <option value="11 SMK">11 SMK</option>
+            <option value="12 SMK">12 SMK</option>
+          </select>
+        </div>
+
+        <div
+          style="
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #e2e8f0;
+          "
+        >
+          <canvas
+            id="statistikChart"
+            style="max-height: 160px; width: 100%"
+          ></canvas>
+        </div>
+
+        <div
+          class="rekap-container"
+          style="max-height: 380px; overflow-y: auto"
+        >
+          <table class="rekap-table">
+            <thead>
+              <tr>
+                <th>Nama Siswa</th>
+                <th>Kelas</th>
+                <th>HP/Shield</th>
+                <th>Total Pelanggaran</th>
+              </tr>
+            </thead>
+            <tbody id="tabelRekapBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 2: KONTROL SISWA -->
+      <div id="adminTabKontrol" class="admin-tab-content hidden">
+        <form
+          id="formAdminAction"
+          onsubmit="
+            event.preventDefault();
+            prosesActionAdminWithLoading();
+          "
+        >
+          <div class="row-group">
+            <div class="input-box">
+              <label>KELAS *</label>
+              <select
+                id="adminKelasSelect"
+                onchange="handleAdminKelasChange()"
+                required
+              >
+                <option value="">-- Pilih Kelas --</option>
+                <option value="10 SMK">10 SMK</option>
+                <option value="11 SMK">11 SMK</option>
+                <option value="12 SMK">12 SMK</option>
+              </select>
+            </div>
+            <div class="input-box">
+              <label>SISWA TARGET *</label>
+              <select id="adminSiswaSelect" required>
+                <option value="">-- Pilih Kelas Dulu --</option>
+              </select>
+            </div>
+          </div>
+          <div class="row-group">
+            <div class="input-box">
+              <label>TINDAKAN SAKTI *</label>
+              <select id="adminActionType" required>
+                <option value="RESET_FULL">
+                  🔄 RESET PENUH (Pemutihan 100%)
+                </option>
+                <option value="ADD_CUSTOM">➕ Tambah Poin HP Manual</option>
+                <option value="SUBTRACT_CUSTOM">
+                  ➖ Potong Poin HP Manual
+                </option>
+              </select>
+            </div>
+            <div class="input-box">
+              <label>CATATAN SIDANG *</label>
+              <input
+                type="text"
+                id="adminNotes"
+                placeholder="Contoh: Pemutihan akhir semester"
+                required
+              />
+            </div>
+          </div>
+          <button type="submit" class="btn-danger" style="margin-top: 5px">
+            Eksekusi Keputusan Admin
+          </button>
+          <p
+            style="
+              font-size: 10px;
+              color: #888;
+              text-align: center;
+              margin-top: 10px;
+            "
+          >
+            *Tindakan Reset Penuh akan mengembalikan HP menjadi 200, Shield 0,
+            dan menghapus seluruh catatan.
+          </p>
+        </form>
+      </div>
+
+      <!-- TAB 3: CETAK LAPORAN -->
+      <div id="adminTabCetak" class="admin-tab-content hidden">
+        <div
+          style="
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+          "
+        >
+          <h4 style="font-size: 13px; color: #1e3c72; margin-bottom: 10px">
+            🖨️ Ekspor Laporan Kedisiplinan
+          </h4>
+          <div class="input-box">
+            <label>KATEGORI CETAK</label>
+            <select id="cetakKategori" onchange="handleCetakKategoriChange()">
+              <option value="semua">Semua Siswa (Rekap Keseluruhan)</option>
+              <option value="kelas">Berdasarkan Kelas Tertentu</option>
+              <option value="siswa">Berdasarkan Siswa Perorangan</option>
+            </select>
+          </div>
+          <div id="boxCetakKelas" class="input-box hidden">
+            <label>PILIH KELAS</label>
+            <select id="cetakKelasSelect">
+              <option value="10 SMK">10 SMK</option>
+              <option value="11 SMK">11 SMK</option>
+              <option value="12 SMK">12 SMK</option>
+            </select>
+          </div>
+          <div id="boxCetakSiswa" class="input-box hidden">
+            <label>CARI NAMA SISWA</label>
+            <input
+              type="text"
+              id="searchSiswaInput"
+              placeholder="Ketik nama siswa..."
+              oninput="filterPilihanSiswaCetak()"
+              style="margin-bottom: 6px"
+            />
+            <select
+              id="cetakSiswaSelect"
+              size="3"
+              style="height: 80px"
+            ></select>
+          </div>
+          <button
+            type="button"
+            onclick="prosesCetakLaporanWithLoading()"
+            style="margin-top: 10px"
+          >
+            Download Dokumen Laporan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HALAMAN PAPAN QUEST -->
+    <div
+      id="questBoardCard"
+      class="card hidden"
+      style="max-width: 550px; max-height: 90vh"
+    >
+      <div class="header-app" style="margin-bottom: 5px">
+        <div class="user-info">
+          <h3>📜 Papan Quest</h3>
+          <p>Sistem Poin Prestasi & Pelanggaran</p>
+        </div>
+        <button class="btn-logout" onclick="kembaliKeMenu()">Tutup</button>
+      </div>
+
+      <div class="quest-tabs">
+        <button
+          id="tabQuestPrestasi"
+          onclick="renderQuestUI('prestasi')"
+          style="background: #3498db; color: white"
+        >
+          🛡️ Prestasi (+Poin)
+        </button>
+        <button
+          id="tabQuestPelanggaran"
+          onclick="renderQuestUI('pelanggaran')"
+          class="btn-outline"
+          style="color: #e74c3c; border-color: #e74c3c"
+        >
+          ⚠️ Pelanggaran (-Poin)
+        </button>
+      </div>
+
+      <div
+        id="questContainerUI"
+        style="
+          flex-grow: 1;
+          overflow-y: auto;
+          text-align: left;
+          padding-right: 5px;
+          margin-top: 5px;
+        "
+      ></div>
+    </div>
+
+    <!-- MODAL KONFIRMASI -->
+    <div id="modalKonfirmasi" class="modal-overlay hidden">
+      <div class="modal-box">
+        <h4>📌 Konfirmasi Input Poin</h4>
+        <div id="modalDetailContent" class="modal-detail"></div>
+        <button onclick="eksekusiSimpanWithLoading()">Ya, Simpan Data</button>
+        <button
+          type="button"
+          class="btn-outline"
+          onclick="tutupModal()"
+          style="margin-top: 8px"
+        >
+          Batal
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL ERROR / NISN TIDAK DITEMUKAN -->
+    <!-- MODAL ERROR NISN TIDAK DITEMUKAN (GAYA RPG) -->
+    <div
+      id="modalErrorSiswa"
+      class="hidden"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(11, 19, 30, 0.85);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        padding: 20px;
+      "
+    >
+      <div
+        style="
+          background: #111b2b;
+          border: 2.5px solid #f1c40f;
+          border-radius: 16px;
+          padding: 24px 20px;
+          width: 100%;
+          max-width: 340px;
+          text-align: center;
+          box-shadow: 0 0 25px rgba(241, 196, 15, 0.35);
+          position: relative;
+          font-family:
+            &quot;Segoe UI&quot;, Tahoma, Geneva, Verdana, sans-serif;
+        "
+      >
+        <!-- Icon Peringatan -->
+        <div style="font-size: 38px; margin-bottom: 8px">⚠️</div>
+
+        <!-- Judul Modal -->
+        <h3
+          style="
+            color: #f1c40f;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+          "
+        >
+          NISN Tidak Ditemukan
+        </h3>
+
+        <!-- Kotak Deskripsi Pesan -->
+        <div
+          style="
+            background: #1a2638;
+            border: 1px solid #2c3e50;
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: #ecf0f1;
+            font-size: 11.5px;
+            line-height: 1.5;
+            margin-bottom: 18px;
+            text-align: center;
+          "
+        >
+          Maaf, nomor NISN yang kamu masukkan tidak terdaftar di database cloud
+          SMK Wiraguna. <br />
+          Pastikan kembali nomor yang kamu ketik sudah benar atau hubungi
+          petugas sekolah! 📚
+        </div>
+
+        <!-- Tombol Tutup / Kembali -->
+        <button
+          onclick="
+            document.getElementById('modalErrorSiswa').classList.add('hidden')
+          "
+          style="
+            background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%);
+            color: #111b2b;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 10px rgba(241, 196, 15, 0.3);
+            transition: all 0.2s ease;
+          "
+        >
+          Coba Lagi ⚔️
+        </button>
+      </div>
+    </div>
+
+    <!-- JAVASCRIPT UTAMA -->
+    <script>
+      console.log(
+        "%cTatib SMK Wiraguna - Logic V3 Powered by System",
+        "color: #f1c40f; font-weight: bold; background: #1e3c72; padding: 10px; border-radius: 5px;",
+      );
+
+      const SCRIPT_URL =
+        "https://script.google.com/macros/s/AKfycbxqfVUxa7o_4CmYN4AB8shVK1Im-KZcgs4csQqp9LUh8IsvcP_KBepsGnQa9b70HIdl/exec";
+
+      const pageLoadTime = Date.now();
+
+      let currentRole = "";
+      let isMultiMode = true;
+
+      // DATA GURU LENGKAP
+      const daftarGuru = [
+        {
+          nama: "Neneng Teti Cahyani",
+          usernama: "nenengcahyani",
+          pass: "wiraguna123",
+          role: "Kesiswaan",
+        },
+        {
+          nama: "ADE YUNIATI",
+          usernama: "adeyuniati",
+          pass: "wiraguna124",
+          role: "Wali Kelas",
+        },
+        {
+          nama: "Aulia Rahmi Sanfitriani",
+          usernama: "auliarahmi",
+          pass: "wiraguna125",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Dhillah Karina",
+          usernama: "dhillahkarina",
+          pass: "wiraguna126",
+          role: "Kesiswaan",
+        },
+        {
+          nama: "Dian Asri Paturrohmah",
+          usernama: "dianasri",
+          pass: "wiraguna127",
+          role: "Wali Kelas",
+        },
+        {
+          nama: "Dian Herdiana",
+          usernama: "dianherdiana",
+          pass: "wiraguna128",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Eneng Resti Kulsum",
+          usernama: "restikulsum",
+          pass: "wiraguna129",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Iwan Setiawan",
+          usernama: "iwansetiawan",
+          pass: "wiraguna130",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Livia Amalia",
+          usernama: "liviaamalia",
+          pass: "wiraguna131",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Rinrin Suryanti",
+          usernama: "rinrinsuryanti",
+          pass: "wiraguna132",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Silma Salsabila",
+          usernama: "silmasalsabila",
+          pass: "wiraguna133",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Tanjung Lis Nurdian",
+          usernama: "tanjunglisnurdian",
+          pass: "wiraguna134",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Widi Triandiani",
+          usernama: "widitriandiani",
+          pass: "wiraguna135",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Wini Asiyah Nurwalifah",
+          usernama: "winiasiyah",
+          pass: "wiraguna136",
+          role: "Wali Kelas",
+        },
+        {
+          nama: "Yusuf Karisma",
+          usernama: "yusufkarisma",
+          pass: "wiraguna137",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Rismayanti",
+          usernama: "rismayanti",
+          pass: "wiraguna138",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Ahmad Qabil Jaelani",
+          usernama: "ahmadqabil",
+          pass: "wiraguna139",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Ahmad Jauhari",
+          usernama: "ahmadjauhari",
+          pass: "wiraguna140",
+          role: "Guru Mapel",
+        },
+        {
+          nama: "Super Admin",
+          usernama: "AdminS",
+          pass: "admins123",
+          role: "Super Admin",
+        },
+      ];
+
+      // MASTER DATA SISWA
+      let masterDataSiswa = [];
+
+      // FUNGSI MEMUAT DATA DENGAN SISTEM CACHING (SESSIONSTORAGE)
+      // FUNGSI MEMUAT DATA DARI FIREBASE FIRESTORE (SUPER CEPAT)
+      async function loadMasterSiswaFromCloud(callback) {
+        const cachedData = sessionStorage.getItem("master_siswa_cache");
+        if (cachedData) {
+          masterDataSiswa = JSON.parse(cachedData);
+          if (callback) callback();
+          return;
+        }
+
+        try {
+          const { collection, getDocs } = window.fbFirestore;
+          const querySnapshot = await getDocs(collection(window.db, "siswa"));
+
+          masterDataSiswa = [];
+          querySnapshot.forEach((doc) => {
+            masterDataSiswa.push(doc.data());
+          });
+
+          // Simpan ke sessionStorage agar akses berikutnya instan
+          sessionStorage.setItem(
+            "master_siswa_cache",
+            JSON.stringify(masterDataSiswa),
+          );
+
+          if (callback) callback();
+        } catch (err) {
+          console.error("Gagal memuat data siswa dari Firestore:", err);
+          alert(
+            "Gagal terhubung ke database Firestore. Periksa koneksi atau konfigurasi.",
+          );
+          if (callback) callback();
+        }
+      }
+
+      // KUMPULAN DATA POIN LENGKAP DARI KITAB SUCI
+      const dataPilihan = {
+        Prestasi: [
+          { t: "Juara tingkat Nasional", p: 30 },
+          { t: "Juara tingkat Provinsi", p: 25 },
+          { t: "Juara tingkat Kabupaten/Kota", p: 20 },
+          { t: "Juara tingkat Sekolah", p: 10 },
+          { t: "Menjadi Petugas Upacara terbaik", p: 5 },
+          { t: "Menjadi Penggerak Kebersihan perminggu", p: 5 },
+          { t: "Menjadi peserta didik teladan perminggu", p: 10 },
+          { t: "Tidak melakukan pelanggaran selama 1 semester", p: 20 },
+          { t: "Tidak melakukan pelanggaran selama 1 tahun", p: 40 },
+          { t: "Kehadiran 100% di semua pelajaran", p: 30 },
+          { t: "Aktif berpartisipasi dalam pembelajaran di kelas", p: 5 },
+          { t: "Menerapkan 5S (Senyum, Salam, Sapa, Sopan, Santun)", p: 5 },
+          { t: "Melaksanakan kegiatan pengabdian kepada masyarakat", p: 10 },
+          { t: "Menjadi imam shalat di masjid", p: 10 },
+          { t: "Mengumandangkan azan di masjid", p: 5 },
+        ],
+        Pelanggaran: {
+          Ringan: [
+            { t: "Terlambat datang ke sekolah", p: 5 },
+            { t: "Tidak memakai atribut lengkap", p: 5 },
+            { t: "Tidak memakai kartu identitas", p: 5 },
+            { t: "Seragam tidak sesuai ketentuan", p: 5 },
+            { t: "Tidak memakai sepatu", p: 5 },
+            { t: "Memainkan ponsel di jam pelajaran", p: 5 },
+            { t: "Rambut tidak rapi", p: 5 },
+            { t: "Kuku panjang/kotor", p: 5 },
+            { t: "Membuang sampah sembarangan", p: 5 },
+            { t: "Tidak mengikuti piket kelas", p: 10 },
+            { t: "Tidak membawa perlengkapan belajar", p: 5 },
+            { t: "Tidur saat pembelajaran", p: 5 },
+            { t: "Makan/minum saat pembelajaran tanpa izin", p: 5 },
+            { t: "Berbicara saat guru menjelaskan", p: 5 },
+            { t: "Keluar kelas tanpa izin", p: 10 },
+            { t: "Tidak mengikuti apel/upacara tanpa alasan", p: 10 },
+            { t: "Bercanda berlebihan saat pembelajaran", p: 5 },
+            { t: "Tidak menjaga kebersihan kelas", p: 10 },
+            { t: "Telat memasuki kelas tanpa izin", p: 10 },
+            { t: "Keluar lingkungan sekolah tanpa izin", p: 10 },
+            { t: "Tidak membawa alat shalat", p: 5 },
+            { t: "Memakai riasan berlebihan", p: 5 },
+            { t: "Tidak melakukan shalat Dhuha", p: 10 },
+            { t: "Tidak melakukan shalat Dzuhur", p: 10 },
+            { t: "Tidak melakukan shalat Ashar", p: 10 },
+            {
+              t: "Melakukan live streaming / bermain game setelah pukul 21.00",
+              p: 5,
+            },
+            { t: "Sebit alis", p: 5 },
+          ],
+          Sedang: [
+            { t: "Membolos 1 jam pelajaran", p: 25 },
+            { t: "Membawa aksesoris berlebihan", p: 25 },
+            { t: "Merokok di lingkungan sekolah", p: 40 },
+            { t: "Vape/Rokok elektrik", p: 40 },
+            { t: "Berkata kasar kepada teman", p: 30 },
+            { t: "Menghina teman", p: 30 },
+            { t: "Body shaming", p: 30 },
+            { t: "Mencoret meja/kursi", p: 30 },
+            { t: "Merusak tanaman", p: 25 },
+            { t: "Memalsukan tanda tangan", p: 50 },
+            { t: "Menyontek / Berlaku curang", p: 40 },
+            { t: "Membantu teman menyontek", p: 40 },
+            { t: "Mengganggu ketertiban kelas", p: 30 },
+            { t: "Mengunggah konten sekolah tanpa izin", p: 40 },
+            { t: "Tidak mengikuti pengajian Hari Kamis", p: 45 },
+          ],
+          Berat: [
+            { t: "Bullying verbal", p: 75 },
+            { t: "Cyberbullying", p: 100 },
+            { t: "Bullying fisik", p: 100 },
+            { t: "Perpeloncoan", p: 100 },
+            { t: "Pemalakan", p: 100 },
+            { t: "Perkelahian", p: 100 },
+            { t: "Membawa senjata tajam/berbahaya", p: 150 },
+            { t: "Mengancam guru/karyawan", p: 150 },
+            { t: "Mengancam teman", p: 100 },
+            { t: "Mencuri", p: 200 },
+            {
+              t: "Merusak fasilitas secara sengaja (termasuk denda penggantian)",
+              p: 100,
+            },
+            { t: "Pornografi", p: 200 },
+            { t: "Pelecehan seksual", p: 200 },
+            { t: "Minum Minuman keras", p: 200 },
+            { t: "Narkoba (rehabilitasi)", p: 200 },
+            { t: "Judi", p: 200 },
+            { t: "Pemalsuan dokumen sekolah", p: 200 },
+            { t: "Provokasi/hasutan yang menyebabkan kerusuhan", p: 200 },
+            { t: "Menyebarkan berita bohong yang merugikan sekolah", p: 100 },
+            { t: "Tindakan yang mencemarkan nama baik sekolah", p: 100 },
+            { t: "Tawuran", p: 150 },
+            { t: "Meninggalkan Shalat", p: 150 },
+          ],
+        },
+      };
+
+      // FUNGSI NAVIGASI TERPUSAT
+      function showScreen(screenId) {
+        document.getElementById("menuWrapper").classList.add("hidden");
+        document.getElementById("mainMenuCard").classList.add("hidden");
+        document.getElementById("questTriggerCard").classList.add("hidden");
+        document.getElementById("loginCard").classList.add("hidden");
+        document.getElementById("siswaCard").classList.add("hidden");
+        document.getElementById("entryCard").classList.add("hidden");
+        document.getElementById("adminCard").classList.add("hidden");
+        document.getElementById("questBoardCard").classList.add("hidden");
+
+        if (screenId === "menu") {
+          document.getElementById("menuWrapper").classList.remove("hidden");
+          document.getElementById("mainMenuCard").classList.remove("hidden");
+          document
+            .getElementById("questTriggerCard")
+            .classList.remove("hidden");
+        } else if (screenId === "login") {
+          document.getElementById("loginCard").classList.remove("hidden");
+        } else if (screenId === "siswa") {
+          document.getElementById("siswaCard").classList.remove("hidden");
+          document.getElementById("hasilPoinSiswa").classList.add("hidden");
+          document.getElementById("nisnSiswaInput").value = "";
+        } else if (screenId === "quest") {
+          document.getElementById("questBoardCard").classList.remove("hidden");
+          renderQuestUI("prestasi");
+        } else if (screenId === "entry") {
+          document.getElementById("entryCard").classList.remove("hidden");
+        } else if (screenId === "admin") {
+          document.getElementById("adminCard").classList.remove("hidden");
+        }
+      }
+
+      function showGamePreloader(customTitle, callback) {
+        const preloader = document.getElementById("gamePreloader");
+        document.getElementById("loadingTitleText").innerText = customTitle;
+        const fillEl = document.getElementById("progressBarFill");
+        const percentEl = document.getElementById("loadingPercentText");
+
+        preloader.classList.remove("hidden");
+        let currentPercent = 0;
+        fillEl.style.width = "0%";
+        percentEl.innerText = "0%";
+
+        let progressInterval = setInterval(() => {
+          if (currentPercent < 85) {
+            currentPercent += 15;
+            fillEl.style.width = currentPercent + "%";
+            percentEl.innerText = currentPercent + "%";
+          }
+        }, 80);
+
+        const finishLoading = () => {
+          clearInterval(progressInterval);
+          fillEl.style.width = "100%";
+          percentEl.innerText = "100%";
+          setTimeout(() => {
+            preloader.classList.add("hidden");
+          }, 300);
+        };
+        if (callback) callback(finishLoading);
+      }
+
+      function togglePassword() {
+        const pwd = document.getElementById("password");
+        pwd.type = pwd.type === "password" ? "text" : "password";
+      }
+
+      function bukaPortal(tipe) {
+        if (tipe === "guru") {
+          showScreen("login");
+        } else if (tipe === "siswa") {
+          showScreen("siswa");
+        } else if (tipe === "quest") {
+          showGamePreloader("LOADING KODE ETIK & TATIB...", (done) => {
+            setTimeout(() => {
+              showScreen("quest");
+              done();
+            }, 600);
+          });
+        }
+      }
+
+      function kembaliKeMenu() {
+        showScreen("menu");
+      }
+      function logout() {
+        showScreen("menu");
+      }
+
+      // EASTER EGG MODAL
+      function tampilkanEasterEggModal(icon, title, message) {
+        document.getElementById("eggIcon").innerText = icon;
+        document.getElementById("eggTitle").innerText = title;
+        document.getElementById("eggMessage").innerHTML = message;
+        document.getElementById("easterEggModal").classList.remove("hidden");
+      }
+      function tutupEasterEggModal() {
+        document.getElementById("easterEggModal").classList.add("hidden");
+        showScreen("menu");
+      }
+
+      let logoTimer = null;
+      document.addEventListener("DOMContentLoaded", () => {
+        const logoElement = document.querySelector(".logo");
+        if (logoElement) {
+          logoElement.addEventListener("touchstart", () => {
+            logoTimer = setTimeout(triggerSecretCoin, 10000);
+          });
+          logoElement.addEventListener("touchend", () => {
+            if (logoTimer) clearTimeout(logoTimer);
+          });
+          logoElement.addEventListener("mousedown", () => {
+            logoTimer = setTimeout(triggerSecretCoin, 10000);
+          });
+          logoElement.addEventListener("mouseup", () => {
+            if (logoTimer) clearTimeout(logoTimer);
+          });
+        }
+      });
+      function triggerSecretCoin() {
+        const modal = document.getElementById("secretCoinModal");
+        modal.classList.remove("hidden");
+        setTimeout(() => {
+          modal.classList.add("hidden");
+        }, 5000);
+      }
+
+      // LOGIKA LOGIN (BERSIH & TEPAT)
+      function login() {
+        const usernameIn = document
+          .getElementById("namaGuruInput")
+          .value.trim();
+        const passIn = document.getElementById("password").value.trim();
+
+        if (
+          usernameIn.toLowerCase() === "akuguru" &&
+          passIn === "smkwiraguna"
+        ) {
+          showGamePreloader("UNLOCKING MENTOR'S BLESSING...", (done) => {
+            setTimeout(() => {
+              done();
+              tampilkanEasterEggModal(
+                "🌟",
+                "ACHIEVEMENT UNLOCKED: THE MENTOR'S BLESSING",
+                "Terima kasih, Pahlawan Tanpa Tanda Jasa. Mengajar bukan sekadar mengisi gelas yang kosong, tapi menyalakan api pengetahuan di dalam diri setiap siswa.<br><br>Kesabaranmu hari ini adalah fondasi akhlak mereka esok hari. Tetaplah semangat membimbing siswa SMK Wiraguna! <br>Kami Sayang Kalian ❤️🥰",
+              );
+            }, 800);
+          });
+          return;
+        }
+
+        showGamePreloader("VERIFYING CREDENTIALS...", (done) => {
+          const user = daftarGuru.find(
+            (u) =>
+              u.usernama.toLowerCase() === usernameIn.toLowerCase() &&
+              u.pass === passIn,
+          );
+
+          if (user) {
+            currentRole = user.role;
+            document.getElementById("pesanEror").style.display = "none";
+
+            if (user.role === "Super Admin") {
+              loadMasterSiswaFromCloud(() => {
+                setTimeout(() => {
+                  done();
+                  document.getElementById("txtNamaAdmin").innerText = user.nama;
+                  showScreen("admin");
+                  switchAdminTab("rekap");
+                }, 600);
+              });
+            } else {
+              document.getElementById("txtNamaGuru").innerText = user.nama;
+              document.getElementById("txtRoleGuru").innerText =
+                "Jabatan: " + user.role;
+
+              loadMasterSiswaFromCloud(() => {
+                done();
+                showScreen("entry");
+                initFormEntry();
+              });
+            }
+          } else {
+            setTimeout(() => {
+              done();
+              document.getElementById("pesanEror").style.display = "block";
+            }, 500);
+          }
+        });
+      }
+
+      // STATUS PEMBINAAN TIERED
+      function getStatusPembinaan(tp) {
+        if (tp < 10)
+          return {
+            title: "NORMAL",
+            desc: "Tidak ada catatan pelanggaran.",
+            color: "#2ecc71",
+          };
+        if (tp <= 20)
+          return {
+            title: "TEGURAN LISAN",
+            desc: "Sanksi: Teguran lisan langsung oleh guru.",
+            color: "#f1c40f",
+          };
+        if (tp <= 40)
+          return {
+            title: "TEGURAN TERTULIS",
+            desc: "Sanksi: Teguran tertulis peringatan kedisiplinan.",
+            color: "#e67e22",
+          };
+        if (tp <= 60)
+          return {
+            title: "PEMBINAAN WALI KELAS",
+            desc: "Sanksi: Pembinaan khusus dan teguran oleh Wali Kelas.",
+            color: "#e67e22",
+          };
+        if (tp <= 80)
+          return {
+            title: "KONSELING BK",
+            desc: "Sanksi: Pemanggilan untuk konseling dan pemantauan Guru BK.",
+            color: "#e74c3c",
+          };
+        if (tp <= 100)
+          return {
+            title: "PANGGILAN ORTU/WALI",
+            desc: "Sanksi: Pemanggilan orang tua/wali ke sekolah.",
+            color: "#e74c3c",
+          };
+        if (tp <= 125)
+          return {
+            title: "SURAT PERNYATAAN I",
+            desc: "Sanksi: Penandatanganan Surat Pernyataan I (Peringatan Keras).",
+            color: "#c0392b",
+          };
+        if (tp <= 150)
+          return {
+            title: "PEMBINAAN KHUSUS & MONITORING",
+            desc: "Sanksi: Pembinaan khusus dan monitoring oleh Tim Sekolah.",
+            color: "#c0392b",
+          };
+        if (tp <= 175)
+          return {
+            title: "SP II & SIDANG TIM",
+            desc: "Sanksi: Surat Pernyataan II dan diproses Sidang Tim Pembinaan.",
+            color: "#8e44ad",
+          };
+        if (tp <= 199)
+          return {
+            title: "SIDANG DEWAN GURU",
+            desc: "Sanksi: Proses evaluasi Sidang Dewan Guru secara keseluruhan.",
+            color: "#8e44ad",
+          };
+        return {
+          title: "TINDAKAN KEPALA SEKOLAH",
+          desc: "Sanksi: Keputusan mutlak Kepala Sekolah (Ancaman Dikeluarkan).",
+          color: "#2c3e50",
+        };
+      }
+
+      // FUNGSI PENUTUP MODAL ERROR SISWA
+      function tutupModalError() {
+        document.getElementById("modalErrorSiswa").classList.add("hidden");
+      }
+
+      // FUNGSI 9 TIER RANK BERBASIS SHIELD (MOBA STYLE + EMOJI + GRADIENT PROGRESSIVE)
+      function getTierRank(shield) {
+        if (shield >= 290) {
+          return {
+            title: "🌌 MYTHIC LEGEND",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #ff0844, #ffb199)",
+            shadow: "0 0 12px rgba(255, 8, 68, 0.7)",
+            border: "1px solid #ffd700",
+          };
+        } else if (shield >= 251) {
+          return {
+            title: "👑 MASTER CHAMPION",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #b224ef, #7579ff)",
+            shadow: "0 0 10px rgba(178, 36, 239, 0.6)",
+            border: "none",
+          };
+        } else if (shield >= 211) {
+          return {
+            title: "💠 DIAMOND VANGUARD",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #00c6ff, #0072ff)",
+            shadow: "0 2px 6px rgba(0, 114, 255, 0.4)",
+            border: "none",
+          };
+        } else if (shield >= 171) {
+          return {
+            title: "💎 PLATINUM GUARDIAN",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #11998e, #38ef7d)",
+            shadow: "0 2px 5px rgba(56, 239, 125, 0.4)",
+            border: "none",
+          };
+        } else if (shield >= 131) {
+          return {
+            title: "🥇 GOLD PALADIN",
+            color: "#1a2536",
+            bg: "linear-gradient(135deg, #f7971e, #ffd200)",
+            shadow: "0 2px 5px rgba(247, 151, 30, 0.4)",
+            border: "none",
+          };
+        } else if (shield >= 91) {
+          return {
+            title: "🥈 SILVER WARRIOR",
+            color: "#1a2536",
+            bg: "linear-gradient(135deg, #e0eafc, #cfdef3)",
+            shadow: "0 1px 4px rgba(0,0,0,0.15)",
+            border: "none",
+          };
+        } else if (shield >= 51) {
+          return {
+            title: "🥉 BRONZE KNIGHT",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #d38312, #a83279)",
+            shadow: "0 1px 4px rgba(0,0,0,0.2)",
+            border: "none",
+          };
+        } else if (shield >= 11) {
+          return {
+            title: "🛡️ IRON SQUIRE",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #485563, #29323c)",
+            shadow: "0 1px 3px rgba(0,0,0,0.25)",
+            border: "none",
+          };
+        } else {
+          return {
+            title: "🔰 NOVICE",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #7f8c8d, #95a5a6)",
+            shadow: "none",
+            border: "none",
+          };
+        }
+      }
+
+      // PENCARIAN SISWA TERHUBUNG CLOUD
+      // PENCARIAN SISWA PERORANGAN DARI FIRESTORE (INSTAN)
+      async function cariPoinSiswaWithLoading() {
+        const nisnInput = document
+          .getElementById("nisnSiswaInput")
+          .value.trim();
+        if (!nisnInput) return alert("Silakan ketik nomor NIS / NISN kamu!");
+
+        // Fitur Easter Egg tetap dipertahankan
+        if (nisnInput.toLowerCase() === "akusiswasmkwiraguna") {
+          showGamePreloader("UNLOCKING SECRET MISSION...", (done) => {
+            setTimeout(() => {
+              done();
+              tampilkanEasterEggModal(
+                "🛡️",
+                "MISSION: THE CHOSEN ONE",
+                "Mengajar dan belajar sama-sama butuh energi besar; jadilah alasan gurumu tersenyum bangga hari ini. Kejarlah impianmu, patuhi nasehatnya, dan buktikan kamu adalah generasi hebat SMK Wiraguna! 📚⚔️🔥",
+              );
+              document.getElementById("nisnSiswaInput").value = "";
+            }, 800);
+          });
+          return;
+        }
+
+        showGamePreloader("FETCHING CLOUD DATABASE...", async (done) => {
+          try {
+            const { doc, getDoc } = window.fbFirestore;
+            // Ambil dokumen berdasarkan NISN sebagai ID dokumen di koleksi "siswa"
+            const docRef = doc(window.db, "siswa", nisnInput);
+            const docSnap = await getDoc(docRef);
+
+            done();
+
+            if (docSnap.exists()) {
+              const siswa = docSnap.data();
+              document
+                .getElementById("hasilPoinSiswa")
+                .classList.remove("hidden");
+
+              const avatarImg = document.querySelector(".rpg-avatar-box img");
+              if (avatarImg) {
+                if (siswa.jk && siswa.jk.toUpperCase() === "P") {
+                  avatarImg.src = "assets/foto_siswa/avatar_p.webp";
+                } else {
+                  avatarImg.src = "assets/foto_siswa/avatar_l.webp";
+                }
+              }
+
+              let badgesHtml = "";
+              const currentHour = new Date().getHours();
+              if (currentHour >= 0 && currentHour < 2) {
+                badgesHtml += `<span style="background:#9b59b6; color:white; padding:2px 6px; border-radius:4px; font-size:8px; margin-left:5px;">🦉 NIGHT OWL</span>`;
+              }
+
+              document.getElementById("txtNamaSiswaHasil").innerHTML =
+                (siswa.nama || "").toUpperCase() + badgesHtml;
+              document.getElementById("txtKelasSiswaHasil").innerText =
+                `Kelas: ${siswa.kelas || "-"} | NISN: ${siswa.nisn || nisnInput}`;
+
+              // RENDER TIER RANK
+              const rankInfo = getTierRank(siswa.shield || 0);
+              document.getElementById("txtTierRankContainer").innerHTML = `
+          <span style="
+            display: inline-block;
+            background: ${rankInfo.bg}; 
+            color: ${rankInfo.color}; 
+            padding: 2px 8px; 
+            border-radius: 5px; 
+            font-size: 10px; 
+            font-weight: 700; 
+            margin-top: 1px; 
+            letter-spacing: 0.4px;
+            box-shadow: ${rankInfo.shadow};
+            border: ${rankInfo.border};
+          ">
+            ${rankInfo.title}
+          </span>
+        `;
+
+              const barHpFill = document.getElementById("barHpFill");
+              const txtHpPercent = document.getElementById("txtHpPercent");
+              const barShieldFill = document.getElementById("barShieldFill");
+
+              let hpValue = siswa.hp !== undefined ? siswa.hp : 200;
+              let hpWidth = Math.max(0, Math.min(100, (hpValue / 200) * 100));
+              barHpFill.style.width = `${hpWidth}%`;
+              txtHpPercent.innerText = `${Math.max(0, hpValue)}/200`;
+
+              if (hpValue <= 50) {
+                barHpFill.style.background = "#e74c3c";
+                txtHpPercent.style.color = "#e74c3c";
+              } else if (hpValue < 150) {
+                barHpFill.style.background = "#f39c12";
+                txtHpPercent.style.color = "#f39c12";
+              } else {
+                barHpFill.style.background = "#2ecc71";
+                txtHpPercent.style.color = "#2ecc71";
+              }
+
+              let shieldValue = siswa.shield || 0;
+              let shieldWidth = Math.max(
+                0,
+                Math.min(100, (shieldValue / 300) * 100),
+              );
+              document.getElementById("txtShieldPercent").innerText =
+                `${shieldValue} Pts`;
+              barShieldFill.style.width = `${shieldWidth}%`;
+
+              const totalPelanggaran = siswa.totalPelanggaran || 0;
+              const statusHukum = getStatusPembinaan(totalPelanggaran);
+              document.getElementById("txtStatusKondisi").innerText =
+                `STATUS: ${statusHukum.title}`;
+              document.getElementById("txtStatusPenanganan").innerText =
+                statusHukum.desc;
+              document.getElementById("rpgStatusBanner").style.borderLeftColor =
+                statusHukum.color;
+              document.getElementById("txtStatusKondisi").style.color =
+                statusHukum.color;
+
+              document.getElementById("txtCountPrestasi").innerText =
+                `${siswa.totalPrestasi || 0} Pts`;
+              document.getElementById("txtCountPelanggaran").innerText =
+                `${totalPelanggaran} Pts`;
+
+              let historyListContainer =
+                document.getElementById("historyListSiswa");
+              historyListContainer.innerHTML = "";
+
+              if (!siswa.riwayat || siswa.riwayat.length === 0) {
+                historyListContainer.innerHTML = `<div style="font-size: 10px; color: #95a5a6; text-align: center; padding: 6px;">Tidak ada catatan riwayat.</div>`;
+              } else {
+                siswa.riwayat.forEach((r) => {
+                  let isPlus = Number(r.p) > 0;
+                  let borderColor = isPlus ? "#2ecc71" : "#e74c3c";
+                  historyListContainer.innerHTML += `
+              <div style="background: #1a2536; border-left: 3px solid ${borderColor}; padding: 8px 10px; border-radius: 0 6px 6px 0; font-size: 10.5px; color: #ecf0f1; border-top: 1px solid #34495e; border-right: 1px solid #34495e; border-bottom: 1px solid #34495e; margin-bottom: 6px;">
+                <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 2px;">
+                  <span style="color: ${borderColor};">${r.t}</span>
+                  <span style="color: ${borderColor};">${isPlus ? "+" + r.p : r.p} Pts</span>
+                </div>
+                <div style="font-size: 9.5px; color: #bdc3c7; display: flex; justify-content: space-between;">
+                  <span>📍 ${r.loc || "-"}</span>
+                  <span>📅 ${r.d || "-"}</span>
+                </div>
+              </div>
+            `;
+                });
+              }
+            } else {
+              document
+                .getElementById("modalErrorSiswa")
+                .classList.remove("hidden");
+            }
+          } catch (err) {
+            done();
+            console.error("Gagal mencari data siswa:", err);
+            alert("Gagal terhubung ke database Firestore.");
+          }
+        });
+      }
+
+      // ENTRY GURU & SECURITY ROLE
+      function initFormEntry() {
+        const now = new Date();
+        const namaHari = [
+          "Minggu",
+          "Senin",
+          "Selasa",
+          "Rabu",
+          "Kamis",
+          "Jum'at",
+          "Sabtu",
+        ];
+        document.getElementById("hari").value = namaHari[now.getDay()];
+        document.getElementById("tanggal").value = now
+          .toISOString()
+          .split("T")[0];
+        document.getElementById("jam").value =
+          `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+        handleKategoriChange();
+        updateEntrySiswaList();
+      }
+
+      function handleKategoriChange() {
+        const kat = document.getElementById("kategori").value;
+        const boxSub = document.getElementById("boxSubKategori");
+        const subKategori = document.getElementById("subKategori");
+
+        if (kat === "Pelanggaran") {
+          boxSub.classList.remove("hidden");
+          subKategori.innerHTML =
+            '<option value="">-- Pilih Tingkat --</option><option value="Ringan">Pelanggaran Ringan (5-20 Pts)</option>';
+
+          if (currentRole !== "Guru Mapel") {
+            subKategori.innerHTML +=
+              '<option value="Sedang">Pelanggaran Sedang (25-50 Pts)</option><option value="Berat">Pelanggaran Berat (75-200 Pts)</option>';
+          }
+
+          subKategori.value = "";
+          document.getElementById("containerOpsi").innerHTML = "";
+          document.getElementById("lblDetailOpsi").innerText =
+            "PILIH TINGKAT PELANGGARAN DI ATAS";
+        } else {
+          boxSub.classList.add("hidden");
+          renderOpsiPoin();
+        }
+      }
+
+      function renderOpsiPoin() {
+        const kat = document.getElementById("kategori").value;
+        const sub = document.getElementById("subKategori").value;
+        const container = document.getElementById("containerOpsi");
+        const label = document.getElementById("lblDetailOpsi");
+        container.innerHTML = "";
+        let listTampil = [];
+
+        if (kat === "Prestasi") {
+          label.innerText = "OPSI PRESTASI (+ HP / SHIELD) *";
+          listTampil = dataPilihan.Prestasi;
+        } else {
+          if (!sub) return;
+          label.innerText = "DETAIL PELANGGARAN (- HP) *";
+          listTampil = dataPilihan.Pelanggaran[sub];
+        }
+
+        listTampil.forEach((item) => {
+          const div = document.createElement("label");
+          div.className = "option-item";
+          div.innerHTML = `<input type="radio" name="opsiPoin" value="${item.t}" data-poin="${item.p}" required>
+                             <span>${item.t} <strong>(${kat === "Prestasi" ? "+" : "-"}${item.p} Pts)</strong></span>`;
+          container.appendChild(div);
+        });
+      }
+
+      function updateEntrySiswaList() {
+        const kelas = document.getElementById("kelas").value;
+        const singleSelect = document.getElementById("selectSingleSiswa");
+        const multiBox = document.getElementById("boxMultiSiswa");
+
+        singleSelect.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+        multiBox.innerHTML = "";
+
+        if (!kelas) {
+          multiBox.innerHTML =
+            '<span style="font-size:11px; color:#888;">Pilih kelas dulu...</span>';
+          return;
+        }
+        const siswaInClass = masterDataSiswa.filter((s) => s.kelas === kelas);
+        siswaInClass.forEach((s) => {
+          singleSelect.innerHTML += `<option value="${s.nama}">${s.nama}</option>`;
+          multiBox.innerHTML += `<label class="checkbox-item"><input type="checkbox" name="multiSiswa" value="${s.nama}"> ${s.nama}</label>`;
+        });
+      }
+
+      function toggleModeSiswa() {
+        isMultiMode = !isMultiMode;
+        const btnTxt = document.getElementById("txtModeSiswa");
+        const singleSelect = document.getElementById("selectSingleSiswa");
+        const multiBox = document.getElementById("boxMultiSiswa");
+
+        if (isMultiMode) {
+          btnTxt.innerText = "Mode: Banyak Siswa";
+          singleSelect.classList.add("hidden");
+          singleSelect.required = false;
+          multiBox.classList.remove("hidden");
+        } else {
+          btnTxt.innerText = "Mode: Satu Siswa";
+          singleSelect.classList.remove("hidden");
+          singleSelect.required = true;
+          multiBox.classList.add("hidden");
+        }
+      }
+
+      function konfirmasiSimpan() {
+        const selectedRadio = document.querySelector(
+          'input[name="opsiPoin"]:checked',
+        );
+        if (!selectedRadio)
+          return alert("Pilih detail jenis kejadian terlebih dahulu!");
+
+        let daftarSiswaDipilih = [];
+        if (isMultiMode) {
+          document
+            .querySelectorAll('input[name="multiSiswa"]:checked')
+            .forEach((cb) => daftarSiswaDipilih.push(cb.value));
+          if (daftarSiswaDipilih.length === 0)
+            return alert("Pilih minimal 1 siswa!");
+        } else {
+          const val = document.getElementById("selectSingleSiswa").value;
+          if (!val) return alert("Pilih nama siswa terlebih dahulu!");
+          daftarSiswaDipilih.push(val);
+        }
+
+        const kat = document.getElementById("kategori").value;
+        const efekPoin =
+          kat === "Prestasi"
+            ? `+${selectedRadio.getAttribute("data-poin")} Prestasi / Heal`
+            : `-${selectedRadio.getAttribute("data-poin")} Pelanggaran`;
+
+        document.getElementById("modalDetailContent").innerHTML = `
+          <strong>Target Siswa (${daftarSiswaDipilih.length}):</strong><br> ${daftarSiswaDipilih.join(", ")}<br><br>
+          <strong>Kejadian:</strong> ${selectedRadio.value}<br>
+          <strong>Dampak Kalkulasi:</strong> ${efekPoin}<br>
+          <strong>Guru Pelapor:</strong> ${document.getElementById("txtNamaGuru").innerText} (${currentRole})
+        `;
+        document.getElementById("modalKonfirmasi").classList.remove("hidden");
+      }
+
+      function tutupModal() {
+        document.getElementById("modalKonfirmasi").classList.add("hidden");
+      }
+
+      // SIMPAN POIN KE CLOUD DATABASE DENGAN PEMBERSIHAN CACHE
+      // SIMPAN POIN KE FIRESTORE (UPDATE HP, SHIELD, DAN RIWAYAT)
+      async function eksekusiSimpanWithLoading() {
+        tutupModal();
+        const selectedRadio = document.querySelector(
+          'input[name="opsiPoin"]:checked',
+        );
+        if (!selectedRadio) return;
+
+        const desc = selectedRadio.value;
+        const poin = parseInt(selectedRadio.getAttribute("data-poin"));
+        const kat = document.getElementById("kategori").value;
+        const tempat = document.getElementById("tempat").value || "Sekolah";
+
+        const tanggalInput = document.getElementById("tanggal").value;
+        const jamInput = document.getElementById("jam").value;
+        const waktuGabung = tanggalInput + " " + (jamInput || "00:00");
+
+        let daftarSiswaDipilih = [];
+        if (isMultiMode) {
+          document
+            .querySelectorAll('input[name="multiSiswa"]:checked')
+            .forEach((cb) => daftarSiswaDipilih.push(cb.value));
+        } else {
+          const val = document.getElementById("selectSingleSiswa").value;
+          if (val) daftarSiswaDipilih.push(val);
+        }
+
+        if (daftarSiswaDipilih.length === 0)
+          return alert("Pilih minimal 1 siswa!");
+
+        showGamePreloader("SAVING TO CLOUD DB...", async (done) => {
+          try {
+            const { doc, getDoc, updateDoc } = window.fbFirestore;
+
+            // Loop untuk setiap siswa yang dipilih
+            for (let namaSiswa of daftarSiswaDipilih) {
+              // Cari NISN siswa berdasarkan nama dari masterDataSiswa
+              const siswaObj = masterDataSiswa.find(
+                (s) => s.nama === namaSiswa,
+              );
+              if (!siswaObj || !siswaObj.nisn) continue;
+
+              const nisn = siswaObj.nisn;
+              const docRef = doc(window.db, "siswa", nisn);
+              const docSnap = await getDoc(docRef);
+
+              if (docSnap.exists()) {
+                const dataSiswa = docSnap.data();
+
+                let hpBaru = dataSiswa.hp !== undefined ? dataSiswa.hp : 200;
+                let shieldBaru = dataSiswa.shield || 0;
+                let totalPres = dataSiswa.totalPrestasi || 0;
+                let totalPel = dataSiswa.totalPelanggaran || 0;
+                let riwayatList = dataSiswa.riwayat || [];
+
+                // Kalkulasi Poin Prestasi atau Pelanggaran
+                let poinDampak = kat === "Prestasi" ? poin : -poin;
+
+                if (kat === "Prestasi") {
+                  totalPres += poin;
+                  shieldBaru += poin; // Prestasi menambah Shield
+                  hpBaru = Math.min(200, (hpValue = hpBaru + poin)); // Heal HP maksimal 200
+                } else {
+                  totalPel += poin;
+                  hpBaru = Math.max(0, hpBaru - poin); // Kurangi HP, minimal 0
+                }
+
+                // Tambahkan riwayat baru di urutan paling atas
+                riwayatList.unshift({
+                  t: desc,
+                  p: poinDampak,
+                  loc: tempat,
+                  d: waktuGabung,
+                });
+
+                // Update dokumen siswa di Firestore
+                await updateDoc(docRef, {
+                  hp: hpBaru,
+                  shield: shieldBaru,
+                  totalPrestasi: totalPres,
+                  totalPelanggaran: totalPel,
+                  riwayat: riwayatList,
+                });
+              }
+            }
+
+            done();
+
+            // Hapus cache agar data lokal diperbarui dari Firestore pada sesi berikutnya
+            sessionStorage.removeItem("master_siswa_cache");
+
+            alert(
+              "✅ Data Poin berhasil dicatat dan disinkronkan ke Database Firestore!",
+            );
+            document.getElementById("formEntry").reset();
+            initFormEntry();
+
+            // Muat ulang data master siswa terbaru
+            loadMasterSiswaFromCloud();
+          } catch (err) {
+            done();
+            console.error("Gagal menyimpan ke Firestore:", err);
+            alert("Gagal menyimpan data ke database Firestore.");
+          }
+        });
+      }
+
+      // SUPER ADMIN TABS
+      function switchAdminTab(tabName) {
+        ["Rekap", "Kontrol", "Cetak"].forEach((n) => {
+          document.getElementById("adminTab" + n).classList.add("hidden");
+          document.getElementById("navBtn" + n).className = "btn-outline";
+          document.getElementById("navBtn" + n).style.background =
+            "transparent";
+        });
+
+        const actTab = document.getElementById(
+          "adminTab" + tabName.charAt(0).toUpperCase() + tabName.slice(1),
+        );
+        const actBtn = document.getElementById(
+          "navBtn" + tabName.charAt(0).toUpperCase() + tabName.slice(1),
+        );
+
+        actTab.classList.remove("hidden");
+        actBtn.className = "";
+        actBtn.style.background = "#1e3c72";
+
+        if (tabName === "rekap") {
+          renderTabelRekap();
+        }
+        if (tabName === "cetak") {
+          filterPilihanSiswaCetak();
+        }
+      }
+
+      let myChartInstance = null;
+
+      function renderTabelRekap() {
+        const filter = document.getElementById("filterKelasRekap").value;
+        const tbody = document.getElementById("tabelRekapBody");
+        tbody.innerHTML = "";
+
+        const data =
+          filter === "SEMUA"
+            ? masterDataSiswa
+            : masterDataSiswa.filter((s) => s.kelas === filter);
+
+        data.forEach((s) => {
+          let badge = `<span style="color:#2ecc71; font-weight:bold">${s.hp} HP</span>`;
+          if (s.shield > 0)
+            badge += ` <span style="color:#3498db; font-size:9px">+${s.shield} Shld</span>`;
+
+          let hukum = getStatusPembinaan(s.totalPelanggaran);
+
+          tbody.innerHTML += `<tr>
+            <td><strong>${s.nama}</strong></td>
+            <td>${s.kelas}</td>
+            <td>${badge}</td>
+            <td><span style="font-size: 9px; padding: 3px 6px; background: ${hukum.color}; color: #fff; border-radius: 4px; font-weight: bold;">${s.totalPelanggaran} Pts (${hukum.title})</span></td>
+          </tr>`;
+        });
+
+        updateStatistikChart();
+      }
+
+      function updateStatistikChart() {
+        let totalPelanggaran10 = 0;
+        let totalPelanggaran11 = 0;
+        let totalPelanggaran12 = 0;
+
+        masterDataSiswa.forEach((s) => {
+          if (s.kelas === "10 SMK")
+            totalPelanggaran10 += Number(s.totalPelanggaran || 0);
+          if (s.kelas === "11 SMK")
+            totalPelanggaran11 += Number(s.totalPelanggaran || 0);
+          if (s.kelas === "12 SMK")
+            totalPelanggaran12 += Number(s.totalPelanggaran || 0);
+        });
+
+        const ctx = document.getElementById("statistikChart").getContext("2d");
+
+        if (myChartInstance) {
+          myChartInstance.destroy();
+        }
+
+        myChartInstance = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: ["10 SMK", "11 SMK", "12 SMK"],
+            datasets: [
+              {
+                label: "Akumulasi Poin Pelanggaran",
+                data: [
+                  totalPelanggaran10,
+                  totalPelanggaran11,
+                  totalPelanggaran12,
+                ],
+                backgroundColor: ["#3498db", "#f39c12", "#e74c3c"],
+                borderWidth: 1,
+                borderRadius: 6,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              title: {
+                display: true,
+                text: "Grafik Total Pelanggaran per Tingkat Kelas",
+                font: { size: 11, family: "Poppins" },
+                color: "#1e3c72",
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { font: { size: 9 } },
+              },
+              x: {
+                ticks: { font: { size: 10 } },
+              },
+            },
+          },
+        });
+      }
+
+      function handleAdminKelasChange() {
+        const kelas = document.getElementById("adminKelasSelect").value;
+        const sel = document.getElementById("adminSiswaSelect");
+        sel.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+        if (!kelas) return;
+        masterDataSiswa
+          .filter((s) => s.kelas === kelas)
+          .forEach((s) => {
+            sel.innerHTML += `<option value="${s.nisn}">${s.nama} (${s.hp} HP)</option>`;
+          });
+      }
+
+      // ACTION ADMIN FIRESTORE (RESET & REBUILD)
+      // ACTION ADMIN FIRESTORE (RESET PENUH / PEMUTIHAN PER SISWA)
+      async function prosesActionAdminWithLoading() {
+        const nisn = document.getElementById("adminSiswaSelect").value;
+        const act = document.getElementById("adminActionType").value;
+        const notes = document.getElementById("adminNotes").value.trim();
+
+        if (!nisn) return alert("Pilih siswa target terlebih dahulu!");
+        if (!notes) return alert("Catatan sidang wajib diisi!");
+
+        showGamePreloader("EXECUTING ADMIN OVERRIDE...", async (done) => {
+          try {
+            if (act === "RESET_FULL") {
+              const { doc, updateDoc } = window.fbFirestore;
+              const docRef = doc(window.db, "siswa", nisn);
+
+              // Reset dokumen siswa di Firestore ke kondisi awal
+              await updateDoc(docRef, {
+                hp: 200,
+                shield: 0,
+                totalPrestasi: 0,
+                totalPelanggaran: 0,
+                riwayat: [
+                  {
+                    t: `PEMUTIHAN (Admin): ${notes}`,
+                    p: 0,
+                    loc: "Ruang BK / Admin",
+                    d: new Date()
+                      .toISOString()
+                      .replace("T", " ")
+                      .substring(0, 16),
+                  },
+                ],
+              });
+
+              done();
+
+              // Hapus cache agar data terbaru ditarik ulang dari Firestore
+              sessionStorage.removeItem("master_siswa_cache");
+
+              alert(
+                `👑 PEMUTIHAN BERHASIL & TERSIMPAN KE CLOUD!\nTarget NISN: ${nisn}\nHP dikembalikan ke 200, Shield 0, dan riwayat di-reset.`,
+              );
+
+              // Reset form
+              document.getElementById("formAdminAction").reset();
+              document.getElementById("adminSiswaSelect").innerHTML =
+                `<option value="">-- Pilih Kelas Dulu --</option>`;
+
+              // Muat ulang master data
+              loadMasterSiswaFromCloud();
+            } else {
+              done();
+              alert(`👑 AKSI BERHASIL DIEKSEKUSI PADA NISN: ${nisn}`);
+              document.getElementById("formAdminAction").reset();
+              document.getElementById("adminSiswaSelect").innerHTML =
+                `<option value="">-- Pilih Kelas Dulu --</option>`;
+            }
+          } catch (err) {
+            done();
+            console.error("Gagal menjalankan aksi Admin:", err);
+            alert("Gagal mengeksekusi reset ke database Firestore.");
+          }
+        });
+      }
+
+      function handleCetakKategoriChange() {
+        const kat = document.getElementById("cetakKategori").value;
+        document
+          .getElementById("boxCetakKelas")
+          .classList.toggle("hidden", kat !== "kelas");
+        document
+          .getElementById("boxCetakSiswa")
+          .classList.toggle("hidden", kat !== "siswa");
+      }
+      function filterPilihanSiswaCetak() {
+        const kw = document.getElementById("searchSiswaInput")
+          ? document.getElementById("searchSiswaInput").value.toLowerCase()
+          : "";
+        const sel = document.getElementById("cetakSiswaSelect");
+        if (!sel) return;
+        sel.innerHTML = "";
+        const m = masterDataSiswa.filter(
+          (s) =>
+            s.nama.toLowerCase().includes(kw) ||
+            s.kelas.toLowerCase().includes(kw),
+        );
+        m.forEach(
+          (s) =>
+            (sel.innerHTML += `<option value="${s.nisn}">${s.nama} (${s.kelas})</option>`),
+        );
+      }
+
+      function prosesCetakLaporanWithLoading() {
+        const kategori = document.getElementById("cetakKategori").value;
+        let dataToExport = [];
+        let filename = "Laporan_Tatib_SMK_Wiraguna.csv";
+
+        if (kategori === "semua") {
+          dataToExport = masterDataSiswa;
+          filename = "Laporan_Semua_Siswa.csv";
+        } else if (kategori === "kelas") {
+          const kelasDipilih =
+            document.getElementById("cetakKelasSelect").value;
+          dataToExport = masterDataSiswa.filter(
+            (s) => s.kelas === kelasDipilih,
+          );
+          filename = `Laporan_Kelas_${kelasDipilih.replace(/\s+/g, "_")}.csv`;
+        } else if (kategori === "siswa") {
+          const nisnDipilih = document.getElementById("cetakSiswaSelect").value;
+          const siswaDitemukan = masterDataSiswa.find(
+            (s) => s.nisn === nisnDipilih,
+          );
+          if (!siswaDitemukan) return alert("Pilih siswa terlebih dahulu!");
+          dataToExport = [siswaDitemukan];
+          filename = `Laporan_Siswa_${siswaDitemukan.nama.replace(/\s+/g, "_")}.csv`;
+        }
+
+        if (dataToExport.length === 0) {
+          return alert("Tidak ada data untuk diekspor!");
+        }
+
+        showGamePreloader("GENERATING REPORT...", (done) => {
+          setTimeout(() => {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent +=
+              "NISN,Nama Siswa,Kelas,Jenis Kelamin,HP,Shield,Total Prestasi,Total Pelanggaran\r\n";
+
+            dataToExport.forEach((s) => {
+              let row = `"${s.nisn}","${s.nama}","${s.kelas}","${s.jk || "-"}","${s.hp}","${s.shield}","${s.totalPrestasi}","${s.totalPelanggaran}"`;
+              csvContent += row + "\r\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            done();
+            alert(
+              "🖨️ Laporan Berhasil Diunduh! Silakan buka file dengan Microsoft Excel.",
+            );
+          }, 1000);
+        });
+      }
+
+      // PAPAN QUEST RENDER
+      function renderQuestUI(tipe) {
+        const btnPres = document.getElementById("tabQuestPrestasi");
+        const btnPelang = document.getElementById("tabQuestPelanggaran");
+        const container = document.getElementById("questContainerUI");
+
+        if (tipe === "prestasi") {
+          btnPres.className = "";
+          btnPres.style.background = "#3498db";
+          btnPres.style.color = "white";
+          btnPelang.className = "btn-outline";
+          btnPelang.style.background = "transparent";
+          btnPelang.style.color = "#e74c3c";
+
+          let html = `<div class="accordion">
+                        <div class="accordion-header" onclick="toggleAccordion(this)"><span>⭐ Daftar Penghargaan (Reward)</span><span>▼</span></div>
+                        <div class="accordion-body active">`;
+          dataPilihan.Prestasi.forEach((item) => {
+            html += `<div class="q-item"><span>${item.t}</span> <span class="badge-shield">+${item.p}</span></div>`;
+          });
+          html += `</div></div>`;
+
+          html += `
+            <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #cbd5e1; margin-bottom: -4px;">
+              <span style="font-size: 9px; color: #94a3b8; font-style: italic;">kamu mungkin bisa menemukan sesuatu yang menarik di web ini!</span>
+            </div>
+          `;
+          container.innerHTML = html;
+        } else {
+          btnPelang.className = "";
+          btnPelang.style.background = "#e74c3c";
+          btnPelang.style.color = "white";
+          btnPres.className = "btn-outline";
+          btnPres.style.background = "transparent";
+          btnPres.style.color = "#3498db";
+
+          let html = "";
+          ["Ringan", "Sedang", "Berat"].forEach((k, idx) => {
+            html += `<div class="accordion">
+                        <div class="accordion-header" onclick="toggleAccordion(this)"><span>⚠️ Pelanggaran ${k}</span><span>▼</span></div>
+                        <div class="accordion-body ${idx === 0 ? "active" : ""}">`;
+            dataPilihan.Pelanggaran[k].forEach((item) => {
+              html += `<div class="q-item"><span>${item.t}</span> <span class="badge-hp">-${item.p}</span></div>`;
+            });
+            html += `</div></div>`;
+          });
+
+          html += `
+            <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #cbd5e1; margin-bottom: -4px;">
+              <span style="font-size: 9px; color: #94a3b8; font-style: italic;">kamu mungkin bisa menemukan sesuatu yang menarik di web ini!</span>
+            </div>
+          `;
+          container.innerHTML = html;
+        }
+      }
+
+      function toggleAccordion(header) {
+        const body = header.nextElementSibling;
+        if (body.classList.contains("active")) {
+          body.classList.remove("active");
+        } else {
+          header.parentElement.parentElement
+            .querySelectorAll(".accordion-body")
+            .forEach((b) => b.classList.remove("active"));
+          body.classList.add("active");
+        }
+      }
+    </script>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        getDocs,
+        doc,
+        getDoc,
+        setDoc,
+        updateDoc,
+      } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+      // Konfigurasi Firebase kamu yang sudah benar
+      const firebaseConfig = {
+        apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
+        authDomain: "tatib-smk-wiraguna.firebaseapp.com",
+        projectId: "tatib-smk-wiraguna",
+        storageBucket: "tatib-smk-wiraguna.firebasestorage.app",
+        messagingSenderId: "80347778161",
+        appId: "1:80347778161:web:cd92d4b9816b82a983d050",
+      };
+
+      // Inisialisasi Firebase & Firestore
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      // Daftarkan ke window agar bisa dipanggil fungsi utama
+      window.db = db;
+      window.fbFirestore = {
+        collection,
+        getDocs,
+        doc,
+        getDoc,
+        setDoc,
+        updateDoc,
+      };
+
+      console.log(
+        "🔥 Firebase Firestore Berhasil Terhubung ke Tatib SMK Wiraguna!",
+      );
+    </script>
+  </body>
+</html>
