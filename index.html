@@ -914,7 +914,7 @@
         class="card text-center quest-card-btn"
         style="
           width: 100%;
-          padding: 15px 20px;
+          padding: 13px 20px;
           cursor: pointer;
           border-color: #3498db;
           background: rgba(255, 255, 255, 0.95);
@@ -1039,15 +1039,14 @@
                   object-fit: cover;
                   border-radius: 4px;
                 "
-                onerror="
-                  this.src =
-                    'https://cdn-icons-png.flaticon.com/512/1490/149071.png'
-                "
+                onerror="this.src = 'assets/foto_siswa/avatar.png'"
               />
             </div>
             <div class="rpg-info-box">
               <div id="txtNamaSiswaHasil" class="rpg-name">-</div>
               <div id="txtKelasSiswaHasil" class="rpg-class-lvl">-</div>
+              <!-- TIER RANK CONTAINER -->
+              <div id="txtTierRankContainer" style="margin-top: 1px"></div>
             </div>
           </div>
 
@@ -1757,12 +1756,12 @@
           { t: "Menjadi peserta didik teladan perminggu", p: 10 },
           { t: "Tidak melakukan pelanggaran selama 1 semester", p: 20 },
           { t: "Tidak melakukan pelanggaran selama 1 tahun", p: 40 },
-          { t: "Kehadiran 100% di semua pelajaran", p: 10 },
+          { t: "Kehadiran 100% di semua pelajaran", p: 30 },
           { t: "Aktif berpartisipasi dalam pembelajaran di kelas", p: 5 },
           { t: "Menerapkan 5S (Senyum, Salam, Sapa, Sopan, Santun)", p: 5 },
           { t: "Melaksanakan kegiatan pengabdian kepada masyarakat", p: 10 },
-          { t: "Menjadi imam shalat di masjid", p: 5 },
-          { t: "Mengumandangkan azan di masjid", p: 3 },
+          { t: "Menjadi imam shalat di masjid", p: 10 },
+          { t: "Mengumandangkan azan di masjid", p: 5 },
         ],
         Pelanggaran: {
           Ringan: [
@@ -1795,6 +1794,7 @@
               t: "Melakukan live streaming / bermain game setelah pukul 21.00",
               p: 5,
             },
+            { t: "Sebit alis", p: 5 },
           ],
           Sedang: [
             { t: "Membolos 1 jam pelajaran", p: 25 },
@@ -1807,10 +1807,11 @@
             { t: "Mencoret meja/kursi", p: 30 },
             { t: "Merusak tanaman", p: 25 },
             { t: "Memalsukan tanda tangan", p: 50 },
-            { t: "Menyontek", p: 40 },
+            { t: "Menyontek / Berlaku curang", p: 40 },
             { t: "Membantu teman menyontek", p: 40 },
             { t: "Mengganggu ketertiban kelas", p: 30 },
             { t: "Mengunggah konten sekolah tanpa izin", p: 40 },
+            { t: "Tidak mengikuti pengajian Hari Kamis", p: 45 },
           ],
           Berat: [
             { t: "Bullying verbal", p: 75 },
@@ -1823,11 +1824,14 @@
             { t: "Mengancam guru/karyawan", p: 150 },
             { t: "Mengancam teman", p: 100 },
             { t: "Mencuri", p: 200 },
-            { t: "Merusak fasilitas secara sengaja", p: 100 },
+            {
+              t: "Merusak fasilitas secara sengaja (termasuk denda penggantian)",
+              p: 100,
+            },
             { t: "Pornografi", p: 200 },
             { t: "Pelecehan seksual", p: 200 },
-            { t: "Minuman keras", p: 200 },
-            { t: "Narkoba", p: 200 },
+            { t: "Minum Minuman keras", p: 200 },
+            { t: "Narkoba (rehabilitasi)", p: 200 },
             { t: "Judi", p: 200 },
             { t: "Pemalsuan dokumen sekolah", p: 200 },
             { t: "Provokasi/hasutan yang menyebabkan kerusuhan", p: 200 },
@@ -2003,12 +2007,14 @@
             document.getElementById("pesanEror").style.display = "none";
 
             if (user.role === "Super Admin") {
-              setTimeout(() => {
-                done();
-                document.getElementById("txtNamaAdmin").innerText = user.nama;
-                showScreen("admin");
-                switchAdminTab("rekap");
-              }, 600);
+              loadMasterSiswaFromCloud(() => {
+                setTimeout(() => {
+                  done();
+                  document.getElementById("txtNamaAdmin").innerText = user.nama;
+                  showScreen("admin");
+                  switchAdminTab("rekap");
+                }, 600);
+              });
             } else {
               document.getElementById("txtNamaGuru").innerText = user.nama;
               document.getElementById("txtRoleGuru").innerText =
@@ -2103,6 +2109,83 @@
         document.getElementById("modalErrorSiswa").classList.add("hidden");
       }
 
+      // FUNGSI 9 TIER RANK BERBASIS SHIELD (MOBA STYLE + EMOJI + GRADIENT PROGRESSIVE)
+      function getTierRank(shield) {
+        if (shield >= 290) {
+          return {
+            title: "🌌 MYTHIC LEGEND",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #ff0844, #ffb199)",
+            shadow: "0 0 12px rgba(255, 8, 68, 0.7)",
+            border: "1px solid #ffd700",
+          };
+        } else if (shield >= 251) {
+          return {
+            title: "👑 MASTER CHAMPION",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #b224ef, #7579ff)",
+            shadow: "0 0 10px rgba(178, 36, 239, 0.6)",
+            border: "none",
+          };
+        } else if (shield >= 211) {
+          return {
+            title: "💠 DIAMOND VANGUARD",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #00c6ff, #0072ff)",
+            shadow: "0 2px 6px rgba(0, 114, 255, 0.4)",
+            border: "none",
+          };
+        } else if (shield >= 171) {
+          return {
+            title: "💎 PLATINUM GUARDIAN",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #11998e, #38ef7d)",
+            shadow: "0 2px 5px rgba(56, 239, 125, 0.4)",
+            border: "none",
+          };
+        } else if (shield >= 131) {
+          return {
+            title: "🥇 GOLD PALADIN",
+            color: "#1a2536",
+            bg: "linear-gradient(135deg, #f7971e, #ffd200)",
+            shadow: "0 2px 5px rgba(247, 151, 30, 0.4)",
+            border: "none",
+          };
+        } else if (shield >= 91) {
+          return {
+            title: "🥈 SILVER WARRIOR",
+            color: "#1a2536",
+            bg: "linear-gradient(135deg, #e0eafc, #cfdef3)",
+            shadow: "0 1px 4px rgba(0,0,0,0.15)",
+            border: "none",
+          };
+        } else if (shield >= 51) {
+          return {
+            title: "🥉 BRONZE KNIGHT",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #d38312, #a83279)",
+            shadow: "0 1px 4px rgba(0,0,0,0.2)",
+            border: "none",
+          };
+        } else if (shield >= 11) {
+          return {
+            title: "🛡️ IRON SQUIRE",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #485563, #29323c)",
+            shadow: "0 1px 3px rgba(0,0,0,0.25)",
+            border: "none",
+          };
+        } else {
+          return {
+            title: "🔰 NOVICE",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #7f8c8d, #95a5a6)",
+            shadow: "none",
+            border: "none",
+          };
+        }
+      }
+
       // PENCARIAN SISWA TERHUBUNG CLOUD
       function cariPoinSiswaWithLoading() {
         const nisnInput = document
@@ -2126,7 +2209,7 @@
         }
 
         const clickTime = Date.now();
-        if ((clickTime - pageLoadTime) / 1000 < 1) {
+        if ((clickTime - pageLoadTime) / 1000 < 2) {
           localStorage.setItem("secret_gelar", "⚡ SPEEDRUNNER");
           localStorage.setItem("gelar_time", Date.now());
         }
@@ -2145,9 +2228,9 @@
                 const avatarImg = document.querySelector(".rpg-avatar-box img");
                 if (avatarImg) {
                   if (siswa.jk && siswa.jk.toUpperCase() === "P") {
-                    avatarImg.src = "assets/foto_siswa/avatar.png";
+                    avatarImg.src = "assets/foto_siswa/avatar_p.png";
                   } else {
-                    avatarImg.src = "assets/foto_siswa/avatar.png";
+                    avatarImg.src = "assets/foto_siswa/avatar_l.png";
                   }
                 }
 
@@ -2155,9 +2238,6 @@
                 const currentHour = new Date().getHours();
                 if (currentHour >= 0 && currentHour < 2) {
                   badgesHtml += `<span style="background:#9b59b6; color:white; padding:2px 6px; border-radius:4px; font-size:8px; margin-left:5px;">🦉 NIGHT OWL</span>`;
-                }
-                if (siswa.hp === 200 && siswa.shield >= 50) {
-                  badgesHtml += `<span style="background:#3498db; color:white; padding:2px 6px; border-radius:4px; font-size:8px; margin-left:5px;">🛡️ DEFENDER</span>`;
                 }
                 const savedGelar = localStorage.getItem("secret_gelar");
                 const savedTime = parseInt(
@@ -2171,6 +2251,26 @@
                   siswa.nama.toUpperCase() + badgesHtml;
                 document.getElementById("txtKelasSiswaHasil").innerText =
                   `Kelas: ${siswa.kelas} | NISN: ${siswa.nisn}`;
+
+                // RENDER TIER RANK (Ukuran 10px, posisi rapat 1px ke atas, gradien progresif)
+                const rankInfo = getTierRank(siswa.shield || 0);
+                document.getElementById("txtTierRankContainer").innerHTML = `
+                  <span style="
+                    display: inline-block;
+                    background: ${rankInfo.bg}; 
+                    color: ${rankInfo.color}; 
+                    padding: 2px 8px; 
+                    border-radius: 5px; 
+                    font-size: 10px; 
+                    font-weight: 700; 
+                    margin-top: 1px; 
+                    letter-spacing: 0.4px;
+                    box-shadow: ${rankInfo.shadow};
+                    border: ${rankInfo.border};
+                  ">
+                    ${rankInfo.title}
+                  </span>
+                `;
 
                 const barHpFill = document.getElementById("barHpFill");
                 const txtHpPercent = document.getElementById("txtHpPercent");
@@ -2194,9 +2294,14 @@
                   txtHpPercent.style.color = "#2ecc71";
                 }
 
-                let shieldWidth = Math.min(100, (siswa.shield / 100) * 100);
+                // SKALA BAR SHIELD (Maksimal penuh di 300 Pts: 150 Pts = setengah, 300 Pts = penuh)
+                let shieldValue = siswa.shield || 0;
+                let shieldWidth = Math.max(
+                  0,
+                  Math.min(100, (shieldValue / 300) * 100),
+                );
                 document.getElementById("txtShieldPercent").innerText =
-                  `${siswa.shield} Pts`;
+                  `${shieldValue} Pts`;
                 barShieldFill.style.width = `${shieldWidth}%`;
 
                 const statusHukum = getStatusPembinaan(siswa.totalPelanggaran);
@@ -2415,7 +2520,10 @@
         const poin = parseInt(selectedRadio.getAttribute("data-poin"));
         const kat = document.getElementById("kategori").value;
         const tempat = document.getElementById("tempat").value || "Sekolah";
-        const tanggal = document.getElementById("tanggal").value;
+
+        const tanggalInput = document.getElementById("tanggal").value;
+        const jamInput = document.getElementById("jam").value;
+        const waktuGabung = tanggalInput + " " + (jamInput || "00:00");
 
         let daftarSiswaDipilih = [];
         if (isMultiMode) {
@@ -2438,7 +2546,7 @@
             poin: poin,
             desc: desc,
             tempat: tempat,
-            tanggal: tanggal,
+            tanggal: waktuGabung,
           };
 
           fetch(SCRIPT_URL, {
@@ -2493,7 +2601,7 @@
         }
       }
 
-      let myChartInstance = null; // Variabel penyimpan objek chart
+      let myChartInstance = null;
 
       function renderTabelRekap() {
         const filter = document.getElementById("filterKelasRekap").value;
@@ -2520,12 +2628,10 @@
           </tr>`;
         });
 
-        // --- RENDER GRAFIK STATISTIK CHART.JS ---
         updateStatistikChart();
       }
 
       function updateStatistikChart() {
-        // Hitung total akumulasi poin pelanggaran per kelas secara otomatis
         let totalPelanggaran10 = 0;
         let totalPelanggaran11 = 0;
         let totalPelanggaran12 = 0;
@@ -2541,7 +2647,6 @@
 
         const ctx = document.getElementById("statistikChart").getContext("2d");
 
-        // Hapus chart lama jika sudah ada agar tidak numpuk saat direfresh
         if (myChartInstance) {
           myChartInstance.destroy();
         }
@@ -2633,7 +2738,6 @@
                 document.getElementById("adminSiswaSelect").innerHTML =
                   `<option value="">-- Pilih Kelas Dulu --</option>`;
 
-                // Refresh data lokal supaya tabel rekap ikut terupdate
                 loadMasterSiswaFromCloud();
               })
               .catch((err) => {
@@ -2642,7 +2746,6 @@
                 alert("Gagal mengeksekusi reset ke cloud database.");
               });
           } else {
-            // Untuk aksi manual lain jika nanti dibutuhkan
             setTimeout(() => {
               done();
               alert(`👑 AKSI BERHASIL DIEKSEKUSI PADA NISN: ${nisn}`);
@@ -2712,7 +2815,6 @@
 
         showGamePreloader("GENERATING REPORT...", (done) => {
           setTimeout(() => {
-            // Buat isi file berformat CSV yang kompatibel dengan Excel
             let csvContent = "data:text/csv;charset=utf-8,";
             csvContent +=
               "NISN,Nama Siswa,Kelas,Jenis Kelamin,HP,Shield,Total Prestasi,Total Pelanggaran\r\n";
@@ -2722,7 +2824,6 @@
               csvContent += row + "\r\n";
             });
 
-            // Trigger otomatis download file di browser
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
