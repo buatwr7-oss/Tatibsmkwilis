@@ -934,7 +934,7 @@
         </button>
       </div>
 
-      <!-- KARTU BERSEBELAHAN: PAPAN QUEST & GLOBAL LEADERBOARD (SEJAJAR HORIZONTAL) -->
+      <!-- KARTU BERSEBELAHAN: PAPAN QUEST & GLOBAL LEADERBOARD -->
       <div style="display: flex; gap: 10px; width: 100%">
         <div
           class="card quest-card-btn"
@@ -1950,6 +1950,167 @@
       ></div>
     </div>
 
+    <!-- MODAL CHAT PERORANGAN (MESSENGER STYLE) -->
+    <div
+      id="modalChatTeman"
+      class="modal-overlay hidden"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        padding: 15px;
+      "
+    >
+      <div
+        class="card"
+        style="
+          width: 100%;
+          max-width: 420px;
+          height: 80vh;
+          max-height: 600px;
+          display: flex;
+          flex-direction: column;
+          background: #fff;
+          border-radius: 16px;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+          overflow: hidden;
+          padding: 15px;
+          margin: auto;
+        "
+      >
+        <!-- Header Chat -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+          "
+        >
+          <div style="display: flex; align-items: center; gap: 10px">
+            <div style="font-size: 24px">💬</div>
+            <div>
+              <h4
+                id="chatTitleNama"
+                style="
+                  font-size: 13px;
+                  color: #1e3c72;
+                  margin: 0;
+                  font-weight: bold;
+                "
+              >
+                Nama Teman
+              </h4>
+              <span
+                id="chatSubStatus"
+                style="font-size: 9px; color: #2ecc71; font-weight: bold"
+                >● Online</span
+              >
+            </div>
+          </div>
+          <button
+            type="button"
+            onclick="tutupChatTeman()"
+            style="
+              margin: 0;
+              padding: 4px 10px;
+              font-size: 10px;
+              width: auto;
+              background: #e74c3c;
+              color: #fff;
+              border-radius: 6px;
+              box-shadow: none;
+              border: none;
+              cursor: pointer;
+            "
+          >
+            Tutup ✕
+          </button>
+        </div>
+
+        <!-- Ruang Pesan Berjalan (Message Bubble Area) -->
+        <div
+          id="chatMessageContainer"
+          style="
+            flex-grow: 1;
+            overflow-y: auto;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 10px;
+          "
+        >
+          <div
+            style="
+              font-size: 11px;
+              color: #888;
+              text-align: center;
+              margin: auto;
+            "
+          >
+            Memuat percakapan...
+          </div>
+        </div>
+
+        <!-- Form Input Pesan -->
+        <form
+          id="formKirimChat"
+          onsubmit="
+            event.preventDefault();
+            kirimPesanChat();
+          "
+          style="display: flex; gap: 8px; margin: 0"
+        >
+          <input
+            type="text"
+            id="inputPesanChat"
+            placeholder="Ketik pesan untuk teman..."
+            autocomplete="off"
+            style="
+              margin: 0;
+              padding: 10px 12px;
+              font-size: 11px;
+              flex: 1;
+              border: 1.5px solid #cbd5e1;
+              border-radius: 8px;
+              outline: none;
+            "
+            required
+          />
+          <button
+            type="submit"
+            style="
+              margin: 0;
+              width: auto;
+              padding: 10px 16px;
+              font-size: 11px;
+              background: #1e3c72;
+              color: #fff;
+              border-radius: 8px;
+              border: none;
+              cursor: pointer;
+              box-shadow: none;
+            "
+          >
+            Kirim 🚀
+          </button>
+        </form>
+      </div>
+    </div>
+
     <!-- MODAL KONFIRMASI -->
     <div id="modalKonfirmasi" class="modal-overlay hidden">
       <div class="modal-box">
@@ -2119,42 +2280,37 @@
       }
 
       // ==========================================
-      // SISTEM PERTEMANAN & SQUAD
+      // SISTEM PERTEMANAN & SQUAD (CLOUD FIRESTORE)
       // ==========================================
       function getMyNisn() {
         const inputVal = document.getElementById("nisnSiswaInput")
           ? document.getElementById("nisnSiswaInput").value.trim()
           : "";
-        return inputVal || localStorage.getItem("activeUser") || "Siswa_Demo";
+        return inputVal || localStorage.getItem("activeUser") || "";
       }
 
-      function getDaftarTeman() {
-        const myNisn = getMyNisn();
-        if (!myNisn) return [];
-        const data = localStorage.getItem(`friends_${myNisn}`);
-        return data ? JSON.parse(data) : [];
+      let activeStudentDocListener = null;
+
+      function initStudentRealtimeListener(nisn) {
+        if (activeStudentDocListener) activeStudentDocListener();
+        try {
+          const { doc, onSnapshot } = window.fbFirestore;
+          activeStudentDocListener = onSnapshot(
+            doc(window.db, "siswa", nisn),
+            (docSnap) => {
+              if (docSnap.exists()) {
+                const data = docSnap.data();
+                window.currentStudentDataCache = data;
+                renderDaftarTeman(data.friends || [], data.requests || []);
+              }
+            },
+          );
+        } catch (e) {
+          console.error("Gagal listen student doc:", e);
+        }
       }
 
-      function simpanDaftarTeman(friendsArray) {
-        const myNisn = getMyNisn();
-        if (!myNisn) return;
-        localStorage.setItem(`friends_${myNisn}`, JSON.stringify(friendsArray));
-      }
-
-      function getIncomingRequests() {
-        const myNisn = getMyNisn();
-        if (!myNisn) return [];
-        const data = localStorage.getItem(`requests_${myNisn}`);
-        return data ? JSON.parse(data) : [];
-      }
-
-      function simpanIncomingRequests(reqsArray) {
-        const myNisn = getMyNisn();
-        if (!myNisn) return;
-        localStorage.setItem(`requests_${myNisn}`, JSON.stringify(reqsArray));
-      }
-
-      function tambahTeman() {
+      async function tambahTeman() {
         const targetNisn = document
           .getElementById("inputNisnTeman")
           .value.trim();
@@ -2167,72 +2323,106 @@
         if (!temanObj)
           return alert("NISN teman tidak ditemukan di database sekolah!");
 
-        let friends = getDaftarTeman();
-        if (friends.includes(targetNisn))
+        if (
+          window.currentStudentDataCache &&
+          window.currentStudentDataCache.friends &&
+          window.currentStudentDataCache.friends.includes(targetNisn)
+        ) {
           return alert("Teman ini sudah ada di daftar Squad kamu!");
-
-        let targetReqs = localStorage.getItem(`requests_${targetNisn}`)
-          ? JSON.parse(localStorage.getItem(`requests_${targetNisn}`))
-          : [];
-        if (targetReqs.includes(myNisn))
-          return alert(
-            "Undangan ke teman ini sudah dikirim dan sedang menunggu konfirmasi!",
-          );
-
-        targetReqs.push(myNisn);
-        localStorage.setItem(
-          `requests_${targetNisn}`,
-          JSON.stringify(targetReqs),
-        );
-
-        document.getElementById("inputNisnTeman").value = "";
-        alert(
-          `📨 Undangan Squad berhasil dikirim ke ${temanObj.nama}! Menunggu konfirmasi dari mereka.`,
-        );
-      }
-
-      function terimaUndangan(senderNisn) {
-        let reqs = getIncomingRequests();
-        reqs = reqs.filter((n) => n !== senderNisn);
-        simpanIncomingRequests(reqs);
-
-        let myFriends = getDaftarTeman();
-        if (!myFriends.includes(senderNisn)) {
-          myFriends.push(senderNisn);
-          simpanDaftarTeman(myFriends);
         }
 
-        let senderFriends = localStorage.getItem(`friends_${senderNisn}`)
-          ? JSON.parse(localStorage.getItem(`friends_${senderNisn}`))
-          : [];
-        if (!senderFriends.includes(getMyNisn())) {
-          senderFriends.push(getMyNisn());
-          localStorage.setItem(
-            `friends_${senderNisn}`,
-            JSON.stringify(senderFriends),
+        try {
+          const { doc, getDoc, updateDoc, arrayUnion } = window.fbFirestore;
+          const targetRef = doc(window.db, "siswa", targetNisn);
+          const targetSnap = await getDoc(targetRef);
+
+          if (!targetSnap.exists())
+            return alert("Data siswa tujuan tidak ditemukan di cloud.");
+          const targetData = targetSnap.data();
+          const targetRequests = targetData.requests || [];
+
+          if (targetRequests.includes(myNisn)) {
+            return alert(
+              "Undangan ke teman ini sudah dikirim dan sedang menunggu konfirmasi!",
+            );
+          }
+
+          await updateDoc(targetRef, {
+            requests: arrayUnion(myNisn),
+          });
+
+          document.getElementById("inputNisnTeman").value = "";
+          alert(
+            `📨 Undangan Squad berhasil dikirim ke ${temanObj.nama}! Menunggu konfirmasi.`,
           );
+        } catch (err) {
+          console.error("Gagal kirim undangan:", err);
+          alert("Gagal mengirim undangan. Periksa koneksi internet.");
         }
-
-        renderDaftarTeman();
-        alert("✅ Undangan diterima! Kalian sekarang resmi berteman di Squad.");
       }
 
-      function tolakUndangan(senderNisn) {
-        let reqs = getIncomingRequests();
-        reqs = reqs.filter((n) => n !== senderNisn);
-        simpanIncomingRequests(reqs);
-        renderDaftarTeman();
+      async function terimaUndangan(senderNisn) {
+        const myNisn = getMyNisn();
+        try {
+          const { doc, updateDoc, arrayUnion, arrayRemove } =
+            window.fbFirestore;
+          const myRef = doc(window.db, "siswa", myNisn);
+          const senderRef = doc(window.db, "siswa", senderNisn);
+
+          await updateDoc(myRef, {
+            requests: arrayRemove(senderNisn),
+            friends: arrayUnion(senderNisn),
+          });
+
+          await updateDoc(senderRef, {
+            friends: arrayUnion(myNisn),
+          });
+
+          alert(
+            "✅ Undangan diterima! Kalian sekarang resmi berteman di Squad.",
+          );
+        } catch (err) {
+          console.error("Gagal menerima undangan:", err);
+          alert("Gagal memproses penerimaan undangan.");
+        }
       }
 
-      function hapusTeman(targetNisn) {
+      async function tolakUndangan(senderNisn) {
+        const myNisn = getMyNisn();
+        try {
+          const { doc, updateDoc, arrayRemove } = window.fbFirestore;
+          await updateDoc(doc(window.db, "siswa", myNisn), {
+            requests: arrayRemove(senderNisn),
+          });
+        } catch (err) {
+          console.error("Gagal menolak undangan:", err);
+        }
+      }
+
+      async function hapusTeman(targetNisn) {
         if (!confirm("Yakin ingin menghapus teman ini dari Squad?")) return;
-        let friends = getDaftarTeman();
-        friends = friends.filter((n) => n !== targetNisn);
-        simpanDaftarTeman(friends);
-        renderDaftarTeman();
+        const myNisn = getMyNisn();
+        try {
+          const { doc, updateDoc, arrayRemove } = window.fbFirestore;
+          const myRef = doc(window.db, "siswa", myNisn);
+          const targetRef = doc(window.db, "siswa", targetNisn);
+
+          await updateDoc(myRef, { friends: arrayRemove(targetNisn) });
+          await updateDoc(targetRef, { friends: arrayRemove(myNisn) });
+
+          alert("Teman berhasil dihapus dari Squad.");
+        } catch (err) {
+          console.error("Gagal menghapus teman:", err);
+          alert("Gagal menghapus teman.");
+        }
       }
 
-      function renderDaftarTeman() {
+      let friendListeners = {};
+
+      function renderDaftarTeman(friendsArray = [], requestsArray = []) {
+        Object.values(friendListeners).forEach((unsub) => unsub());
+        friendListeners = {};
+
         const container = document.getElementById("listTemanContainer");
         const containerUndangan = document.getElementById(
           "containerUndanganMasuk",
@@ -2240,12 +2430,11 @@
         const counterTxt = document.getElementById("jumlahTemanTxt");
         if (!container) return;
 
-        const requests = getIncomingRequests();
         if (containerUndangan) {
           containerUndangan.innerHTML = "";
-          if (requests.length > 0) {
-            let reqHtml = `<div style="font-size: 10px; color: #f1c40f; font-weight: bold; margin-bottom: 4px;">📩 Undangan Masuk (${requests.length}):</div>`;
-            requests.forEach((senderNisn) => {
+          if (requestsArray.length > 0) {
+            let reqHtml = `<div style="font-size: 10px; color: #f1c40f; font-weight: bold; margin-bottom: 4px;">📩 Undangan Masuk (${requestsArray.length}):</div>`;
+            requestsArray.forEach((senderNisn) => {
               const sender = masterDataSiswa.find((s) => s.nisn === senderNisn);
               const senderName = sender ? sender.nama : `NISN: ${senderNisn}`;
               reqHtml += `
@@ -2262,23 +2451,18 @@
           }
         }
 
-        const friends = getDaftarTeman();
-        counterTxt.innerText = `${friends.length} Teman`;
+        counterTxt.innerText = `${friendsArray.length} Teman`;
         container.innerHTML = "";
 
-        if (friends.length === 0) {
+        if (friendsArray.length === 0) {
           container.innerHTML = `<div style="font-size: 10px; color: #95a5a6; text-align: center; padding: 10px;">Belum ada teman di Squad. Yuk invite temanmu pakai NISN!</div>`;
           return;
         }
 
-        friends.forEach((nisn) => {
+        friendsArray.forEach((nisn) => {
           const teman = masterDataSiswa.find((s) => s.nisn === nisn);
           const namaTeman = teman ? teman.nama : `NISN: ${nisn}`;
           const kelasTeman = teman ? teman.kelas : "-";
-          const hpTeman = teman && teman.hp !== undefined ? teman.hp : 200;
-          const shieldTeman =
-            teman && teman.shield !== undefined ? teman.shield : 0;
-          const tierInfo = getTierRank(shieldTeman);
           const avatarFile =
             teman && teman.jk && teman.jk.toUpperCase() === "P"
               ? "assets/foto_siswa/avatar_p.webp"
@@ -2286,29 +2470,215 @@
 
           const statusInfo = checkUserStatus(nisn);
           const dotColor = statusInfo.isOnline ? "#2ecc71" : "#e74c3c";
+          const myNisn = getMyNisn();
+          const roomId = getChatRoomId(myNisn, nisn);
 
           container.innerHTML += `
             <div style="background: #111823; border: 1px solid #34495e; border-radius: 8px; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-              <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
+              <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; flex: 1;">
                 <div style="width: 32px; height: 32px; border-radius: 6px; overflow: hidden; background: #2c3e50; flex-shrink: 0; border: 1px solid #f1c40f;">
                   <img src="${avatarFile}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='assets/foto_siswa/avatar.webp'">
                 </div>
-                <div style="overflow: hidden;">
+                <div style="overflow: hidden; flex: 1;">
                   <div style="display: flex; align-items: center; gap: 5px; overflow: hidden;">
                     <div style="font-size: 11px; font-weight: bold; color: #f1c40f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${namaTeman}</div>
-                    <span style="background: ${tierInfo.bg}; color: ${tierInfo.color}; padding: 1px 5px; border-radius: 4px; font-size: 7.5px; font-weight: 700; flex-shrink: 0;">${tierInfo.title}</span>
+                    <span id="badge_unread_${nisn}" style="display: none; background: #e74c3c; color: #fff; font-size: 8px; font-weight: bold; padding: 1px 5px; border-radius: 10px;">0</span>
                   </div>
-                  <div style="font-size: 9px; color: #bdc3c7;">Kelas: ${kelasTeman} | HP: ${hpTeman}</div>
+                  <div style="font-size: 9px; color: #bdc3c7;">Kelas: ${kelasTeman}</div>
                   <div style="font-size: 8.5px; color: ${dotColor}; display: flex; align-items: center; gap: 4px; margin-top: 1px;">
                     <span style="width: 6px; height: 6px; border-radius: 50%; background: ${dotColor}; display: inline-block;"></span>
                     <span>${statusInfo.text}</span>
                   </div>
                 </div>
               </div>
-              <button type="button" onclick="hapusTeman('${nisn}')" style="margin-top: 0; padding: 4px 8px; font-size: 9px; background: #e74c3c; color: #fff; width: auto; border-radius: 6px; box-shadow: none;">Hapus</button>
+              <div style="display: flex; gap: 4px; flex-shrink: 0;">
+                <button type="button" onclick="bukaChatTeman('${nisn}', '${namaTeman}')" style="margin-top: 0; padding: 4px 8px; font-size: 9px; background: #3498db; color: #fff; width: auto; border-radius: 6px; border: none; cursor: pointer; box-shadow: none;">Chat 💬</button>
+                <button type="button" onclick="hapusTeman('${nisn}')" style="margin-top: 0; padding: 4px 8px; font-size: 9px; background: #e74c3c; color: #fff; width: auto; border-radius: 6px; border: none; cursor: pointer; box-shadow: none;">Hapus</button>
+              </div>
             </div>
           `;
+
+          try {
+            const { collection, onSnapshot } = window.fbFirestore;
+            const roomQuery = collection(
+              window.db,
+              "chats",
+              roomId,
+              "messages",
+            );
+            const unsub = onSnapshot(roomQuery, (snapshot) => {
+              let unreadCount = 0;
+              snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                if (data.senderNisn === nisn && data.read === false) {
+                  unreadCount++;
+                }
+              });
+              const badgeEl = document.getElementById(`badge_unread_${nisn}`);
+              if (badgeEl) {
+                if (unreadCount > 0) {
+                  badgeEl.style.display = "inline-block";
+                  badgeEl.innerText = unreadCount;
+                } else {
+                  badgeEl.style.display = "none";
+                }
+              }
+            });
+            friendListeners[nisn] = unsub;
+          } catch (e) {
+            console.error("Gagal melacak unread:", e);
+          }
         });
+      }
+
+      // ==========================================
+      // SISTEM CHAT PERORANGAN (MESSENGER 1-ON-1)
+      // ==========================================
+      let activeChatListener = null;
+      let currentChatTargetNisn = "";
+
+      function bukaChatTeman(targetNisn, targetNama) {
+        currentChatTargetNisn = targetNisn;
+        document.getElementById("chatTitleNama").innerText = targetNama;
+        document.getElementById("modalChatTeman").classList.remove("hidden");
+        loadPesanChatRealtime(targetNisn);
+      }
+
+      function tutupChatTeman() {
+        document.getElementById("modalChatTeman").classList.add("hidden");
+        if (activeChatListener) {
+          activeChatListener();
+          activeChatListener = null;
+        }
+        renderDaftarTeman();
+      }
+
+      function getChatRoomId(nisn1, nisn2) {
+        return [nisn1, nisn2].sort().join("_");
+      }
+
+      async function loadPesanChatRealtime(targetNisn) {
+        const myNisn = getMyNisn();
+        const roomId = getChatRoomId(myNisn, targetNisn);
+        const container = document.getElementById("chatMessageContainer");
+        container.innerHTML = `<div style="font-size: 11px; color: #888; text-align: center; margin: auto;">Menghubungkan ke ruang aman...</div>`;
+
+        try {
+          const {
+            collection,
+            query,
+            orderBy,
+            where,
+            onSnapshot,
+            doc,
+            updateDoc,
+            getDocs,
+            deleteDoc,
+          } = window.fbFirestore;
+          const messagesRef = collection(
+            window.db,
+            "chats",
+            roomId,
+            "messages",
+          );
+
+          const tujuhHariLalu = Date.now() - 7 * 24 * 60 * 60 * 1000;
+          const qExpired = query(
+            messagesRef,
+            where("timestamp", "<", tujuhHariLalu),
+          );
+          const expiredSnap = await getDocs(qExpired);
+
+          expiredSnap.forEach((docSnap) => {
+            deleteDoc(
+              doc(window.db, "chats", roomId, "messages", docSnap.id),
+            ).catch((err) => console.log("Gagal hapus pesan lama:", err));
+          });
+
+          const qValid = query(
+            messagesRef,
+            where("timestamp", ">=", tujuhHariLalu),
+            orderBy("timestamp", "asc"),
+          );
+
+          if (activeChatListener) activeChatListener();
+
+          activeChatListener = onSnapshot(qValid, (snapshot) => {
+            container.innerHTML = "";
+            if (snapshot.empty) {
+              container.innerHTML = `<div style="font-size: 11px; color: #888; text-align: center; margin: auto;">Belum ada riwayat pesan. Mulai sapa temanmu sekarang! 👋</div>`;
+              return;
+            }
+
+            snapshot.forEach((docSnap) => {
+              const msg = docSnap.data();
+              const msgId = docSnap.id;
+              const isMe = msg.senderNisn === myNisn;
+
+              if (!isMe && !msg.read) {
+                updateDoc(doc(window.db, "chats", roomId, "messages", msgId), {
+                  read: true,
+                });
+              }
+
+              let bubbleStyle = isMe
+                ? "align-self: flex-end; background: #1e3c72; color: #fff; border-bottom-right-radius: 2px;"
+                : "align-self: flex-start; background: #ffffff; color: #333; border: 1.5px solid #e2e8f0; border-bottom-left-radius: 2px;";
+
+              let timeFormatted = msg.time || "";
+              let tickStatus = "";
+
+              if (isMe) {
+                tickStatus = msg.read
+                  ? `<span style="color: #38bdf8; margin-left: 4px; font-weight: bold;" title="Sudah Dibaca">✓✓</span>`
+                  : `<span style="color: #cbd5e1; margin-left: 4px;" title="Terkirim">✓</span>`;
+              }
+
+              container.innerHTML += `
+                <div style="${bubbleStyle} padding: 8px 12px; border-radius: 12px; max-width: 75%; font-size: 11px; word-break: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                  <div>${msg.text}</div>
+                  <div style="font-size: 7.5px; opacity: 0.8; text-align: right; margin-top: 3px; display: flex; justify-content: flex-end; align-items: center; gap: 2px;">
+                    <span>${timeFormatted}</span>
+                    ${tickStatus}
+                  </div>
+                </div>
+              `;
+            });
+            container.scrollTop = container.scrollHeight;
+          });
+        } catch (err) {
+          console.error("Gagal memuat chat:", err);
+          container.innerHTML = `<div style="font-size: 11px; color: #e74c3c; text-align: center; margin: auto;">Gagal memuat ruang obrolan.</div>`;
+        }
+      }
+
+      async function kirimPesanChat() {
+        const inputEl = document.getElementById("inputPesanChat");
+        const text = inputEl.value.trim();
+        if (!text) return;
+
+        const myNisn = getMyNisn();
+        const targetNisn = currentChatTargetNisn;
+        const roomId = getChatRoomId(myNisn, targetNisn);
+
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+        try {
+          const { collection, addDoc } = window.fbFirestore;
+          await addDoc(collection(window.db, "chats", roomId, "messages"), {
+            senderNisn: myNisn,
+            text: text,
+            time: timeStr,
+            timestamp: Date.now(),
+            read: false,
+          });
+
+          inputEl.value = "";
+        } catch (err) {
+          console.error("Gagal mengirim pesan:", err);
+          alert("Gagal mengirim pesan. Periksa koneksi internetmu.");
+        }
       }
 
       // DATA GURU LENGKAP
@@ -2771,7 +3141,7 @@
         showScreen("menu");
       }
 
-      // RENDER GLOBAL LEADERBOARD (DENGAN DESIGN TOP 3 KUSTOM ANDA)
+      // RENDER GLOBAL LEADERBOARD
       function renderGlobalLeaderboard() {
         const filter = document.getElementById("filterLeaderboardKelas").value;
         const container = document.getElementById("globalLeaderboardList");
@@ -3061,7 +3431,7 @@
               const siswa = docSnap.data();
               if (siswa.dailyScore === undefined) siswa.dailyScore = 0;
               localStorage.setItem("activeUser", nisnInput);
-              renderDaftarTeman();
+              initStudentRealtimeListener(nisnInput);
 
               document
                 .getElementById("boxInputNisnSiswa")
@@ -3308,7 +3678,6 @@
         document.getElementById("modalKonfirmasi").classList.add("hidden");
       }
 
-      // EKSEKUSI SIMPAN POIN
       async function eksekusiSimpanWithLoading() {
         tutupModal();
         const selectedRadio = document.querySelector(
@@ -3419,7 +3788,7 @@
         });
       }
 
-      // SUPER ADMIN TABS & ACTION HANDLER (GLOBAL & PER KELAS)
+      // SUPER ADMIN TABS
       function switchAdminTab(tabName) {
         ["Rekap", "Kontrol", "Cetak"].forEach((n) => {
           document.getElementById("adminTab" + n).classList.add("hidden");
@@ -3467,7 +3836,6 @@
           </tr>`;
         });
 
-        // RENDER / UPDATE CHART.JS STATISTIK
         const ctx = document.getElementById("statistikChart").getContext("2d");
         let labels = ["10 SMK", "11 SMK", "12 SMK"];
         let pelanggaranPerKelas = [0, 0, 0];
@@ -3575,7 +3943,6 @@
               .replace("T", " ")
               .substring(0, 16);
 
-            // 1. RESET DAILY GLOBAL
             if (act === "RESET_DAILY_GLOBAL") {
               for (let s of masterDataSiswa) {
                 if (!s.nisn) continue;
@@ -3598,9 +3965,7 @@
               done();
               sessionStorage.removeItem("master_siswa_cache");
               alert("⭐ Poin harian SELURUH SISWA berhasil di-reset jadi 0!");
-            }
-            // 2. RESET DAILY CLASS
-            else if (act === "RESET_DAILY_CLASS") {
+            } else if (act === "RESET_DAILY_CLASS") {
               const targetList = masterDataSiswa.filter(
                 (s) => s.kelas === kelasTarget,
               );
@@ -3627,9 +3992,7 @@
               alert(
                 `⭐ Poin harian kelas ${kelasTarget} berhasil di-reset jadi 0!`,
               );
-            }
-            // 3. RESET DAILY INDIVIDUAL
-            else if (act === "RESET_DAILY_INDIVIDUAL") {
+            } else if (act === "RESET_DAILY_INDIVIDUAL") {
               const docRef = doc(window.db, "siswa", nisnTarget);
               const docSnap = await getDoc(docRef);
               let riwayatList = docSnap.exists()
@@ -3648,9 +4011,7 @@
               done();
               sessionStorage.removeItem("master_siswa_cache");
               alert(`⭐ Poin harian siswa berhasil di-reset jadi 0!`);
-            }
-            // 4. RESET FULL GLOBAL (PEMUTIHAN SEMUA SISWA)
-            else if (act === "RESET_FULL_GLOBAL") {
+            } else if (act === "RESET_FULL_GLOBAL") {
               for (let s of masterDataSiswa) {
                 if (!s.nisn) continue;
                 const docRef = doc(window.db, "siswa", s.nisn);
@@ -3672,9 +4033,7 @@
               done();
               sessionStorage.removeItem("master_siswa_cache");
               alert("👑 Pemutihan penuh SELURUH SISWA berhasil dieksekusi!");
-            }
-            // 5. RESET FULL CLASS (PEMUTIHAN PER KELAS)
-            else if (act === "RESET_FULL_CLASS") {
+            } else if (act === "RESET_FULL_CLASS") {
               const targetList = masterDataSiswa.filter(
                 (s) => s.kelas === kelasTarget,
               );
@@ -3701,9 +4060,7 @@
               alert(
                 `👑 Pemutihan penuh kelas ${kelasTarget} berhasil dieksekusi!`,
               );
-            }
-            // 6. RESET FULL INDIVIDUAL
-            else if (act === "RESET_FULL_INDIVIDUAL") {
+            } else if (act === "RESET_FULL_INDIVIDUAL") {
               const docRef = doc(window.db, "siswa", nisnTarget);
               await updateDoc(docRef, {
                 hp: 200,
@@ -3748,8 +4105,8 @@
           btnPelang.style.color = "#e74c3c";
 
           let html = `<div class="accordion">
-                        <div class="accordion-header" onclick="toggleAccordion(this)"><span>⭐ Daftar Penghargaan (Reward)</span><span>▼</span></div>
-                        <div class="accordion-body active">`;
+                      <div class="accordion-header" onclick="toggleAccordion(this)"><span>⭐ Daftar Penghargaan (Reward)</span><span>▼</span></div>
+                      <div class="accordion-body active">`;
           dataPilihan.Prestasi.forEach((item) => {
             html += `<div class="q-item"><span>${item.t}</span> <span class="badge-shield">+${item.p}</span></div>`;
           });
@@ -3805,6 +4162,13 @@
         setDoc,
         updateDoc,
         deleteDoc,
+        addDoc,
+        query,
+        orderBy,
+        where,
+        onSnapshot,
+        arrayUnion,
+        arrayRemove,
       } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
       const firebaseConfig = {
@@ -3828,6 +4192,13 @@
         setDoc,
         updateDoc,
         deleteDoc,
+        addDoc,
+        query,
+        orderBy,
+        where,
+        onSnapshot,
+        arrayUnion,
+        arrayRemove,
       };
       console.log("🔥 Firebase Firestore Terhubung ke Tatib SMK Wiraguna!");
     </script>
