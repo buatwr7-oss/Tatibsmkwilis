@@ -1571,7 +1571,6 @@
     </div>
 
     <!-- MODAL ERROR / NISN TIDAK DITEMUKAN -->
-    <!-- MODAL ERROR NISN TIDAK DITEMUKAN (GAYA RPG) -->
     <div
       id="modalErrorSiswa"
       class="hidden"
@@ -1604,10 +1603,7 @@
             &quot;Segoe UI&quot;, Tahoma, Geneva, Verdana, sans-serif;
         "
       >
-        <!-- Icon Peringatan -->
         <div style="font-size: 38px; margin-bottom: 8px">⚠️</div>
-
-        <!-- Judul Modal -->
         <h3
           style="
             color: #f1c40f;
@@ -1620,8 +1616,6 @@
         >
           NISN Tidak Ditemukan
         </h3>
-
-        <!-- Kotak Deskripsi Pesan -->
         <div
           style="
             background: #1a2638;
@@ -1640,8 +1634,6 @@
           Pastikan kembali nomor yang kamu ketik sudah benar atau hubungi
           petugas sekolah! 📚
         </div>
-
-        <!-- Tombol Tutup / Kembali -->
         <button
           onclick="
             document.getElementById('modalErrorSiswa').classList.add('hidden')
@@ -1801,8 +1793,6 @@
       // MASTER DATA SISWA
       let masterDataSiswa = [];
 
-      // FUNGSI MEMUAT DATA DENGAN SISTEM CACHING (SESSIONSTORAGE)
-      // FUNGSI MEMUAT DATA DARI FIREBASE FIRESTORE (SUPER CEPAT)
       async function loadMasterSiswaFromCloud(callback) {
         const cachedData = sessionStorage.getItem("master_siswa_cache");
         if (cachedData) {
@@ -1820,7 +1810,6 @@
             masterDataSiswa.push(doc.data());
           });
 
-          // Simpan ke sessionStorage agar akses berikutnya instan
           sessionStorage.setItem(
             "master_siswa_cache",
             JSON.stringify(masterDataSiswa),
@@ -2073,7 +2062,7 @@
         }, 5000);
       }
 
-      // LOGIKA LOGIN (BERSIH & TEPAT)
+      // LOGIKA LOGIN
       function login() {
         const usernameIn = document
           .getElementById("namaGuruInput")
@@ -2206,12 +2195,11 @@
         };
       }
 
-      // FUNGSI PENUTUP MODAL ERROR SISWA
       function tutupModalError() {
         document.getElementById("modalErrorSiswa").classList.add("hidden");
       }
 
-      // FUNGSI 9 TIER RANK BERBASIS SHIELD (MOBA STYLE + EMOJI + GRADIENT PROGRESSIVE)
+      // TIER RANK BERBASIS SHIELD
       function getTierRank(shield) {
         if (shield >= 290) {
           return {
@@ -2288,15 +2276,13 @@
         }
       }
 
-      // PENCARIAN SISWA TERHUBUNG CLOUD
-      // PENCARIAN SISWA PERORANGAN DARI FIRESTORE (INSTAN)
+      // PENCARIAN SISWA PERORANGAN DARI FIRESTORE
       async function cariPoinSiswaWithLoading() {
         const nisnInput = document
           .getElementById("nisnSiswaInput")
           .value.trim();
         if (!nisnInput) return alert("Silakan ketik nomor NIS / NISN kamu!");
 
-        // Fitur Easter Egg tetap dipertahankan
         if (nisnInput.toLowerCase() === "akusiswasmkwiraguna") {
           showGamePreloader("UNLOCKING SECRET MISSION...", (done) => {
             setTimeout(() => {
@@ -2315,7 +2301,6 @@
         showGamePreloader("FETCHING CLOUD DATABASE...", async (done) => {
           try {
             const { doc, getDoc } = window.fbFirestore;
-            // Ambil dokumen berdasarkan NISN sebagai ID dokumen di koleksi "siswa"
             const docRef = doc(window.db, "siswa", nisnInput);
             const docSnap = await getDoc(docRef);
 
@@ -2347,7 +2332,6 @@
               document.getElementById("txtKelasSiswaHasil").innerText =
                 `Kelas: ${siswa.kelas || "-"} | NISN: ${siswa.nisn || nisnInput}`;
 
-              // RENDER TIER RANK
               const rankInfo = getTierRank(siswa.shield || 0);
               document.getElementById("txtTierRankContainer").innerHTML = `
           <span style="
@@ -2585,7 +2569,7 @@
         const kat = document.getElementById("kategori").value;
         const efekPoin =
           kat === "Prestasi"
-            ? `+${selectedRadio.getAttribute("data-poin")} Prestasi / Heal`
+            ? `+${selectedRadio.getAttribute("data-poin")} Prestasi`
             : `-${selectedRadio.getAttribute("data-poin")} Pelanggaran`;
 
         document.getElementById("modalDetailContent").innerHTML = `
@@ -2601,8 +2585,7 @@
         document.getElementById("modalKonfirmasi").classList.add("hidden");
       }
 
-      // SIMPAN POIN KE CLOUD DATABASE DENGAN PEMBERSIHAN CACHE
-      // SIMPAN POIN KE FIRESTORE (UPDATE HP, SHIELD, DAN RIWAYAT)
+      // SIMPAN POIN KE FIRESTORE (DENGAN LOGIKA RPG BARU: HEAL FIRST, SHIELD LATER / SHIELD FIRST, HP LATER)
       async function eksekusiSimpanWithLoading() {
         tutupModal();
         const selectedRadio = document.querySelector(
@@ -2636,9 +2619,7 @@
           try {
             const { doc, getDoc, updateDoc } = window.fbFirestore;
 
-            // Loop untuk setiap siswa yang dipilih
             for (let namaSiswa of daftarSiswaDipilih) {
-              // Cari NISN siswa berdasarkan nama dari masterDataSiswa
               const siswaObj = masterDataSiswa.find(
                 (s) => s.nama === namaSiswa,
               );
@@ -2657,16 +2638,45 @@
                 let totalPel = dataSiswa.totalPelanggaran || 0;
                 let riwayatList = dataSiswa.riwayat || [];
 
-                // Kalkulasi Poin Prestasi atau Pelanggaran
                 let poinDampak = kat === "Prestasi" ? poin : -poin;
 
                 if (kat === "Prestasi") {
+                  // Akumulasi total prestasi murni
                   totalPres += poin;
-                  shieldBaru += poin; // Prestasi menambah Shield
-                  hpBaru = Math.min(200, (hpValue = hpBaru + poin)); // Heal HP maksimal 200
+
+                  // Logika: Heal First, Shield Later
+                  let sisaPoin = poin;
+                  let kekuranganHp = 200 - hpBaru;
+                  if (kekuranganHp > 0) {
+                    if (sisaPoin >= kekuranganHp) {
+                      hpBaru = 200;
+                      sisaPoin -= kekuranganHp;
+                    } else {
+                      hpBaru += sisaPoin;
+                      sisaPoin = 0;
+                    }
+                  }
+                  if (sisaPoin > 0) {
+                    shieldBaru += sisaPoin;
+                  }
                 } else {
+                  // Akumulasi total pelanggaran murni
                   totalPel += poin;
-                  hpBaru = Math.max(0, hpBaru - poin); // Kurangi HP, minimal 0
+
+                  // Logika: Shield First, HP Later
+                  let sisaPelanggaran = poin;
+                  if (shieldBaru > 0) {
+                    if (sisaPelanggaran >= shieldBaru) {
+                      sisaPelanggaran -= shieldBaru;
+                      shieldBaru = 0;
+                    } else {
+                      shieldBaru -= sisaPelanggaran;
+                      sisaPelanggaran = 0;
+                    }
+                  }
+                  if (sisaPelanggaran > 0) {
+                    hpBaru = Math.max(0, hpBaru - sisaPelanggaran);
+                  }
                 }
 
                 // Tambahkan riwayat baru di urutan paling atas
@@ -2690,7 +2700,6 @@
 
             done();
 
-            // Hapus cache agar data lokal diperbarui dari Firestore pada sesi berikutnya
             sessionStorage.removeItem("master_siswa_cache");
 
             alert(
@@ -2699,7 +2708,6 @@
             document.getElementById("formEntry").reset();
             initFormEntry();
 
-            // Muat ulang data master siswa terbaru
             loadMasterSiswaFromCloud();
           } catch (err) {
             done();
@@ -2842,8 +2850,7 @@
           });
       }
 
-      // ACTION ADMIN FIRESTORE (RESET & REBUILD)
-      // ACTION ADMIN FIRESTORE (RESET PENUH / PEMUTIHAN PER SISWA)
+      // ACTION ADMIN FIRESTORE (RESET PENUH / PEMUTIHAN)
       async function prosesActionAdminWithLoading() {
         const nisn = document.getElementById("adminSiswaSelect").value;
         const act = document.getElementById("adminActionType").value;
@@ -2858,7 +2865,6 @@
               const { doc, updateDoc } = window.fbFirestore;
               const docRef = doc(window.db, "siswa", nisn);
 
-              // Reset dokumen siswa di Firestore ke kondisi awal
               await updateDoc(docRef, {
                 hp: 200,
                 shield: 0,
@@ -2879,19 +2885,16 @@
 
               done();
 
-              // Hapus cache agar data terbaru ditarik ulang dari Firestore
               sessionStorage.removeItem("master_siswa_cache");
 
               alert(
                 `👑 PEMUTIHAN BERHASIL & TERSIMPAN KE CLOUD!\nTarget NISN: ${nisn}\nHP dikembalikan ke 200, Shield 0, dan riwayat di-reset.`,
               );
 
-              // Reset form
               document.getElementById("formAdminAction").reset();
               document.getElementById("adminSiswaSelect").innerHTML =
                 `<option value="">-- Pilih Kelas Dulu --</option>`;
 
-              // Muat ulang master data
               loadMasterSiswaFromCloud();
             } else {
               done();
@@ -3072,7 +3075,6 @@
         updateDoc,
       } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
-      // Konfigurasi Firebase kamu yang sudah benar
       const firebaseConfig = {
         apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
         authDomain: "tatib-smk-wiraguna.firebaseapp.com",
@@ -3082,11 +3084,9 @@
         appId: "1:80347778161:web:cd92d4b9816b82a983d050",
       };
 
-      // Inisialisasi Firebase & Firestore
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
 
-      // Daftarkan ke window agar bisa dipanggil fungsi utama
       window.db = db;
       window.fbFirestore = {
         collection,
