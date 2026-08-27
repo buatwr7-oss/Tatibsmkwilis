@@ -29,6 +29,23 @@
         -webkit-tap-highlight-color: transparent;
       }
 
+      /* CUSTOM SCROLLBAR RAMPING / KECIL */
+      ::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(241, 196, 15, 0.4);
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(241, 196, 15, 0.8);
+      }
+
       body {
         min-height: 100vh;
         display: flex;
@@ -159,9 +176,9 @@
         text-align: center;
       }
       .logo {
-        width: 85px;
-        height: 85px;
-        margin: 0 auto 10px auto;
+        width: 75px;
+        height: 75px;
+        margin: 0 auto 8px auto;
         display: block;
         object-fit: contain;
         filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
@@ -174,7 +191,7 @@
       h2 {
         color: #1e3c72;
         margin-bottom: 3px;
-        font-size: 19px;
+        font-size: 18px;
         font-weight: 700;
         line-height: 1.3;
       }
@@ -678,7 +695,7 @@
         margin-bottom: 15px;
       }
 
-      /* QUEST BOARD (TATIB) STYLES */
+      /* QUEST BOARD STYLES */
       .quest-tabs {
         display: flex;
         gap: 5px;
@@ -866,7 +883,7 @@
 
     <div class="particles-container">
       <span class="particle"></span><span class="particle"></span>
-      <span class="particle"></span> <span class="particle"></span>
+      <span class="particle"></span><span class="particle"></span>
       <span class="particle"></span><span class="particle"></span>
     </div>
 
@@ -878,12 +895,16 @@
         max-width: 480px;
         display: flex;
         flex-direction: column;
-        gap: 15px;
+        gap: 12px;
         align-items: center;
         z-index: 2;
       "
     >
-      <div id="mainMenuCard" class="card text-center" style="width: 100%">
+      <div
+        id="mainMenuCard"
+        class="card text-center"
+        style="width: 100%; padding: 20px 18px"
+      >
         <img
           src="logo.png"
           alt="Logo SMK Wiraguna"
@@ -899,7 +920,7 @@
             font-size: 9px;
             color: #b7950b;
             margin-top: -2px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             font-weight: 700;
             letter-spacing: 1px;
             text-transform: uppercase;
@@ -913,47 +934,136 @@
         </button>
       </div>
 
-      <div
-        id="questTriggerCard"
-        class="card text-center quest-card-btn"
-        style="
-          width: 100%;
-          padding: 13px 20px;
-          cursor: pointer;
-          border-color: #3498db;
-          background: rgba(255, 255, 255, 0.95);
-        "
-        onclick="bukaPortal('quest')"
-      >
+      <!-- KARTU BERSEBELAHAN: PAPAN QUEST & GLOBAL LEADERBOARD (SEJAJAR HORIZONTAL) -->
+      <div style="display: flex; gap: 10px; width: 100%">
         <div
+          class="card quest-card-btn"
           style="
+            flex: 1;
+            padding: 12px 14px;
+            cursor: pointer;
+            border-color: #3498db;
+            background: rgba(255, 255, 255, 0.95);
             display: flex;
+            flex-direction: row;
             align-items: center;
-            justify-content: center;
             gap: 12px;
+            text-align: left;
           "
+          onclick="bukaPortal('quest')"
         >
-          <span style="font-size: 28px">📜</span>
-          <div style="text-align: left">
+          <span style="font-size: 28px; flex-shrink: 0">📜</span>
+          <div style="display: flex; flex-direction: column; overflow: hidden">
             <h3
               style="
-                font-size: 14px;
+                font-size: 11.5px;
                 color: #1e3c72;
                 margin: 0;
                 font-weight: 700;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
               "
             >
               Papan Quest
             </h3>
             <p
-              style="font-size: 11px; color: #666; margin: 0; font-weight: 500"
+              style="
+                font-size: 9px;
+                color: #666;
+                margin: 1px 0 0 0;
+                white-space: nowrap;
+              "
             >
-              Panduan poin kedisiplinan & prestasi sekolah.
+              Panduan Poin Tata Tertib
             </p>
           </div>
-          <span style="font-size: 16px; color: #3498db; margin-left: auto"
-            >▶</span
+        </div>
+
+        <div
+          class="card quest-card-btn"
+          style="
+            flex: 1;
+            padding: 12px 14px;
+            cursor: pointer;
+            border-color: #f1c40f;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+          "
+          onclick="bukaPortal('leaderboard')"
+        >
+          <span style="font-size: 28px; flex-shrink: 0">🏆</span>
+          <div style="display: flex; flex-direction: column; overflow: hidden">
+            <h3
+              style="
+                font-size: 11.5px;
+                color: #1e3c72;
+                margin: 0;
+                font-weight: 700;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              "
+            >
+              Top Global Rank
+            </h3>
+            <p
+              style="
+                font-size: 9px;
+                color: #666;
+                margin: 1px 0 0 0;
+                white-space: nowrap;
+              "
+            >
+              Leaderboard Siswa
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- BAGIAN BAWAH: DAFTAR TUGAS / PR AKTIF DARI GURU -->
+      <div class="card" style="width: 100%; padding: 15px; text-align: left">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 6px;
+          "
+        >
+          <h3 style="font-size: 12px; color: #1e3c72; font-weight: 700">
+            📚 Papan Tugas & PR Aktif
+          </h3>
+          <span style="font-size: 9px; color: #b7950b; font-weight: bold"
+            >(Berlaku untuk ±1 Minggu)</span
           >
+        </div>
+        <div
+          id="mainTaskBoardList"
+          style="
+            max-height: 180px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+          "
+        >
+          <div
+            style="
+              font-size: 10.5px;
+              color: #888;
+              text-align: center;
+              padding: 10px;
+            "
+          >
+            Memuat tugas aktif dari guru...
+          </div>
         </div>
       </div>
     </div>
@@ -1014,42 +1124,73 @@
         <button class="btn-logout" onclick="kembaliKeMenu()">Keluar</button>
       </div>
 
-      <div class="input-box">
-        <label>NOMOR NISN *</label>
-        <input
-          type="text"
-          id="nisnSiswaInput"
-          inputmode="numeric"
-          placeholder="Ketik NISN Kamu"
-          required
-          autocomplete="off"
-        />
+      <!-- KOTAK INPUT NISN & TOMBOL -->
+      <div id="boxInputNisnSiswa">
+        <div class="input-box">
+          <label>NOMOR NISN *</label>
+          <input
+            type="text"
+            id="nisnSiswaInput"
+            inputmode="numeric"
+            placeholder="Ketik NISN Kamu"
+            autocomplete="off"
+          />
+        </div>
+        <button onclick="cariPoinSiswaWithLoading()">
+          Tampilkan Status Saya
+        </button>
       </div>
-      <button onclick="cariPoinSiswaWithLoading()">
-        Tampilkan Status Saya
-      </button>
 
       <!-- KONTENER HASIL RPG PROFILE -->
       <div id="hasilPoinSiswa" class="hidden">
         <div class="rpg-card-container">
           <div class="rpg-top-section">
-            <div class="rpg-avatar-box" style="padding: 0; overflow: hidden">
-              <img
-                src="assets/foto_siswa/avatar.webp"
-                alt="Avatar"
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 5px;
+                flex-shrink: 0;
+              "
+            >
+              <div
+                class="rpg-avatar-box"
+                style="padding: 0; overflow: hidden; width: 65px; height: 65px"
+              >
+                <img
+                  src="assets/foto_siswa/avatar.webp"
+                  alt="Avatar"
+                  style="
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    border-radius: 4px;
+                  "
+                  onerror="this.src = 'assets/foto_siswa/avatar.webp'"
+                />
+              </div>
+              <div
+                id="txtDailyScoreTextOnly"
                 style="
-                  width: 100%;
-                  height: 100%;
-                  object-fit: cover;
-                  border-radius: 4px;
+                  background: #111823;
+                  border: 1px solid #34495e;
+                  border-radius: 6px;
+                  padding: 2px 4px;
+                  font-size: 10.5px;
+                  font-weight: bold;
+                  color: #f1c40f;
+                  text-align: center;
+                  width: 65px;
+                  white-space: nowrap;
                 "
-                onerror="this.src = 'assets/foto_siswa/avatar.webp'"
-              />
+              >
+                ⭐ 0 Pts
+              </div>
             </div>
             <div class="rpg-info-box">
               <div id="txtNamaSiswaHasil" class="rpg-name">-</div>
               <div id="txtKelasSiswaHasil" class="rpg-class-lvl">-</div>
-              <!-- TIER RANK CONTAINER -->
               <div id="txtTierRankContainer" style="margin-top: 1px"></div>
             </div>
           </div>
@@ -1083,7 +1224,6 @@
             </div>
           </div>
 
-          <!-- BANNER STATUS PEMBINAAN HUKUM -->
           <div id="rpgStatusBanner" class="rpg-status-banner">
             <strong id="txtStatusKondisi">STATUS: NORMAL</strong>
             <span id="txtStatusPenanganan" style="color: #ecf0f1"
@@ -1136,7 +1276,6 @@
             </div>
           </div>
 
-          <!-- RIWAYAT KEJADIAN & POIN -->
           <div
             class="history-container"
             style="
@@ -1171,12 +1310,101 @@
               "
             ></div>
           </div>
+
+          <!-- SQUAD / PERTEMANAN SECTION -->
+          <div class="rpg-card-container" style="margin-top: 15px">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 10px;
+                border-bottom: 2px solid #2c3e50;
+                padding-bottom: 8px;
+                gap: 8px;
+              "
+            >
+              <span
+                style="
+                  font-size: 11.5px;
+                  color: #f1c40f;
+                  font-weight: 700;
+                  white-space: nowrap;
+                  padding-top: 6px;
+                "
+                >👥 Daftar Teman</span
+              >
+
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  align-items: flex-end;
+                  gap: 4px;
+                  flex-grow: 1;
+                  max-width: 250px;
+                "
+              >
+                <div style="display: flex; gap: 5px; width: 100%">
+                  <input
+                    type="text"
+                    id="inputNisnTeman"
+                    placeholder="Masukkan NISN Teman..."
+                    style="
+                      padding: 6px 8px;
+                      font-size: 10px;
+                      border-radius: 6px;
+                      border: 1px solid #34495e;
+                      background: #111823;
+                      color: #fff;
+                      flex: 1;
+                      outline: none;
+                    "
+                  />
+                  <button
+                    type="button"
+                    onclick="tambahTeman()"
+                    style="
+                      margin-top: 0;
+                      padding: 6px 10px;
+                      font-size: 10px;
+                      background: #f1c40f;
+                      color: #1a2536;
+                      font-weight: bold;
+                      width: auto;
+                      border-radius: 6px;
+                      box-shadow: none;
+                      border: none;
+                      cursor: pointer;
+                    "
+                  >
+                    Invite
+                  </button>
+                </div>
+                <span id="jumlahTemanTxt" style="font-size: 9px; color: #bdc3c7"
+                  >0 Teman</span
+                >
+              </div>
+            </div>
+
+            <div id="containerUndanganMasuk" style="margin-bottom: 10px"></div>
+            <div
+              id="listTemanContainer"
+              style="
+                max-height: 180px;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+              "
+            ></div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- HALAMAN ENTRY GURU -->
-    <div id="entryCard" class="card hidden">
+    <div id="entryCard" class="card hidden" style="max-width: 520px">
       <div class="header-app">
         <div class="user-info">
           <h3 id="txtNamaGuru">Nama Guru</h3>
@@ -1185,110 +1413,217 @@
         <button class="btn-logout" onclick="logout()">Keluar</button>
       </div>
 
-      <form
-        id="formEntry"
-        onsubmit="
-          event.preventDefault();
-          konfirmasiSimpan();
-        "
-      >
-        <div class="row-group">
-          <div class="input-box" style="flex: 1.2">
-            <label>HARI *</label>
-            <select id="hari" required>
-              <option value="Senin">Senin</option>
-              <option value="Selasa">Selasa</option>
-              <option value="Rabu">Rabu</option>
-              <option value="Kamis">Kamis</option>
-              <option value="Jum'at">Jum'at</option>
-              <option value="Sabtu">Sabtu</option>
-            </select>
-          </div>
-          <div class="input-box" style="flex: 1.5">
-            <label>TANGGAL *</label>
-            <input type="date" id="tanggal" required />
-          </div>
-          <div class="input-box" style="flex: 1.1">
-            <label>JAM *</label>
-            <input type="time" id="jam" required />
-          </div>
-        </div>
+      <!-- NAVIGASI TAB GURU -->
+      <div class="admin-nav" style="margin-bottom: 15px">
+        <button
+          id="navBtnInputPoin"
+          onclick="switchTeacherTab('poin')"
+          style="background: #1e3c72; font-size: 11px; padding: 8px"
+        >
+          ⭐ Input Poin Tugas
+        </button>
+        <button
+          id="navBtnPostTugas"
+          onclick="switchTeacherTab('posting')"
+          class="btn-outline"
+          style="font-size: 11px; padding: 8px"
+        >
+          📢 Posting & Hapus Tugas
+        </button>
+      </div>
 
-        <div class="row-group">
+      <!-- TAB 1: INPUT POIN TUGAS HARIAN -->
+      <div id="teacherTabPoin" class="admin-tab-content">
+        <form
+          id="formEntry"
+          onsubmit="
+            event.preventDefault();
+            konfirmasiSimpan();
+          "
+        >
+          <div class="row-group">
+            <div class="input-box" style="flex: 1.2">
+              <label>HARI *</label>
+              <select id="hari" required>
+                <option value="Senin">Senin</option>
+                <option value="Selasa">Selasa</option>
+                <option value="Rabu">Rabu</option>
+                <option value="Kamis">Kamis</option>
+                <option value="Jum'at">Jum'at</option>
+                <option value="Sabtu">Sabtu</option>
+              </select>
+            </div>
+            <div class="input-box" style="flex: 1.5">
+              <label>TANGGAL *</label>
+              <input type="date" id="tanggal" required />
+            </div>
+            <div class="input-box" style="flex: 1.1">
+              <label>JAM *</label>
+              <input type="time" id="jam" required />
+            </div>
+          </div>
+
+          <div class="row-group">
+            <div class="input-box">
+              <label>TEMPAT *</label>
+              <select id="tempat" required>
+                <option value="">-- Lokasi --</option>
+                <option value="Ruang Kelas">Ruang Kelas</option>
+                <option value="Laboratorium">Laboratorium</option>
+                <option value="Online / Daring">Online / Daring</option>
+                <option value="Lainnya">Lainnya</option>
+              </select>
+            </div>
+            <div class="input-box">
+              <label>KATEGORI *</label>
+              <select id="kategori" onchange="handleKategoriChange()" required>
+                <option value="Prestasi">🏆 Prestasi (+HP/Shield)</option>
+                <option value="Pelanggaran">⚠️ Pelanggaran (-HP)</option>
+                <option value="TugasHarian" selected>
+                  ⭐ Poin Harian / Tugas Kelas (+XP)
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div id="boxSubKategori" class="input-box hidden">
+            <label>TINGKAT PELANGGARAN *</label>
+            <select id="subKategori" onchange="renderOpsiPoin()"></select>
+          </div>
+
           <div class="input-box">
-            <label>TEMPAT *</label>
-            <select id="tempat" required>
-              <option value="">-- Lokasi --</option>
-              <option value="Ruang Kelas">Ruang Kelas</option>
-              <option value="Lapangan">Lapangan</option>
-              <option value="Toilet">Toilet</option>
-              <option value="Masjid">Masjid</option>
-              <option value="Kantin">Kantin</option>
-              <option value="Lainnya">Lainnya</option>
+            <label>KELAS *</label>
+            <select id="kelas" onchange="updateEntrySiswaList()" required>
+              <option value="">-- Pilih Kelas --</option>
+              <option value="10 SMK">10 SMK</option>
+              <option value="11 SMK">11 SMK</option>
+              <option value="12 SMK">12 SMK</option>
+            </select>
+          </div>
+
+          <div class="input-box">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 4px;
+              "
+            >
+              <label style="margin: 0">TARGET SISWA *</label>
+              <span
+                style="
+                  font-size: 10px;
+                  color: #1e3c72;
+                  cursor: pointer;
+                  font-weight: bold;
+                "
+                onclick="toggleModeSiswa()"
+              >
+                🔄 <span id="txtModeSiswa">Mode: Banyak Siswa</span>
+              </span>
+            </div>
+            <select id="selectSingleSiswa" required class="hidden">
+              <option value="">-- Pilih Kelas Dulu --</option>
+            </select>
+            <div id="boxMultiSiswa" class="checkbox-container">
+              <span style="font-size: 11px; color: #888"
+                >Pilih kelas dulu...</span
+              >
+            </div>
+          </div>
+
+          <div class="input-box" style="margin-top: 10px">
+            <label id="lblDetailOpsi">DETAIL AKTIVITAS HARIAN / TUGAS *</label>
+            <div id="containerOpsi" class="options-container"></div>
+          </div>
+          <button type="submit" id="btnSubmit">Proses Simpan Poin Tugas</button>
+        </form>
+      </div>
+
+      <!-- TAB 2: POSTING & KELOLA / HAPUS TUGAS -->
+      <div id="teacherTabPosting" class="admin-tab-content hidden">
+        <form
+          id="formPostTugas"
+          onsubmit="
+            event.preventDefault();
+            simpanPengumumanTugas();
+          "
+        >
+          <div class="input-box">
+            <label>TARGET KELAS *</label>
+            <select id="postKelasTarget" required>
+              <option value="Semua Kelas">Semua Kelas (Global)</option>
+              <option value="10 SMK">Khusus Kelas 10 SMK</option>
+              <option value="11 SMK">Khusus Kelas 11 SMK</option>
+              <option value="12 SMK">Khusus Kelas 12 SMK</option>
             </select>
           </div>
           <div class="input-box">
-            <label>KATEGORI *</label>
-            <select id="kategori" onchange="handleKategoriChange()" required>
-              <option value="Prestasi">🏆 Prestasi (+HP/Shield)</option>
-              <option value="Pelanggaran">⚠️ Pelanggaran (-HP)</option>
-            </select>
+            <label>JUDUL TUGAS / MATA PELAJARAN *</label>
+            <input
+              type="text"
+              id="postJudul"
+              placeholder="Contoh: PR Matematika Bab Integral / Tugas PBO"
+              required
+              autocomplete="off"
+            />
           </div>
-        </div>
+          <div class="input-box">
+            <label>INSTRUKSI / KETERANGAN TUGAS *</label>
+            <textarea
+              id="postIsi"
+              rows="3"
+              placeholder="Tuliskan detail instruksi tugas di sini..."
+              required
+              style="resize: none"
+            ></textarea>
+          </div>
+          <button type="submit" style="background: #27ae60">
+            📢 Publikasikan ke Halaman Utama
+          </button>
+        </form>
 
-        <div id="boxSubKategori" class="input-box hidden">
-          <label>TINGKAT PELANGGARAN *</label>
-          <select id="subKategori" onchange="renderOpsiPoin()"></select>
-        </div>
-
-        <div class="input-box">
-          <label>KELAS *</label>
-          <select id="kelas" onchange="updateEntrySiswaList()" required>
-            <option value="">-- Pilih Kelas --</option>
-            <option value="10 SMK">10 SMK</option>
-            <option value="11 SMK">11 SMK</option>
-            <option value="12 SMK">12 SMK</option>
-          </select>
-        </div>
-
-        <div class="input-box">
-          <div
+        <div
+          style="
+            margin-top: 15px;
+            border-top: 2px solid #e2e8f0;
+            padding-top: 12px;
+          "
+        >
+          <h4
             style="
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 4px;
+              font-size: 11.5px;
+              color: #1e3c72;
+              margin-bottom: 8px;
+              font-weight: 700;
             "
           >
-            <label style="margin: 0">TARGET SISWA *</label>
-            <span
+            📋 Kelola & Hapus Tugas Aktif:
+          </h4>
+          <div
+            id="teacherTaskList"
+            style="
+              max-height: 160px;
+              overflow-y: auto;
+              display: flex;
+              flex-direction: column;
+              gap: 6px;
+            "
+          >
+            <div
               style="
                 font-size: 10px;
-                color: #1e3c72;
-                cursor: pointer;
-                font-weight: bold;
+                color: #888;
+                text-align: center;
+                padding: 10px;
               "
-              onclick="toggleModeSiswa()"
             >
-              🔄 <span id="txtModeSiswa">Mode: Banyak Siswa</span>
-            </span>
-          </div>
-          <select id="selectSingleSiswa" required class="hidden">
-            <option value="">-- Pilih Kelas Dulu --</option>
-          </select>
-          <div id="boxMultiSiswa" class="checkbox-container">
-            <span style="font-size: 11px; color: #888"
-              >Pilih kelas dulu...</span
-            >
+              Memuat daftar tugas...
+            </div>
           </div>
         </div>
-
-        <div class="input-box" style="margin-top: 10px">
-          <label id="lblDetailOpsi">DETAIL DAMPAK POIN *</label>
-          <div id="containerOpsi" class="options-container"></div>
-        </div>
-        <button type="submit" id="btnSubmit">Proses Simpan Data</button>
-      </form>
+      </div>
     </div>
 
     <!-- HALAMAN SUPER ADMIN -->
@@ -1392,50 +1727,61 @@
             prosesActionAdminWithLoading();
           "
         >
-          <div class="row-group">
-            <div class="input-box">
-              <label>KELAS *</label>
-              <select
-                id="adminKelasSelect"
-                onchange="handleAdminKelasChange()"
-                required
-              >
-                <option value="">-- Pilih Kelas --</option>
-                <option value="10 SMK">10 SMK</option>
-                <option value="11 SMK">11 SMK</option>
-                <option value="12 SMK">12 SMK</option>
-              </select>
-            </div>
-            <div class="input-box">
-              <label>SISWA TARGET *</label>
-              <select id="adminSiswaSelect" required>
-                <option value="">-- Pilih Kelas Dulu --</option>
-              </select>
-            </div>
+          <div class="input-box">
+            <label>TINDAKAN SAKTI *</label>
+            <select
+              id="adminActionType"
+              onchange="handleAdminActionTypeChange()"
+              required
+            >
+              <option value="RESET_DAILY_GLOBAL">
+                ⭐ Reset Poin Harian SEMUA SISWA (Global)
+              </option>
+              <option value="RESET_DAILY_CLASS">
+                ⭐ Reset Poin Harian PER KELAS
+              </option>
+              <option value="RESET_DAILY_INDIVIDUAL">
+                ⭐ Reset Poin Harian SISWA PERORANGAN
+              </option>
+              <option value="RESET_FULL_GLOBAL">
+                🔄 Pemutihan Penuh SEMUA SISWA (Global Tatib)
+              </option>
+              <option value="RESET_FULL_CLASS">
+                🔄 Pemutihan Penuh PER KELAS (Tatib)
+              </option>
+              <option value="RESET_FULL_INDIVIDUAL">
+                🔄 Pemutihan Penuh SISWA PERORANGAN (Tatib)
+              </option>
+            </select>
           </div>
-          <div class="row-group">
-            <div class="input-box">
-              <label>TINDAKAN SAKTI *</label>
-              <select id="adminActionType" required>
-                <option value="RESET_FULL">
-                  🔄 RESET PENUH (Pemutihan 100%)
-                </option>
-                <option value="ADD_CUSTOM">➕ Tambah Poin HP Manual</option>
-                <option value="SUBTRACT_CUSTOM">
-                  ➖ Potong Poin HP Manual
-                </option>
-              </select>
-            </div>
-            <div class="input-box">
-              <label>CATATAN SIDANG *</label>
-              <input
-                type="text"
-                id="adminNotes"
-                placeholder="Contoh: Pemutihan akhir semester"
-                required
-              />
-            </div>
+
+          <div id="boxAdminKelas" class="input-box hidden">
+            <label>PILIH KELAS TARGET *</label>
+            <select id="adminKelasSelect" onchange="handleAdminKelasChange()">
+              <option value="">-- Pilih Kelas --</option>
+              <option value="10 SMK">10 SMK</option>
+              <option value="11 SMK">11 SMK</option>
+              <option value="12 SMK">12 SMK</option>
+            </select>
           </div>
+
+          <div id="boxAdminSiswa" class="input-box hidden">
+            <label>PILIH SISWA TARGET *</label>
+            <select id="adminSiswaSelect">
+              <option value="">-- Pilih Kelas Dulu --</option>
+            </select>
+          </div>
+
+          <div class="input-box">
+            <label>CATATAN SIDANG / KETERANGAN *</label>
+            <input
+              type="text"
+              id="adminNotes"
+              placeholder="Contoh: Reset mingguan / Pemutihan akhir semester"
+              required
+            />
+          </div>
+
           <button type="submit" class="btn-danger" style="margin-top: 5px">
             Eksekusi Keputusan Admin
           </button>
@@ -1447,8 +1793,8 @@
               margin-top: 10px;
             "
           >
-            *Tindakan Reset Penuh akan mengembalikan HP menjadi 200, Shield 0,
-            dan menghapus seluruh catatan.
+            *Pilih opsi Global untuk mengeksekusi ke seluruh siswa sekaligus di
+            database cloud.
           </p>
         </form>
       </div>
@@ -1553,6 +1899,57 @@
       ></div>
     </div>
 
+    <!-- HALAMAN GLOBAL LEADERBOARD -->
+    <div
+      id="leaderboardCard"
+      class="card hidden"
+      style="max-width: 520px; max-height: 90vh"
+    >
+      <div class="header-app" style="margin-bottom: 8px">
+        <div class="user-info">
+          <h3>🏆 Global Leaderboard</h3>
+          <p>Papan Peringkat Poin Harian Siswa</p>
+        </div>
+        <button class="btn-logout" onclick="kembaliKeMenu()">Tutup</button>
+      </div>
+
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+        "
+      >
+        <label style="margin: 0; font-size: 10.5px; color: #1e3c72"
+          >FILTER KELAS:</label
+        >
+        <select
+          id="filterLeaderboardKelas"
+          onchange="renderGlobalLeaderboard()"
+          style="width: auto; padding: 4px 8px; font-size: 10.5px"
+        >
+          <option value="SEMUA">Semua Kelas (Global)</option>
+          <option value="10 SMK">Kelas 10 SMK</option>
+          <option value="11 SMK">Kelas 11 SMK</option>
+          <option value="12 SMK">Kelas 12 SMK</option>
+        </select>
+      </div>
+
+      <div
+        id="globalLeaderboardList"
+        style="
+          flex-grow: 1;
+          overflow-y: auto;
+          max-height: 380px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          padding-right: 2px;
+        "
+      ></div>
+    </div>
+
     <!-- MODAL KONFIRMASI -->
     <div id="modalKonfirmasi" class="modal-overlay hidden">
       <div class="modal-box">
@@ -1599,8 +1996,6 @@
           text-align: center;
           box-shadow: 0 0 25px rgba(241, 196, 15, 0.35);
           position: relative;
-          font-family:
-            &quot;Segoe UI&quot;, Tahoma, Geneva, Verdana, sans-serif;
         "
       >
         <div style="font-size: 38px; margin-bottom: 8px">⚠️</div>
@@ -1630,9 +2025,8 @@
           "
         >
           Maaf, nomor NISN yang kamu masukkan tidak terdaftar di database cloud
-          SMK Wiraguna. <br />
-          Pastikan kembali nomor yang kamu ketik sudah benar atau hubungi
-          petugas sekolah! 📚
+          SMK Wiraguna. <br />Pastikan kembali nomor yang kamu ketik sudah benar
+          atau hubungi petugas sekolah! 📚
         </div>
         <button
           onclick="
@@ -1649,7 +2043,6 @@
             cursor: pointer;
             width: 100%;
             box-shadow: 0 4px 10px rgba(241, 196, 15, 0.3);
-            transition: all 0.2s ease;
           "
         >
           Coba Lagi ⚔️
@@ -1666,11 +2059,257 @@
 
       const SCRIPT_URL =
         "https://script.google.com/macros/s/AKfycbxqfVUxa7o_4CmYN4AB8shVK1Im-KZcgs4csQqp9LUh8IsvcP_KBepsGnQa9b70HIdl/exec";
-
-      const pageLoadTime = Date.now();
-
       let currentRole = "";
       let isMultiMode = true;
+
+      // ==========================================
+      // ONLINE STATUS ENGINE
+      // ==========================================
+      const currentUsername =
+        localStorage.getItem("activeUser") || "Siswa_Demo";
+
+      function sendHeartbeat() {
+        const statusData = { state: "online", lastActive: Date.now() };
+        localStorage.setItem(
+          `status_${currentUsername}`,
+          JSON.stringify(statusData),
+        );
+      }
+      sendHeartbeat();
+      setInterval(sendHeartbeat, 5000);
+
+      window.addEventListener("beforeunload", () => {
+        const statusData = { state: "offline", lastActive: Date.now() };
+        localStorage.setItem(
+          `status_${currentUsername}`,
+          JSON.stringify(statusData),
+        );
+      });
+
+      function checkUserStatus(username) {
+        const data = localStorage.getItem(`status_${username}`);
+        if (!data)
+          return { state: "offline", text: "Offline", isOnline: false };
+        try {
+          const parsed = JSON.parse(data);
+          const timeElapsed = Date.now() - parsed.lastActive;
+          if (parsed.state === "online" && timeElapsed < 10000) {
+            return { state: "online", text: "Online", isOnline: true };
+          } else {
+            return {
+              state: "offline",
+              text: formatLastActive(parsed.lastActive),
+              isOnline: false,
+            };
+          }
+        } catch (e) {
+          return { state: "offline", text: "Offline", isOnline: false };
+        }
+      }
+
+      function formatLastActive(timestamp) {
+        if (!timestamp) return "Offline";
+        const seconds = Math.floor((Date.now() - timestamp) / 1000);
+        if (seconds < 60) return "Terakhir aktif baru saja";
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `Terakhir aktif ${minutes} menit yang lalu`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `Terakhir aktif ${hours} jam yang lalu`;
+        return "Terakhir aktif kemarin";
+      }
+
+      // ==========================================
+      // SISTEM PERTEMANAN & SQUAD
+      // ==========================================
+      function getMyNisn() {
+        const inputVal = document.getElementById("nisnSiswaInput")
+          ? document.getElementById("nisnSiswaInput").value.trim()
+          : "";
+        return inputVal || localStorage.getItem("activeUser") || "Siswa_Demo";
+      }
+
+      function getDaftarTeman() {
+        const myNisn = getMyNisn();
+        if (!myNisn) return [];
+        const data = localStorage.getItem(`friends_${myNisn}`);
+        return data ? JSON.parse(data) : [];
+      }
+
+      function simpanDaftarTeman(friendsArray) {
+        const myNisn = getMyNisn();
+        if (!myNisn) return;
+        localStorage.setItem(`friends_${myNisn}`, JSON.stringify(friendsArray));
+      }
+
+      function getIncomingRequests() {
+        const myNisn = getMyNisn();
+        if (!myNisn) return [];
+        const data = localStorage.getItem(`requests_${myNisn}`);
+        return data ? JSON.parse(data) : [];
+      }
+
+      function simpanIncomingRequests(reqsArray) {
+        const myNisn = getMyNisn();
+        if (!myNisn) return;
+        localStorage.setItem(`requests_${myNisn}`, JSON.stringify(reqsArray));
+      }
+
+      function tambahTeman() {
+        const targetNisn = document
+          .getElementById("inputNisnTeman")
+          .value.trim();
+        const myNisn = getMyNisn();
+        if (!targetNisn) return alert("Ketik NISN teman yang mau di-invite!");
+        if (targetNisn === myNisn)
+          return alert("Tidak bisa mengundang diri sendiri ke Squad!");
+
+        const temanObj = masterDataSiswa.find((s) => s.nisn === targetNisn);
+        if (!temanObj)
+          return alert("NISN teman tidak ditemukan di database sekolah!");
+
+        let friends = getDaftarTeman();
+        if (friends.includes(targetNisn))
+          return alert("Teman ini sudah ada di daftar Squad kamu!");
+
+        let targetReqs = localStorage.getItem(`requests_${targetNisn}`)
+          ? JSON.parse(localStorage.getItem(`requests_${targetNisn}`))
+          : [];
+        if (targetReqs.includes(myNisn))
+          return alert(
+            "Undangan ke teman ini sudah dikirim dan sedang menunggu konfirmasi!",
+          );
+
+        targetReqs.push(myNisn);
+        localStorage.setItem(
+          `requests_${targetNisn}`,
+          JSON.stringify(targetReqs),
+        );
+
+        document.getElementById("inputNisnTeman").value = "";
+        alert(
+          `📨 Undangan Squad berhasil dikirim ke ${temanObj.nama}! Menunggu konfirmasi dari mereka.`,
+        );
+      }
+
+      function terimaUndangan(senderNisn) {
+        let reqs = getIncomingRequests();
+        reqs = reqs.filter((n) => n !== senderNisn);
+        simpanIncomingRequests(reqs);
+
+        let myFriends = getDaftarTeman();
+        if (!myFriends.includes(senderNisn)) {
+          myFriends.push(senderNisn);
+          simpanDaftarTeman(myFriends);
+        }
+
+        let senderFriends = localStorage.getItem(`friends_${senderNisn}`)
+          ? JSON.parse(localStorage.getItem(`friends_${senderNisn}`))
+          : [];
+        if (!senderFriends.includes(getMyNisn())) {
+          senderFriends.push(getMyNisn());
+          localStorage.setItem(
+            `friends_${senderNisn}`,
+            JSON.stringify(senderFriends),
+          );
+        }
+
+        renderDaftarTeman();
+        alert("✅ Undangan diterima! Kalian sekarang resmi berteman di Squad.");
+      }
+
+      function tolakUndangan(senderNisn) {
+        let reqs = getIncomingRequests();
+        reqs = reqs.filter((n) => n !== senderNisn);
+        simpanIncomingRequests(reqs);
+        renderDaftarTeman();
+      }
+
+      function hapusTeman(targetNisn) {
+        if (!confirm("Yakin ingin menghapus teman ini dari Squad?")) return;
+        let friends = getDaftarTeman();
+        friends = friends.filter((n) => n !== targetNisn);
+        simpanDaftarTeman(friends);
+        renderDaftarTeman();
+      }
+
+      function renderDaftarTeman() {
+        const container = document.getElementById("listTemanContainer");
+        const containerUndangan = document.getElementById(
+          "containerUndanganMasuk",
+        );
+        const counterTxt = document.getElementById("jumlahTemanTxt");
+        if (!container) return;
+
+        const requests = getIncomingRequests();
+        if (containerUndangan) {
+          containerUndangan.innerHTML = "";
+          if (requests.length > 0) {
+            let reqHtml = `<div style="font-size: 10px; color: #f1c40f; font-weight: bold; margin-bottom: 4px;">📩 Undangan Masuk (${requests.length}):</div>`;
+            requests.forEach((senderNisn) => {
+              const sender = masterDataSiswa.find((s) => s.nisn === senderNisn);
+              const senderName = sender ? sender.nama : `NISN: ${senderNisn}`;
+              reqHtml += `
+                <div style="background: rgba(241, 196, 15, 0.1); border: 1px solid #f1c40f; border-radius: 6px; padding: 6px 8px; display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px;">
+                  <span style="font-size: 10px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><strong>${senderName}</strong> mengundangmu</span>
+                  <div style="display: flex; gap: 4px; flex-shrink: 0;">
+                    <button type="button" onclick="terimaUndangan('${senderNisn}')" style="margin-top: 0; padding: 3px 6px; font-size: 8.5px; background: #2ecc71; color: #fff; width: auto; border-radius: 4px; box-shadow: none;">Terima</button>
+                    <button type="button" onclick="tolakUndangan('${senderNisn}')" style="margin-top: 0; padding: 3px 6px; font-size: 8.5px; background: #e74c3c; color: #fff; width: auto; border-radius: 4px; box-shadow: none;">Tolak</button>
+                  </div>
+                </div>
+              `;
+            });
+            containerUndangan.innerHTML = reqHtml;
+          }
+        }
+
+        const friends = getDaftarTeman();
+        counterTxt.innerText = `${friends.length} Teman`;
+        container.innerHTML = "";
+
+        if (friends.length === 0) {
+          container.innerHTML = `<div style="font-size: 10px; color: #95a5a6; text-align: center; padding: 10px;">Belum ada teman di Squad. Yuk invite temanmu pakai NISN!</div>`;
+          return;
+        }
+
+        friends.forEach((nisn) => {
+          const teman = masterDataSiswa.find((s) => s.nisn === nisn);
+          const namaTeman = teman ? teman.nama : `NISN: ${nisn}`;
+          const kelasTeman = teman ? teman.kelas : "-";
+          const hpTeman = teman && teman.hp !== undefined ? teman.hp : 200;
+          const shieldTeman =
+            teman && teman.shield !== undefined ? teman.shield : 0;
+          const tierInfo = getTierRank(shieldTeman);
+          const avatarFile =
+            teman && teman.jk && teman.jk.toUpperCase() === "P"
+              ? "assets/foto_siswa/avatar_p.webp"
+              : "assets/foto_siswa/avatar_l.webp";
+
+          const statusInfo = checkUserStatus(nisn);
+          const dotColor = statusInfo.isOnline ? "#2ecc71" : "#e74c3c";
+
+          container.innerHTML += `
+            <div style="background: #111823; border: 1px solid #34495e; border-radius: 8px; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
+                <div style="width: 32px; height: 32px; border-radius: 6px; overflow: hidden; background: #2c3e50; flex-shrink: 0; border: 1px solid #f1c40f;">
+                  <img src="${avatarFile}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='assets/foto_siswa/avatar.webp'">
+                </div>
+                <div style="overflow: hidden;">
+                  <div style="display: flex; align-items: center; gap: 5px; overflow: hidden;">
+                    <div style="font-size: 11px; font-weight: bold; color: #f1c40f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${namaTeman}</div>
+                    <span style="background: ${tierInfo.bg}; color: ${tierInfo.color}; padding: 1px 5px; border-radius: 4px; font-size: 7.5px; font-weight: 700; flex-shrink: 0;">${tierInfo.title}</span>
+                  </div>
+                  <div style="font-size: 9px; color: #bdc3c7;">Kelas: ${kelasTeman} | HP: ${hpTeman}</div>
+                  <div style="font-size: 8.5px; color: ${dotColor}; display: flex; align-items: center; gap: 4px; margin-top: 1px;">
+                    <span style="width: 6px; height: 6px; border-radius: 50%; background: ${dotColor}; display: inline-block;"></span>
+                    <span>${statusInfo.text}</span>
+                  </div>
+                </div>
+              </div>
+              <button type="button" onclick="hapusTeman('${nisn}')" style="margin-top: 0; padding: 4px 8px; font-size: 9px; background: #e74c3c; color: #fff; width: auto; border-radius: 6px; box-shadow: none;">Hapus</button>
+            </div>
+          `;
+        });
+      }
 
       // DATA GURU LENGKAP
       const daftarGuru = [
@@ -1790,13 +2429,17 @@
         },
       ];
 
-      // MASTER DATA SISWA
+      // MASTER DATA SISWA & TUGAS AKTIF
       let masterDataSiswa = [];
+      let masterDataTugas = [];
 
       async function loadMasterSiswaFromCloud(callback) {
         const cachedData = sessionStorage.getItem("master_siswa_cache");
         if (cachedData) {
           masterDataSiswa = JSON.parse(cachedData);
+          masterDataSiswa.forEach((s) => {
+            if (s.dailyScore === undefined) s.dailyScore = 0;
+          });
           if (callback) callback();
           return;
         }
@@ -1804,28 +2447,108 @@
         try {
           const { collection, getDocs } = window.fbFirestore;
           const querySnapshot = await getDocs(collection(window.db, "siswa"));
-
           masterDataSiswa = [];
           querySnapshot.forEach((doc) => {
-            masterDataSiswa.push(doc.data());
+            let sData = doc.data();
+            if (sData.dailyScore === undefined) sData.dailyScore = 0;
+            masterDataSiswa.push(sData);
           });
-
           sessionStorage.setItem(
             "master_siswa_cache",
             JSON.stringify(masterDataSiswa),
           );
-
           if (callback) callback();
         } catch (err) {
-          console.error("Gagal memuat data siswa dari Firestore:", err);
-          alert(
-            "Gagal terhubung ke database Firestore. Periksa koneksi atau konfigurasi.",
-          );
+          console.error("Gagal memuat data siswa:", err);
           if (callback) callback();
         }
       }
 
-      // KUMPULAN DATA POIN LENGKAP DARI KITAB SUCI
+      async function loadTugasAktif() {
+        const container = document.getElementById("mainTaskBoardList");
+        const teacherContainer = document.getElementById("teacherTaskList");
+
+        try {
+          const { collection, getDocs } = window.fbFirestore;
+          const querySnapshot = await getDocs(collection(window.db, "tugas"));
+
+          masterDataTugas = [];
+          const now = Date.now();
+          const satuMingguMs = 7 * 24 * 60 * 60 * 1000;
+
+          querySnapshot.forEach((docSnap) => {
+            let tData = docSnap.data();
+            if (tData.timestamp && now - tData.timestamp < satuMingguMs) {
+              masterDataTugas.push(tData);
+            }
+          });
+
+          if (container) {
+            container.innerHTML = "";
+            if (masterDataTugas.length === 0) {
+              container.innerHTML = `<div style="font-size: 10.5px; color: #888; text-align: center; padding: 10px;">Belum ada tugas atau PR aktif minggu ini.</div>`;
+            } else {
+              masterDataTugas.forEach((t) => {
+                container.innerHTML += `
+                  <div style="background: #f8f9fa; border-left: 3px solid #f1c40f; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px;">
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 11px; color: #1e3c72; margin-bottom: 2px;">
+                      <span>📌 ${t.judul}</span>
+                      <span style="font-size: 8.5px; background: #e2e8f0; padding: 2px 5px; border-radius: 4px; color: #555;">${t.targetKelas}</span>
+                    </div>
+                    <div style="font-size: 10px; color: #444; line-height: 1.4; margin-bottom: 4px;">${t.isi}</div>
+                    <div style="font-size: 8.5px; color: #888; display: flex; justify-content: space-between;">
+                      <span>👨‍🏫 Oleh: ${t.namaGuru}</span>
+                      <span>📅 ${t.tanggal}</span>
+                    </div>
+                  </div>
+                `;
+              });
+            }
+          }
+
+          if (teacherContainer) {
+            teacherContainer.innerHTML = "";
+            if (masterDataTugas.length === 0) {
+              teacherContainer.innerHTML = `<div style="font-size: 10px; color: #888; text-align: center; padding: 8px;">Tidak ada tugas aktif yang bisa dikelola.</div>`;
+            } else {
+              masterDataTugas.forEach((t) => {
+                teacherContainer.innerHTML += `
+                  <div style="background: #111823; border: 1px solid #34495e; border-radius: 8px; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                    <div style="overflow: hidden;">
+                      <div style="font-size: 11px; font-weight: bold; color: #f1c40f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.judul}</div>
+                      <div style="font-size: 9px; color: #bdc3c7;">Target: ${t.targetKelas} | ${t.tanggal}</div>
+                    </div>
+                    <button type="button" onclick="hapusTugas('${t.id}')" style="margin-top: 0; padding: 4px 8px; font-size: 9px; background: #e74c3c; color: #fff; width: auto; border-radius: 6px; box-shadow: none; flex-shrink: 0;">Hapus</button>
+                  </div>
+                `;
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Gagal memuat daftar tugas:", err);
+        }
+      }
+
+      async function hapusTugas(tugasId) {
+        if (!confirm("Yakin ingin menghapus tugas ini dari sistem?")) return;
+
+        showGamePreloader("MENDELETING TASK FROM CLOUD...", async (done) => {
+          try {
+            const { doc, deleteDoc } = window.fbFirestore;
+            await deleteDoc(doc(window.db, "tugas", tugasId));
+
+            done();
+            alert("✅ Tugas berhasil dihapus!");
+            loadTugasAktif();
+          } catch (err) {
+            done();
+            console.error("Gagal menghapus tugas:", err);
+            alert("Gagal menghapus tugas dari database.");
+          }
+        });
+      }
+
+      // KUMPULAN DATA POIN LENGKAP
       const dataPilihan = {
         Prestasi: [
           { t: "Juara tingkat Nasional", p: 30 },
@@ -1840,98 +2563,37 @@
           { t: "Kehadiran 100% di semua pelajaran", p: 30 },
           { t: "Aktif berpartisipasi dalam pembelajaran di kelas", p: 5 },
           { t: "Menerapkan 5S (Senyum, Salam, Sapa, Sopan, Santun)", p: 5 },
-          { t: "Melaksanakan kegiatan pengabdian kepada masyarakat", p: 10 },
+          {
+            t: "Melaksanakan kegiatan pengabdian kepada masyarakat",
+            p: 10,
+          },
           { t: "Menjadi imam shalat di masjid", p: 10 },
           { t: "Mengumandangkan azan di masjid", p: 5 },
+        ],
+        TugasHarian: [
+          { t: "Mengerjakan PR / Tugas Kelas dengan baik", p: 10 },
+          { t: "Aktif berdiskusi / Tanya jawab di kelas", p: 5 },
+          { t: "Membantu guru / piket kebersihan kelas", p: 5 },
+          { t: "Nilai ulangan harian memuaskan", p: 15 },
+          { t: "Menyelesaikan proyek praktikum tepat waktu", p: 20 },
         ],
         Pelanggaran: {
           Ringan: [
             { t: "Terlambat datang ke sekolah", p: 5 },
             { t: "Tidak memakai atribut lengkap", p: 5 },
-            { t: "Tidak memakai kartu identitas", p: 5 },
-            { t: "Seragam tidak sesuai ketentuan", p: 5 },
-            { t: "Tidak memakai sepatu", p: 5 },
             { t: "Memainkan ponsel di jam pelajaran", p: 5 },
-            { t: "Rambut tidak rapi", p: 5 },
-            { t: "Kuku panjang/kotor", p: 5 },
-            { t: "Membuang sampah sembarangan", p: 5 },
             { t: "Tidak mengikuti piket kelas", p: 10 },
-            { t: "Tidak membawa perlengkapan belajar", p: 5 },
             { t: "Tidur saat pembelajaran", p: 5 },
-            { t: "Makan/minum saat pembelajaran tanpa izin", p: 5 },
-            { t: "Berbicara saat guru menjelaskan", p: 5 },
-            { t: "Keluar kelas tanpa izin", p: 10 },
-            { t: "Tidak mengikuti apel/upacara tanpa alasan", p: 10 },
-            { t: "Bercanda berlebihan saat pembelajaran", p: 5 },
-            { t: "Tidak menjaga kebersihan kelas", p: 10 },
-            { t: "Telat memasuki kelas tanpa izin", p: 10 },
-            { t: "Keluar lingkungan sekolah tanpa izin", p: 10 },
-            { t: "Tidak membawa alat shalat", p: 5 },
-            { t: "Memakai riasan berlebihan", p: 5 },
-            { t: "Tidak melakukan shalat Dhuha", p: 10 },
-            { t: "Tidak melakukan shalat Dzuhur berjamaah", p: 10 },
-            { t: "Tidak melakukan shalat Ashar berjamaah", p: 10 },
-            {
-              t: "Melakukan live streaming / bermain game setelah pukul 21.00",
-              p: 5,
-            },
-            { t: "mencukur alis (Sebit alis)", p: 5 },
-            { t: "Terlambat datang latihan", p: 5 },
-            { t: "Meninggalkan latihan tanpa izin", p: 10 },
           ],
           Sedang: [
             { t: "Membolos 1 jam pelajaran", p: 25 },
-            { t: "Membawa aksesoris berlebihan", p: 25 },
-            { t: "Membawa Vape/Rokok elektrik atau semua jenis rokok", p: 40 },
+            { t: "Membawa Vape/Rokok elektrik", p: 40 },
             { t: "Berkata kasar kepada teman", p: 30 },
-            { t: "Menghina teman", p: 30 },
-            { t: "Body shaming", p: 30 },
-            { t: "Mencoret meja/kursi", p: 30 },
-            { t: "Merusak tanaman", p: 25 },
-            { t: "Memalsukan tanda tangan", p: 50 },
-            { t: "Menyontek / Berlaku curang", p: 40 },
-            { t: "Membantu teman menyontek", p: 40 },
-            { t: "Mengganggu ketertiban kelas", p: 30 },
-            { t: "Mengunggah konten sekolah tanpa izin", p: 40 },
-            { t: "Tidak mengikuti pengajian Hari Kamis", p: 45 },
-            { t: "Memisahkan diri atau membuat kelompok kecil", p: 30 },
-            { t: "Mengikuti event/turnamen tanpa izin pelatih", p: 40 },
           ],
           Berat: [
-            { t: "Bullying verbal", p: 75 },
-            { t: "Bullying fisik", p: 100 },
-            { t: "Cyberbullying", p: 100 },
-            { t: "Perpeloncoan", p: 100 },
-            { t: "Pemalakan", p: 100 },
-            { t: "Perkelahian", p: 100 },
-            { t: "Membawa senjata tajam/berbahaya", p: 150 },
-            { t: "Mengancam guru/karyawan", p: 150 },
-            { t: "Mengancam teman", p: 100 },
+            { t: "Bullying fisik / verbal", p: 100 },
+            { t: "Perkelahian / Tawuran", p: 150 },
             { t: "Mencuri", p: 200 },
-            {
-              t: "Merusak fasilitas secara sengaja (termasuk denda penggantian)",
-              p: 100,
-            },
-            { t: "Pornografi", p: 200 },
-            { t: "Pelecehan seksual", p: 200 },
-            { t: "Minum Minuman keras", p: 200 },
-            { t: "Narkoba (rehabilitasi)", p: 200 },
-            { t: "Judi", p: 200 },
-            { t: "Pemalsuan dokumen sekolah", p: 200 },
-            { t: "Provokasi/hasutan yang menyebabkan kerusuhan", p: 200 },
-            { t: "Menyebarkan berita bohong yang merugikan sekolah", p: 100 },
-            { t: "Tindakan yang mencemarkan nama baik sekolah", p: 100 },
-            { t: "Tawuran", p: 150 },
-            {
-              t: "Sengaja menolak / meninggalkan kewajiban Shalat fardhu",
-              p: 150,
-            },
-            {
-              t: "Mengonsumsi makanan/minuman yang dilarang (dingin, pedas, asam)",
-              p: 75,
-            },
-            { t: "Merokok di lingkungan latihan atau sekolah", p: 75 },
-            { t: "Tidak mengenakan kerudung bagi siswi putri", p: 75 },
           ],
         },
       };
@@ -1940,32 +2602,37 @@
       function showScreen(screenId) {
         document.getElementById("menuWrapper").classList.add("hidden");
         document.getElementById("mainMenuCard").classList.add("hidden");
-        document.getElementById("questTriggerCard").classList.add("hidden");
         document.getElementById("loginCard").classList.add("hidden");
         document.getElementById("siswaCard").classList.add("hidden");
         document.getElementById("entryCard").classList.add("hidden");
         document.getElementById("adminCard").classList.add("hidden");
         document.getElementById("questBoardCard").classList.add("hidden");
+        document.getElementById("leaderboardCard").classList.add("hidden");
 
         if (screenId === "menu") {
           document.getElementById("menuWrapper").classList.remove("hidden");
           document.getElementById("mainMenuCard").classList.remove("hidden");
-          document
-            .getElementById("questTriggerCard")
-            .classList.remove("hidden");
+          loadTugasAktif();
         } else if (screenId === "login") {
           document.getElementById("loginCard").classList.remove("hidden");
         } else if (screenId === "siswa") {
           document.getElementById("siswaCard").classList.remove("hidden");
           document.getElementById("hasilPoinSiswa").classList.add("hidden");
+          document
+            .getElementById("boxInputNisnSiswa")
+            .classList.remove("hidden");
           document.getElementById("nisnSiswaInput").value = "";
         } else if (screenId === "quest") {
           document.getElementById("questBoardCard").classList.remove("hidden");
           renderQuestUI("prestasi");
+        } else if (screenId === "leaderboard") {
+          document.getElementById("leaderboardCard").classList.remove("hidden");
+          loadMasterSiswaFromCloud(() => renderGlobalLeaderboard());
         } else if (screenId === "entry") {
           document.getElementById("entryCard").classList.remove("hidden");
         } else if (screenId === "admin") {
           document.getElementById("adminCard").classList.remove("hidden");
+          handleAdminActionTypeChange();
         }
       }
 
@@ -2016,6 +2683,13 @@
               done();
             }, 600);
           });
+        } else if (tipe === "leaderboard") {
+          showGamePreloader("LOADING GLOBAL LEADERBOARD...", (done) => {
+            setTimeout(() => {
+              showScreen("leaderboard");
+              done();
+            }, 600);
+          });
         }
       }
 
@@ -2026,67 +2700,84 @@
         showScreen("menu");
       }
 
-      // EASTER EGG MODAL
-      function tampilkanEasterEggModal(icon, title, message) {
-        document.getElementById("eggIcon").innerText = icon;
-        document.getElementById("eggTitle").innerText = title;
-        document.getElementById("eggMessage").innerHTML = message;
-        document.getElementById("easterEggModal").classList.remove("hidden");
-      }
-      function tutupEasterEggModal() {
-        document.getElementById("easterEggModal").classList.add("hidden");
-        showScreen("menu");
-      }
+      // RENDER GLOBAL LEADERBOARD (DENGAN DESIGN TOP 3 KUSTOM ANDA)
+      function renderGlobalLeaderboard() {
+        const filter = document.getElementById("filterLeaderboardKelas").value;
+        const container = document.getElementById("globalLeaderboardList");
+        if (!container) return;
 
-      let logoTimer = null;
-      document.addEventListener("DOMContentLoaded", () => {
-        const logoElement = document.querySelector(".logo");
-        if (logoElement) {
-          logoElement.addEventListener("touchstart", () => {
-            logoTimer = setTimeout(triggerSecretCoin, 10000);
-          });
-          logoElement.addEventListener("touchend", () => {
-            if (logoTimer) clearTimeout(logoTimer);
-          });
-          logoElement.addEventListener("mousedown", () => {
-            logoTimer = setTimeout(triggerSecretCoin, 10000);
-          });
-          logoElement.addEventListener("mouseup", () => {
-            if (logoTimer) clearTimeout(logoTimer);
-          });
+        let filtered =
+          filter === "SEMUA"
+            ? [...masterDataSiswa]
+            : masterDataSiswa.filter((s) => s.kelas === filter);
+        filtered.sort((a, b) => (b.dailyScore || 0) - (a.dailyScore || 0));
+
+        container.innerHTML = "";
+        if (filtered.length === 0) {
+          container.innerHTML = `<div style="font-size: 11px; color: #95a5a6; text-align: center; padding: 15px;">Belum ada data siswa di leaderboard.</div>`;
+          return;
         }
-      });
-      function triggerSecretCoin() {
-        const modal = document.getElementById("secretCoinModal");
-        modal.classList.remove("hidden");
-        setTimeout(() => {
-          modal.classList.add("hidden");
-        }, 5000);
+
+        filtered.forEach((s, index) => {
+          const rank = index + 1;
+          const score = s.dailyScore || 0;
+          const avatarFile =
+            s.jk && s.jk.toUpperCase() === "P"
+              ? "assets/foto_siswa/avatar_p.webp"
+              : "assets/foto_siswa/avatar_l.webp";
+
+          let rankBadge = `#${rank}`;
+          let rowStyle = "background: #1a2536; border: 1px solid #34495e;";
+          let nameColor = "#fff";
+          let scoreColor = "#f1c40f";
+
+          if (rank === 1) {
+            rankBadge = "👑 1";
+            rowStyle =
+              "background: linear-gradient(135deg, #a18000, #1a2536); border: 2.5px solid #f1c40f; box-shadow: 0 0 18px rgba(241, 196, 15, 0.7);";
+            nameColor = "#f1c40f";
+            scoreColor = "#f1c40f";
+          } else if (rank === 2) {
+            rankBadge = "🥈 2";
+            rowStyle =
+              "background: linear-gradient(135deg, #003d93, #1e293b); border: 2.5px solid #38bdf8; box-shadow: 0 0 18px rgba(56, 189, 248, 0.6);";
+            nameColor = "#38bdf8";
+            scoreColor = "#38bdf8";
+          } else if (rank === 3) {
+            rankBadge = "🥉 3";
+            rowStyle =
+              "background: linear-gradient(135deg, #892b00, #1a2536); border: 2.5px solid #fb923c; box-shadow: 0 0 18px rgba(251, 146, 60, 0.6);";
+            nameColor = "#fb923c";
+            scoreColor = "#fb923c";
+          }
+
+          container.innerHTML += `
+            <div style="${rowStyle} border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
+                <div style="font-size: 13px; font-weight: bold; color: ${nameColor}; width: 32px; text-align: center; flex-shrink: 0;">${rankBadge}</div>
+                <div style="width: 36px; height: 36px; border-radius: 8px; overflow: hidden; background: #2c3e50; flex-shrink: 0; border: 1.5px solid ${nameColor};">
+                  <img src="${avatarFile}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='assets/foto_siswa/avatar.webp'">
+                </div>
+                <div style="overflow: hidden;">
+                  <div style="font-size: 12px; font-weight: bold; color: ${nameColor}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.nama}</div>
+                  <div style="font-size: 9.5px; color: #cbd5e1;">Kelas: ${s.kelas}</div>
+                </div>
+              </div>
+              <div style="text-align: right; flex-shrink: 0;">
+                <div style="font-size: 13px; font-weight: bold; color: ${scoreColor};">${score} Pts</div>
+                <div style="font-size: 8px; color: #94a3b8;">Poin Tugas</div>
+              </div>
+            </div>
+          `;
+        });
       }
 
-      // LOGIKA LOGIN
+      // LOGIN GURU
       function login() {
         const usernameIn = document
           .getElementById("namaGuruInput")
           .value.trim();
         const passIn = document.getElementById("password").value.trim();
-
-        if (
-          usernameIn.toLowerCase() === "akuguru" &&
-          passIn === "smkwiraguna"
-        ) {
-          showGamePreloader("UNLOCKING MENTOR'S BLESSING...", (done) => {
-            setTimeout(() => {
-              done();
-              tampilkanEasterEggModal(
-                "🌟",
-                "ACHIEVEMENT UNLOCKED: THE MENTOR'S BLESSING",
-                "Terima kasih, Pahlawan Tanpa Tanda Jasa. Mengajar bukan sekadar mengisi gelas yang kosong, tapi menyalakan api pengetahuan di dalam diri setiap siswa.<br><br>Kesabaranmu hari ini adalah fondasi akhlak mereka esok hari. Tetaplah semangat membimbing siswa SMK Wiraguna! <br>Kami Sayang Kalian ❤️🥰",
-              );
-            }, 800);
-          });
-          return;
-        }
 
         showGamePreloader("VERIFYING CREDENTIALS...", (done) => {
           const user = daftarGuru.find(
@@ -2094,11 +2785,9 @@
               u.usernama.toLowerCase() === usernameIn.toLowerCase() &&
               u.pass === passIn,
           );
-
           if (user) {
             currentRole = user.role;
             document.getElementById("pesanEror").style.display = "none";
-
             if (user.role === "Super Admin") {
               loadMasterSiswaFromCloud(() => {
                 setTimeout(() => {
@@ -2112,11 +2801,12 @@
               document.getElementById("txtNamaGuru").innerText = user.nama;
               document.getElementById("txtRoleGuru").innerText =
                 "Jabatan: " + user.role;
-
               loadMasterSiswaFromCloud(() => {
                 done();
                 showScreen("entry");
                 initFormEntry();
+                switchTeacherTab("poin");
+                loadTugasAktif();
               });
             }
           } else {
@@ -2128,7 +2818,125 @@
         });
       }
 
-      // STATUS PEMBINAAN TIERED
+      // TEACHER TABS
+      function switchTeacherTab(tab) {
+        const tabPoin = document.getElementById("teacherTabPoin");
+        const tabPosting = document.getElementById("teacherTabPosting");
+        const btnPoin = document.getElementById("navBtnInputPoin");
+        const btnPosting = document.getElementById("navBtnPostTugas");
+
+        if (tab === "poin") {
+          tabPoin.classList.remove("hidden");
+          tabPosting.classList.add("hidden");
+          btnPoin.style.background = "#1e3c72";
+          btnPoin.className = "";
+          btnPosting.style.background = "transparent";
+          btnPosting.className = "btn-outline";
+        } else {
+          tabPoin.classList.add("hidden");
+          tabPosting.classList.remove("hidden");
+          btnPosting.style.background = "#1e3c72";
+          btnPosting.className = "";
+          btnPoin.style.background = "transparent";
+          btnPoin.className = "btn-outline";
+          loadTugasAktif();
+        }
+      }
+
+      // POST PENGUMUMAN TUGAS KE FIRESTORE
+      async function simpanPengumumanTugas() {
+        const targetKelas = document.getElementById("postKelasTarget").value;
+        const judul = document.getElementById("postJudul").value.trim();
+        const isi = document.getElementById("postIsi").value.trim();
+        const namaGuru = document.getElementById("txtNamaGuru").innerText;
+
+        if (!judul || !isi) return alert("Judul dan isi tugas wajib diisi!");
+
+        showGamePreloader("PUBLISHING TASK TO CLOUD...", async (done) => {
+          try {
+            const { doc: firestoreDoc, setDoc: firestoreSetDoc } =
+              window.fbFirestore;
+            const tugasId = "tugas_" + Date.now();
+
+            await firestoreSetDoc(firestoreDoc(window.db, "tugas", tugasId), {
+              id: tugasId,
+              targetKelas: targetKelas,
+              judul: judul,
+              isi: isi,
+              namaGuru: namaGuru,
+              tanggal: new Date().toISOString().split("T")[0],
+              timestamp: Date.now(),
+            });
+
+            done();
+            alert("✅ Tugas & PR berhasil dipublikasikan!");
+            document.getElementById("formPostTugas").reset();
+            loadTugasAktif();
+          } catch (err) {
+            done();
+            console.error("Gagal mempublikasikan tugas:", err);
+            alert("Gagal menyimpan tugas ke database.");
+          }
+        });
+      }
+
+      // TIER RANK BERBASIS SHIELD
+      function getTierRank(shield) {
+        if (shield >= 290)
+          return {
+            title: "🌌 MYTHIC LEGEND",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #ff0844, #ffb199)",
+          };
+        if (shield >= 251)
+          return {
+            title: "👑 MASTER CHAMPION",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #b224ef, #7579ff)",
+          };
+        if (shield >= 211)
+          return {
+            title: "💠 DIAMOND VANGUARD",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #00c6ff, #0072ff)",
+          };
+        if (shield >= 171)
+          return {
+            title: "💎 PLATINUM GUARDIAN",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #11998e, #38ef7d)",
+          };
+        if (shield >= 131)
+          return {
+            title: "🥇 GOLD PALADIN",
+            color: "#1a2536",
+            bg: "linear-gradient(135deg, #f7971e, #ffd200)",
+          };
+        if (shield >= 91)
+          return {
+            title: "🥈 SILVER WARRIOR",
+            color: "#1a2536",
+            bg: "linear-gradient(135deg, #e0eafc, #cfdef3)",
+          };
+        if (shield >= 51)
+          return {
+            title: "🥉 BRONZE KNIGHT",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #d38312, #a83279)",
+          };
+        if (shield >= 11)
+          return {
+            title: "🛡️ IRON SQUIRE",
+            color: "#ffffff",
+            bg: "linear-gradient(135deg, #485563, #29323c)",
+          };
+        return {
+          title: "🔰 NOVICE",
+          color: "#ffffff",
+          bg: "linear-gradient(135deg, #7f8c8d, #95a5a6)",
+        };
+      }
+
       function getStatusPembinaan(tp) {
         if (tp < 10)
           return {
@@ -2145,263 +2953,105 @@
         if (tp <= 40)
           return {
             title: "TEGURAN TERTULIS",
-            desc: "Sanksi: Teguran tertulis peringatan kedisiplinan.",
-            color: "#e67e22",
-          };
-        if (tp <= 60)
-          return {
-            title: "PEMBINAAN WALI KELAS",
-            desc: "Sanksi: Pembinaan khusus dan teguran oleh Wali Kelas.",
+            desc: "Sanksi: Teguran tertulis peringatan.",
             color: "#e67e22",
           };
         if (tp <= 80)
           return {
             title: "KONSELING BK",
-            desc: "Sanksi: Pemanggilan untuk konseling dan pemantauan Guru BK.",
+            desc: "Sanksi: Pemanggilan konseling Guru BK.",
             color: "#e74c3c",
-          };
-        if (tp <= 100)
-          return {
-            title: "PANGGILAN ORTU/WALI",
-            desc: "Sanksi: Pemanggilan orang tua/wali ke sekolah.",
-            color: "#e74c3c",
-          };
-        if (tp <= 125)
-          return {
-            title: "SURAT PERNYATAAN I",
-            desc: "Sanksi: Penandatanganan Surat Pernyataan I (Peringatan Keras).",
-            color: "#c0392b",
-          };
-        if (tp <= 150)
-          return {
-            title: "PEMBINAAN KHUSUS & MONITORING",
-            desc: "Sanksi: Pembinaan khusus dan monitoring oleh Tim Sekolah.",
-            color: "#c0392b",
-          };
-        if (tp <= 175)
-          return {
-            title: "SP II & SIDANG TIM",
-            desc: "Sanksi: Surat Pernyataan II dan diproses Sidang Tim Pembinaan.",
-            color: "#8e44ad",
-          };
-        if (tp <= 199)
-          return {
-            title: "SIDANG DEWAN GURU",
-            desc: "Sanksi: Proses evaluasi Sidang Dewan Guru secara keseluruhan.",
-            color: "#8e44ad",
           };
         return {
           title: "TINDAKAN KEPALA SEKOLAH",
-          desc: "Sanksi: Keputusan mutlak Kepala Sekolah (Ancaman Dikeluarkan).",
+          desc: "Sanksi: Keputusan mutlak Kepala Sekolah.",
           color: "#2c3e50",
         };
       }
 
-      function tutupModalError() {
-        document.getElementById("modalErrorSiswa").classList.add("hidden");
-      }
-
-      // TIER RANK BERBASIS SHIELD
-      function getTierRank(shield) {
-        if (shield >= 290) {
-          return {
-            title: "🌌 MYTHIC LEGEND",
-            color: "#ffffff",
-            bg: "linear-gradient(135deg, #ff0844, #ffb199)",
-            shadow: "0 0 12px rgba(255, 8, 68, 0.7)",
-            border: "1px solid #ffd700",
-          };
-        } else if (shield >= 251) {
-          return {
-            title: "👑 MASTER CHAMPION",
-            color: "#ffffff",
-            bg: "linear-gradient(135deg, #b224ef, #7579ff)",
-            shadow: "0 0 10px rgba(178, 36, 239, 0.6)",
-            border: "none",
-          };
-        } else if (shield >= 211) {
-          return {
-            title: "💠 DIAMOND VANGUARD",
-            color: "#ffffff",
-            bg: "linear-gradient(135deg, #00c6ff, #0072ff)",
-            shadow: "0 2px 6px rgba(0, 114, 255, 0.4)",
-            border: "none",
-          };
-        } else if (shield >= 171) {
-          return {
-            title: "💎 PLATINUM GUARDIAN",
-            color: "#ffffff",
-            bg: "linear-gradient(135deg, #11998e, #38ef7d)",
-            shadow: "0 2px 5px rgba(56, 239, 125, 0.4)",
-            border: "none",
-          };
-        } else if (shield >= 131) {
-          return {
-            title: "🥇 GOLD PALADIN",
-            color: "#1a2536",
-            bg: "linear-gradient(135deg, #f7971e, #ffd200)",
-            shadow: "0 2px 5px rgba(247, 151, 30, 0.4)",
-            border: "none",
-          };
-        } else if (shield >= 91) {
-          return {
-            title: "🥈 SILVER WARRIOR",
-            color: "#1a2536",
-            bg: "linear-gradient(135deg, #e0eafc, #cfdef3)",
-            shadow: "0 1px 4px rgba(0,0,0,0.15)",
-            border: "none",
-          };
-        } else if (shield >= 51) {
-          return {
-            title: "🥉 BRONZE KNIGHT",
-            color: "#ffffff",
-            bg: "linear-gradient(135deg, #d38312, #a83279)",
-            shadow: "0 1px 4px rgba(0,0,0,0.2)",
-            border: "none",
-          };
-        } else if (shield >= 11) {
-          return {
-            title: "🛡️ IRON SQUIRE",
-            color: "#ffffff",
-            bg: "linear-gradient(135deg, #485563, #29323c)",
-            shadow: "0 1px 3px rgba(0,0,0,0.25)",
-            border: "none",
-          };
-        } else {
-          return {
-            title: "🔰 NOVICE",
-            color: "#ffffff",
-            bg: "linear-gradient(135deg, #7f8c8d, #95a5a6)",
-            shadow: "none",
-            border: "none",
-          };
-        }
-      }
-
-      // PENCARIAN SISWA PERORANGAN DARI FIRESTORE
+      // PENCARIAN SISWA PERORANGAN
       async function cariPoinSiswaWithLoading() {
         const nisnInput = document
           .getElementById("nisnSiswaInput")
           .value.trim();
         if (!nisnInput) return alert("Silakan ketik nomor NIS / NISN kamu!");
 
-        if (nisnInput.toLowerCase() === "akusiswasmkwiraguna") {
-          showGamePreloader("UNLOCKING SECRET MISSION...", (done) => {
-            setTimeout(() => {
-              done();
-              tampilkanEasterEggModal(
-                "🛡️",
-                "MISSION: THE CHOSEN ONE",
-                "Mengajar dan belajar sama-sama butuh energi besar; jadilah alasan gurumu tersenyum bangga hari ini. Kejarlah impianmu, patuhi nasehatnya, dan buktikan kamu adalah generasi hebat SMK Wiraguna! 📚⚔️🔥",
-              );
-              document.getElementById("nisnSiswaInput").value = "";
-            }, 800);
-          });
-          return;
-        }
-
         showGamePreloader("FETCHING CLOUD DATABASE...", async (done) => {
           try {
+            await new Promise((resolve) => {
+              loadMasterSiswaFromCloud(() => resolve());
+            });
             const { doc, getDoc } = window.fbFirestore;
             const docRef = doc(window.db, "siswa", nisnInput);
             const docSnap = await getDoc(docRef);
-
             done();
 
             if (docSnap.exists()) {
               const siswa = docSnap.data();
+              if (siswa.dailyScore === undefined) siswa.dailyScore = 0;
+              localStorage.setItem("activeUser", nisnInput);
+              renderDaftarTeman();
+
+              document
+                .getElementById("boxInputNisnSiswa")
+                .classList.add("hidden");
               document
                 .getElementById("hasilPoinSiswa")
                 .classList.remove("hidden");
 
               const avatarImg = document.querySelector(".rpg-avatar-box img");
               if (avatarImg) {
-                if (siswa.jk && siswa.jk.toUpperCase() === "P") {
-                  avatarImg.src = "assets/foto_siswa/avatar_p.webp";
-                } else {
-                  avatarImg.src = "assets/foto_siswa/avatar_l.webp";
-                }
+                avatarImg.src =
+                  siswa.jk && siswa.jk.toUpperCase() === "P"
+                    ? "assets/foto_siswa/avatar_p.webp"
+                    : "assets/foto_siswa/avatar_l.webp";
               }
 
-              let badgesHtml = "";
-              const currentHour = new Date().getHours();
-              if (currentHour >= 0 && currentHour < 2) {
-                badgesHtml += `<span style="background:#9b59b6; color:white; padding:2px 6px; border-radius:4px; font-size:8px; margin-left:5px;">🦉 NIGHT OWL</span>`;
-              }
-
-              document.getElementById("txtNamaSiswaHasil").innerHTML =
-                (siswa.nama || "").toUpperCase() + badgesHtml;
+              document.getElementById("txtNamaSiswaHasil").innerHTML = (
+                siswa.nama || ""
+              ).toUpperCase();
               document.getElementById("txtKelasSiswaHasil").innerText =
                 `Kelas: ${siswa.kelas || "-"} | NISN: ${siswa.nisn || nisnInput}`;
 
               const rankInfo = getTierRank(siswa.shield || 0);
               document.getElementById("txtTierRankContainer").innerHTML = `
-          <span style="
-            display: inline-block;
-            background: ${rankInfo.bg}; 
-            color: ${rankInfo.color}; 
-            padding: 2px 8px; 
-            border-radius: 5px; 
-            font-size: 10px; 
-            font-weight: 700; 
-            margin-top: 1px; 
-            letter-spacing: 0.4px;
-            box-shadow: ${rankInfo.shadow};
-            border: ${rankInfo.border};
-          ">
-            ${rankInfo.title}
-          </span>
-        `;
-
-              const barHpFill = document.getElementById("barHpFill");
-              const txtHpPercent = document.getElementById("txtHpPercent");
-              const barShieldFill = document.getElementById("barShieldFill");
+                <span style="display: inline-block; background: ${rankInfo.bg}; color: ${rankInfo.color}; padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 700; margin-top: 1px;">
+                  ${rankInfo.title}
+                </span>
+              `;
 
               let hpValue = siswa.hp !== undefined ? siswa.hp : 200;
-              let hpWidth = Math.max(0, Math.min(100, (hpValue / 200) * 100));
-              barHpFill.style.width = `${hpWidth}%`;
-              txtHpPercent.innerText = `${Math.max(0, hpValue)}/200`;
-
-              if (hpValue <= 50) {
-                barHpFill.style.background = "#e74c3c";
-                txtHpPercent.style.color = "#e74c3c";
-              } else if (hpValue < 150) {
-                barHpFill.style.background = "#f39c12";
-                txtHpPercent.style.color = "#f39c12";
-              } else {
-                barHpFill.style.background = "#2ecc71";
-                txtHpPercent.style.color = "#2ecc71";
-              }
+              document.getElementById("barHpFill").style.width =
+                `${Math.max(0, Math.min(100, (hpValue / 200) * 100))}%`;
+              document.getElementById("txtHpPercent").innerText =
+                `${Math.max(0, hpValue)}/200`;
 
               let shieldValue = siswa.shield || 0;
-              let shieldWidth = Math.max(
-                0,
-                Math.min(100, (shieldValue / 300) * 100),
-              );
               document.getElementById("txtShieldPercent").innerText =
                 `${shieldValue} Pts`;
-              barShieldFill.style.width = `${shieldWidth}%`;
+              document.getElementById("barShieldFill").style.width =
+                `${Math.max(0, Math.min(100, (shieldValue / 300) * 100))}%`;
 
-              const totalPelanggaran = siswa.totalPelanggaran || 0;
-              const statusHukum = getStatusPembinaan(totalPelanggaran);
+              let dailyValue = siswa.dailyScore || 0;
+              document.getElementById("txtDailyScoreTextOnly").innerText =
+                `⭐ ${dailyValue} Pts`;
+
+              const statusHukum = getStatusPembinaan(
+                siswa.totalPelanggaran || 0,
+              );
               document.getElementById("txtStatusKondisi").innerText =
                 `STATUS: ${statusHukum.title}`;
               document.getElementById("txtStatusPenanganan").innerText =
                 statusHukum.desc;
-              document.getElementById("rpgStatusBanner").style.borderLeftColor =
-                statusHukum.color;
-              document.getElementById("txtStatusKondisi").style.color =
-                statusHukum.color;
 
               document.getElementById("txtCountPrestasi").innerText =
                 `${siswa.totalPrestasi || 0} Pts`;
               document.getElementById("txtCountPelanggaran").innerText =
-                `${totalPelanggaran} Pts`;
+                `${siswa.totalPelanggaran || 0} Pts`;
 
               let historyListContainer =
                 document.getElementById("historyListSiswa");
               historyListContainer.innerHTML = "";
-
               if (!siswa.riwayat || siswa.riwayat.length === 0) {
                 historyListContainer.innerHTML = `<div style="font-size: 10px; color: #95a5a6; text-align: center; padding: 6px;">Tidak ada catatan riwayat.</div>`;
               } else {
@@ -2409,17 +3059,17 @@
                   let isPlus = Number(r.p) > 0;
                   let borderColor = isPlus ? "#2ecc71" : "#e74c3c";
                   historyListContainer.innerHTML += `
-              <div style="background: #1a2536; border-left: 3px solid ${borderColor}; padding: 8px 10px; border-radius: 0 6px 6px 0; font-size: 10.5px; color: #ecf0f1; border-top: 1px solid #34495e; border-right: 1px solid #34495e; border-bottom: 1px solid #34495e; margin-bottom: 6px;">
-                <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 2px;">
-                  <span style="color: ${borderColor};">${r.t}</span>
-                  <span style="color: ${borderColor};">${isPlus ? "+" + r.p : r.p} Pts</span>
-                </div>
-                <div style="font-size: 9.5px; color: #bdc3c7; display: flex; justify-content: space-between;">
-                  <span>📍 ${r.loc || "-"}</span>
-                  <span>📅 ${r.d || "-"}</span>
-                </div>
-              </div>
-            `;
+                    <div style="background: #1a2536; border-left: 3px solid ${borderColor}; padding: 8px 10px; border-radius: 0 6px 6px 0; font-size: 10.5px; color: #ecf0f1; border: 1px solid #34495e; margin-bottom: 6px;">
+                      <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 2px;">
+                        <span style="color: ${borderColor};">${r.t}</span>
+                        <span style="color: ${borderColor};">${isPlus ? "+" + r.p : r.p} Pts</span>
+                      </div>
+                      <div style="font-size: 9.5px; color: #bdc3c7; display: flex; justify-content: space-between;">
+                        <span>📍 ${r.loc || "-"}</span>
+                        <span>📅 ${r.d || "-"}</span>
+                      </div>
+                    </div>
+                  `;
                 });
               }
             } else {
@@ -2430,12 +3080,11 @@
           } catch (err) {
             done();
             console.error("Gagal mencari data siswa:", err);
-            alert("Gagal terhubung ke database Firestore.");
           }
         });
       }
 
-      // ENTRY GURU & SECURITY ROLE
+      // ENTRY GURU FORM
       function initFormEntry() {
         const now = new Date();
         const namaHari = [
@@ -2453,7 +3102,6 @@
           .split("T")[0];
         document.getElementById("jam").value =
           `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-
         handleKategoriChange();
         updateEntrySiswaList();
       }
@@ -2461,22 +3109,20 @@
       function handleKategoriChange() {
         const kat = document.getElementById("kategori").value;
         const boxSub = document.getElementById("boxSubKategori");
-        const subKategori = document.getElementById("subKategori");
+        const container = document.getElementById("containerOpsi");
+        const label = document.getElementById("lblDetailOpsi");
+        container.innerHTML = "";
 
         if (kat === "Pelanggaran") {
           boxSub.classList.remove("hidden");
+          const subKategori = document.getElementById("subKategori");
           subKategori.innerHTML =
-            '<option value="">-- Pilih Tingkat --</option><option value="Ringan">Pelanggaran Ringan (5-20 Pts)</option>';
-
+            '<option value="">-- Pilih Tingkat --</option><option value="Ringan">Pelanggaran Ringan (5-10 Pts)</option>';
           if (currentRole !== "Guru Mapel") {
             subKategori.innerHTML +=
-              '<option value="Sedang">Pelanggaran Sedang (25-50 Pts)</option><option value="Berat">Pelanggaran Berat (75-200 Pts)</option>';
+              '<option value="Sedang">Pelanggaran Sedang (25-40 Pts)</option><option value="Berat">Pelanggaran Berat (100-200 Pts)</option>';
           }
-
-          subKategori.value = "";
-          document.getElementById("containerOpsi").innerHTML = "";
-          document.getElementById("lblDetailOpsi").innerText =
-            "PILIH TINGKAT PELANGGARAN DI ATAS";
+          label.innerText = "PILIH TINGKAT PELANGGARAN DI ATAS";
         } else {
           boxSub.classList.add("hidden");
           renderOpsiPoin();
@@ -2485,7 +3131,9 @@
 
       function renderOpsiPoin() {
         const kat = document.getElementById("kategori").value;
-        const sub = document.getElementById("subKategori").value;
+        const sub = document.getElementById("subKategori")
+          ? document.getElementById("subKategori").value
+          : "";
         const container = document.getElementById("containerOpsi");
         const label = document.getElementById("lblDetailOpsi");
         container.innerHTML = "";
@@ -2494,6 +3142,9 @@
         if (kat === "Prestasi") {
           label.innerText = "OPSI PRESTASI (+ HP / SHIELD) *";
           listTampil = dataPilihan.Prestasi;
+        } else if (kat === "TugasHarian") {
+          label.innerText = "OPSI POIN HARIAN / TUGAS KELAS (+XP) *";
+          listTampil = dataPilihan.TugasHarian;
         } else {
           if (!sub) return;
           label.innerText = "DETAIL PELANGGARAN (- HP) *";
@@ -2503,8 +3154,10 @@
         listTampil.forEach((item) => {
           const div = document.createElement("label");
           div.className = "option-item";
+          let labelPrefix =
+            kat === "Prestasi" ? "+" : kat === "TugasHarian" ? "+" : "-";
           div.innerHTML = `<input type="radio" name="opsiPoin" value="${item.t}" data-poin="${item.p}" required>
-                             <span>${item.t} <strong>(${kat === "Prestasi" ? "+" : "-"}${item.p} Pts)</strong></span>`;
+                             <span>${item.t} <strong>(${labelPrefix}${item.p} Pts)</strong></span>`;
           container.appendChild(div);
         });
       }
@@ -2513,7 +3166,6 @@
         const kelas = document.getElementById("kelas").value;
         const singleSelect = document.getElementById("selectSingleSiswa");
         const multiBox = document.getElementById("boxMultiSiswa");
-
         singleSelect.innerHTML = '<option value="">-- Pilih Siswa --</option>';
         multiBox.innerHTML = "";
 
@@ -2522,30 +3174,26 @@
             '<span style="font-size:11px; color:#888;">Pilih kelas dulu...</span>';
           return;
         }
-        const siswaInClass = masterDataSiswa.filter((s) => s.kelas === kelas);
-        siswaInClass.forEach((s) => {
-          singleSelect.innerHTML += `<option value="${s.nama}">${s.nama}</option>`;
-          multiBox.innerHTML += `<label class="checkbox-item"><input type="checkbox" name="multiSiswa" value="${s.nama}"> ${s.nama}</label>`;
-        });
+        masterDataSiswa
+          .filter((s) => s.kelas === kelas)
+          .forEach((s) => {
+            singleSelect.innerHTML += `<option value="${s.nama}">${s.nama}</option>`;
+            multiBox.innerHTML += `<label class="checkbox-item"><input type="checkbox" name="multiSiswa" value="${s.nama}"> ${s.nama}</label>`;
+          });
       }
 
       function toggleModeSiswa() {
         isMultiMode = !isMultiMode;
-        const btnTxt = document.getElementById("txtModeSiswa");
-        const singleSelect = document.getElementById("selectSingleSiswa");
-        const multiBox = document.getElementById("boxMultiSiswa");
-
-        if (isMultiMode) {
-          btnTxt.innerText = "Mode: Banyak Siswa";
-          singleSelect.classList.add("hidden");
-          singleSelect.required = false;
-          multiBox.classList.remove("hidden");
-        } else {
-          btnTxt.innerText = "Mode: Satu Siswa";
-          singleSelect.classList.remove("hidden");
-          singleSelect.required = true;
-          multiBox.classList.add("hidden");
-        }
+        document.getElementById("txtModeSiswa").innerText = isMultiMode
+          ? "Mode: Banyak Siswa"
+          : "Mode: Satu Siswa";
+        document
+          .getElementById("selectSingleSiswa")
+          .classList.toggle("hidden", isMultiMode);
+        document.getElementById("selectSingleSiswa").required = !isMultiMode;
+        document
+          .getElementById("boxMultiSiswa")
+          .classList.toggle("hidden", !isMultiMode);
       }
 
       function konfirmasiSimpan() {
@@ -2569,16 +3217,18 @@
         }
 
         const kat = document.getElementById("kategori").value;
-        const efekPoin =
-          kat === "Prestasi"
-            ? `+${selectedRadio.getAttribute("data-poin")} Prestasi`
-            : `-${selectedRadio.getAttribute("data-poin")} Pelanggaran`;
+        let efekText =
+          kat === "TugasHarian"
+            ? `+${selectedRadio.getAttribute("data-poin")} Poin Harian (Leaderboard)`
+            : kat === "Prestasi"
+              ? `+${selectedRadio.getAttribute("data-poin")} Prestasi`
+              : `-${selectedRadio.getAttribute("data-poin")} Pelanggaran`;
 
         document.getElementById("modalDetailContent").innerHTML = `
-          <strong>Target Siswa (${daftarSiswaDipilih.length}):</strong><br> ${daftarSiswaDipilih.join(", ")}<br><br>
-          <strong>Kejadian:</strong> ${selectedRadio.value}<br>
-          <strong>Dampak Kalkulasi:</strong> ${efekPoin}<br>
-          <strong>Guru Pelapor:</strong> ${document.getElementById("txtNamaGuru").innerText} (${currentRole})
+          <strong>Target Siswa (${daftarSiswaDipilih.length}):</strong><br>${daftarSiswaDipilih.join(", ")}<br><br>
+          <strong>Aktivitas:</strong> ${selectedRadio.value}<br>
+          <strong>Dampak:</strong> ${efekText}<br>
+          <strong>Guru Pelapor:</strong> ${document.getElementById("txtNamaGuru").innerText}
         `;
         document.getElementById("modalKonfirmasi").classList.remove("hidden");
       }
@@ -2587,7 +3237,7 @@
         document.getElementById("modalKonfirmasi").classList.add("hidden");
       }
 
-      // SIMPAN POIN KE FIRESTORE (DENGAN LOGIKA RPG BARU: HEAL FIRST, SHIELD LATER / SHIELD FIRST, HP LATER)
+      // EKSEKUSI SIMPAN POIN
       async function eksekusiSimpanWithLoading() {
         tutupModal();
         const selectedRadio = document.querySelector(
@@ -2599,10 +3249,10 @@
         const poin = parseInt(selectedRadio.getAttribute("data-poin"));
         const kat = document.getElementById("kategori").value;
         const tempat = document.getElementById("tempat").value || "Sekolah";
-
-        const tanggalInput = document.getElementById("tanggal").value;
-        const jamInput = document.getElementById("jam").value;
-        const waktuGabung = tanggalInput + " " + (jamInput || "00:00");
+        const waktuGabung =
+          document.getElementById("tanggal").value +
+          " " +
+          (document.getElementById("jam").value || "00:00");
 
         let daftarSiswaDipilih = [];
         if (isMultiMode) {
@@ -2614,9 +3264,6 @@
           if (val) daftarSiswaDipilih.push(val);
         }
 
-        if (daftarSiswaDipilih.length === 0)
-          return alert("Pilih minimal 1 siswa!");
-
         showGamePreloader("SAVING TO CLOUD DB...", async (done) => {
           try {
             const { doc, getDoc, updateDoc } = window.fbFirestore;
@@ -2627,45 +3274,33 @@
               );
               if (!siswaObj || !siswaObj.nisn) continue;
 
-              const nisn = siswaObj.nisn;
-              const docRef = doc(window.db, "siswa", nisn);
+              const docRef = doc(window.db, "siswa", siswaObj.nisn);
               const docSnap = await getDoc(docRef);
 
               if (docSnap.exists()) {
                 const dataSiswa = docSnap.data();
-
                 let hpBaru = dataSiswa.hp !== undefined ? dataSiswa.hp : 200;
                 let shieldBaru = dataSiswa.shield || 0;
                 let totalPres = dataSiswa.totalPrestasi || 0;
                 let totalPel = dataSiswa.totalPelanggaran || 0;
+                let dailyScoreBaru = dataSiswa.dailyScore || 0;
                 let riwayatList = dataSiswa.riwayat || [];
 
-                let poinDampak = kat === "Prestasi" ? poin : -poin;
+                let poinDampak = kat === "Pelanggaran" ? -poin : poin;
 
-                if (kat === "Prestasi") {
-                  // Akumulasi total prestasi murni
+                if (kat === "TugasHarian") {
+                  dailyScoreBaru += poin;
+                } else if (kat === "Prestasi") {
                   totalPres += poin;
-
-                  // Logika: Heal First, Shield Later
                   let sisaPoin = poin;
                   let kekuranganHp = 200 - hpBaru;
                   if (kekuranganHp > 0) {
-                    if (sisaPoin >= kekuranganHp) {
-                      hpBaru = 200;
-                      sisaPoin -= kekuranganHp;
-                    } else {
-                      hpBaru += sisaPoin;
-                      sisaPoin = 0;
-                    }
+                    hpBaru = sisaPoin >= kekuranganHp ? 200 : hpBaru + sisaPoin;
+                    sisaPoin -= kekuranganHp;
                   }
-                  if (sisaPoin > 0) {
-                    shieldBaru += sisaPoin;
-                  }
+                  if (sisaPoin > 0) shieldBaru += sisaPoin;
                 } else {
-                  // Akumulasi total pelanggaran murni
                   totalPel += poin;
-
-                  // Logika: Shield First, HP Later
                   let sisaPelanggaran = poin;
                   if (shieldBaru > 0) {
                     if (sisaPelanggaran >= shieldBaru) {
@@ -2681,7 +3316,6 @@
                   }
                 }
 
-                // Tambahkan riwayat baru di urutan paling atas
                 riwayatList.unshift({
                   t: desc,
                   p: poinDampak,
@@ -2689,37 +3323,32 @@
                   d: waktuGabung,
                 });
 
-                // Update dokumen siswa di Firestore
                 await updateDoc(docRef, {
                   hp: hpBaru,
                   shield: shieldBaru,
                   totalPrestasi: totalPres,
                   totalPelanggaran: totalPel,
+                  dailyScore: dailyScoreBaru,
                   riwayat: riwayatList,
                 });
               }
             }
 
             done();
-
             sessionStorage.removeItem("master_siswa_cache");
-
-            alert(
-              "✅ Data Poin berhasil dicatat dan disinkronkan ke Database Firestore!",
-            );
+            alert("✅ Poin Berhasil Disimpan & Disinkronkan ke Leaderboard!");
             document.getElementById("formEntry").reset();
             initFormEntry();
-
             loadMasterSiswaFromCloud();
           } catch (err) {
             done();
-            console.error("Gagal menyimpan ke Firestore:", err);
-            alert("Gagal menyimpan data ke database Firestore.");
+            console.error("Gagal menyimpan poin:", err);
+            alert("Gagal menyimpan data ke Firestore.");
           }
         });
       }
 
-      // SUPER ADMIN TABS
+      // SUPER ADMIN TABS & ACTION HANDLER (GLOBAL & PER KELAS)
       function switchAdminTab(tabName) {
         ["Rekap", "Kontrol", "Cetak"].forEach((n) => {
           document.getElementById("adminTab" + n).classList.add("hidden");
@@ -2727,33 +3356,27 @@
           document.getElementById("navBtn" + n).style.background =
             "transparent";
         });
-
-        const actTab = document.getElementById(
-          "adminTab" + tabName.charAt(0).toUpperCase() + tabName.slice(1),
-        );
+        document
+          .getElementById(
+            "adminTab" + tabName.charAt(0).toUpperCase() + tabName.slice(1),
+          )
+          .classList.remove("hidden");
         const actBtn = document.getElementById(
           "navBtn" + tabName.charAt(0).toUpperCase() + tabName.slice(1),
         );
-
-        actTab.classList.remove("hidden");
         actBtn.className = "";
         actBtn.style.background = "#1e3c72";
 
-        if (tabName === "rekap") {
-          renderTabelRekap();
-        }
-        if (tabName === "cetak") {
-          filterPilihanSiswaCetak();
-        }
+        if (tabName === "rekap") renderTabelRekap();
+        if (tabName === "kontrol") handleAdminActionTypeChange();
       }
 
-      let myChartInstance = null;
+      let statistikChartInstance = null;
 
       function renderTabelRekap() {
         const filter = document.getElementById("filterKelasRekap").value;
         const tbody = document.getElementById("tabelRekapBody");
         tbody.innerHTML = "";
-
         const data =
           filter === "SEMUA"
             ? masterDataSiswa
@@ -2763,54 +3386,49 @@
           let badge = `<span style="color:#2ecc71; font-weight:bold">${s.hp} HP</span>`;
           if (s.shield > 0)
             badge += ` <span style="color:#3498db; font-size:9px">+${s.shield} Shld</span>`;
-
-          let hukum = getStatusPembinaan(s.totalPelanggaran);
+          let hukum = getStatusPembinaan(s.totalPelanggaran || 0);
 
           tbody.innerHTML += `<tr>
             <td><strong>${s.nama}</strong></td>
             <td>${s.kelas}</td>
             <td>${badge}</td>
-            <td><span style="font-size: 9px; padding: 3px 6px; background: ${hukum.color}; color: #fff; border-radius: 4px; font-weight: bold;">${s.totalPelanggaran} Pts (${hukum.title})</span></td>
+            <td><span style="font-size: 9px; padding: 3px 6px; background: ${hukum.color}; color: #fff; border-radius: 4px; font-weight: bold;">${s.totalPelanggaran || 0} Pts</span></td>
           </tr>`;
         });
 
-        updateStatistikChart();
-      }
-
-      function updateStatistikChart() {
-        let totalPelanggaran10 = 0;
-        let totalPelanggaran11 = 0;
-        let totalPelanggaran12 = 0;
+        // RENDER / UPDATE CHART.JS STATISTIK
+        const ctx = document.getElementById("statistikChart").getContext("2d");
+        let labels = ["10 SMK", "11 SMK", "12 SMK"];
+        let pelanggaranPerKelas = [0, 0, 0];
+        let prestasiPerKelas = [0, 0, 0];
 
         masterDataSiswa.forEach((s) => {
-          if (s.kelas === "10 SMK")
-            totalPelanggaran10 += Number(s.totalPelanggaran || 0);
-          if (s.kelas === "11 SMK")
-            totalPelanggaran11 += Number(s.totalPelanggaran || 0);
-          if (s.kelas === "12 SMK")
-            totalPelanggaran12 += Number(s.totalPelanggaran || 0);
+          let idx = labels.indexOf(s.kelas);
+          if (idx !== -1) {
+            pelanggaranPerKelas[idx] += s.totalPelanggaran || 0;
+            prestasiPerKelas[idx] += s.totalPrestasi || 0;
+          }
         });
 
-        const ctx = document.getElementById("statistikChart").getContext("2d");
-
-        if (myChartInstance) {
-          myChartInstance.destroy();
+        if (statistikChartInstance) {
+          statistikChartInstance.destroy();
         }
 
-        myChartInstance = new Chart(ctx, {
+        statistikChartInstance = new Chart(ctx, {
           type: "bar",
           data: {
-            labels: ["10 SMK", "11 SMK", "12 SMK"],
+            labels: labels,
             datasets: [
               {
-                label: "Akumulasi Poin Pelanggaran",
-                data: [
-                  totalPelanggaran10,
-                  totalPelanggaran11,
-                  totalPelanggaran12,
-                ],
-                backgroundColor: ["#3498db", "#f39c12", "#e74c3c"],
-                borderWidth: 1,
+                label: "Total Pelanggaran",
+                data: pelanggaranPerKelas,
+                backgroundColor: "#e74c3c",
+                borderRadius: 6,
+              },
+              {
+                label: "Total Prestasi",
+                data: prestasiPerKelas,
+                backgroundColor: "#2ecc71",
                 borderRadius: 6,
               },
             ],
@@ -2819,18 +3437,15 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: { display: false },
-              title: {
-                display: true,
-                text: "Grafik Total Pelanggaran per Tingkat Kelas",
-                font: { size: 11, family: "Poppins" },
-                color: "#1e3c72",
+              legend: {
+                position: "top",
+                labels: { font: { size: 10 } },
               },
             },
             scales: {
               y: {
                 beginAtZero: true,
-                ticks: { font: { size: 9 } },
+                ticks: { font: { size: 10 } },
               },
               x: {
                 ticks: { font: { size: 10 } },
@@ -2838,6 +3453,23 @@
             },
           },
         });
+      }
+
+      function handleAdminActionTypeChange() {
+        const act = document.getElementById("adminActionType").value;
+        const boxKelas = document.getElementById("boxAdminKelas");
+        const boxSiswa = document.getElementById("boxAdminSiswa");
+
+        if (act.includes("GLOBAL")) {
+          boxKelas.classList.add("hidden");
+          boxSiswa.classList.add("hidden");
+        } else if (act.includes("CLASS")) {
+          boxKelas.classList.remove("hidden");
+          boxSiswa.classList.add("hidden");
+        } else if (act.includes("INDIVIDUAL")) {
+          boxKelas.classList.remove("hidden");
+          boxSiswa.classList.remove("hidden");
+        }
       }
 
       function handleAdminKelasChange() {
@@ -2848,25 +3480,160 @@
         masterDataSiswa
           .filter((s) => s.kelas === kelas)
           .forEach((s) => {
-            sel.innerHTML += `<option value="${s.nisn}">${s.nama} (${s.hp} HP)</option>`;
+            sel.innerHTML += `<option value="${s.nisn}">${s.nama} (${s.dailyScore || 0} Pts Tugas)</option>`;
           });
       }
 
-      // ACTION ADMIN FIRESTORE (RESET PENUH / PEMUTIHAN)
       async function prosesActionAdminWithLoading() {
-        const nisn = document.getElementById("adminSiswaSelect").value;
         const act = document.getElementById("adminActionType").value;
+        const kelasTarget = document.getElementById("adminKelasSelect").value;
+        const nisnTarget = document.getElementById("adminSiswaSelect").value;
         const notes = document.getElementById("adminNotes").value.trim();
 
-        if (!nisn) return alert("Pilih siswa target terlebih dahulu!");
         if (!notes) return alert("Catatan sidang wajib diisi!");
+        if (act.includes("CLASS") && !kelasTarget)
+          return alert("Pilih kelas target terlebih dahulu!");
+        if (act.includes("INDIVIDUAL") && !nisnTarget)
+          return alert("Pilih siswa target terlebih dahulu!");
 
         showGamePreloader("EXECUTING ADMIN OVERRIDE...", async (done) => {
           try {
-            if (act === "RESET_FULL") {
-              const { doc, updateDoc } = window.fbFirestore;
-              const docRef = doc(window.db, "siswa", nisn);
+            const { doc, getDoc, updateDoc } = window.fbFirestore;
+            const timestampStr = new Date()
+              .toISOString()
+              .replace("T", " ")
+              .substring(0, 16);
 
+            // 1. RESET DAILY GLOBAL
+            if (act === "RESET_DAILY_GLOBAL") {
+              for (let s of masterDataSiswa) {
+                if (!s.nisn) continue;
+                const docRef = doc(window.db, "siswa", s.nisn);
+                const docSnap = await getDoc(docRef);
+                let riwayatList = docSnap.exists()
+                  ? docSnap.data().riwayat || []
+                  : [];
+                riwayatList.unshift({
+                  t: `RESET POIN HARIAN (Global): ${notes}`,
+                  p: 0,
+                  loc: "Ruang BK / Admin",
+                  d: timestampStr,
+                });
+                await updateDoc(docRef, {
+                  dailyScore: 0,
+                  riwayat: riwayatList,
+                });
+              }
+              done();
+              sessionStorage.removeItem("master_siswa_cache");
+              alert("⭐ Poin harian SELURUH SISWA berhasil di-reset jadi 0!");
+            }
+            // 2. RESET DAILY CLASS
+            else if (act === "RESET_DAILY_CLASS") {
+              const targetList = masterDataSiswa.filter(
+                (s) => s.kelas === kelasTarget,
+              );
+              for (let s of targetList) {
+                if (!s.nisn) continue;
+                const docRef = doc(window.db, "siswa", s.nisn);
+                const docSnap = await getDoc(docRef);
+                let riwayatList = docSnap.exists()
+                  ? docSnap.data().riwayat || []
+                  : [];
+                riwayatList.unshift({
+                  t: `RESET POIN HARIAN (Kelas ${kelasTarget}): ${notes}`,
+                  p: 0,
+                  loc: "Ruang BK / Admin",
+                  d: timestampStr,
+                });
+                await updateDoc(docRef, {
+                  dailyScore: 0,
+                  riwayat: riwayatList,
+                });
+              }
+              done();
+              sessionStorage.removeItem("master_siswa_cache");
+              alert(
+                `⭐ Poin harian kelas ${kelasTarget} berhasil di-reset jadi 0!`,
+              );
+            }
+            // 3. RESET DAILY INDIVIDUAL
+            else if (act === "RESET_DAILY_INDIVIDUAL") {
+              const docRef = doc(window.db, "siswa", nisnTarget);
+              const docSnap = await getDoc(docRef);
+              let riwayatList = docSnap.exists()
+                ? docSnap.data().riwayat || []
+                : [];
+              riwayatList.unshift({
+                t: `RESET POIN HARIAN: ${notes}`,
+                p: 0,
+                loc: "Ruang BK / Admin",
+                d: timestampStr,
+              });
+              await updateDoc(docRef, {
+                dailyScore: 0,
+                riwayat: riwayatList,
+              });
+              done();
+              sessionStorage.removeItem("master_siswa_cache");
+              alert(`⭐ Poin harian siswa berhasil di-reset jadi 0!`);
+            }
+            // 4. RESET FULL GLOBAL (PEMUTIHAN SEMUA SISWA)
+            else if (act === "RESET_FULL_GLOBAL") {
+              for (let s of masterDataSiswa) {
+                if (!s.nisn) continue;
+                const docRef = doc(window.db, "siswa", s.nisn);
+                await updateDoc(docRef, {
+                  hp: 200,
+                  shield: 0,
+                  totalPrestasi: 0,
+                  totalPelanggaran: 0,
+                  riwayat: [
+                    {
+                      t: `PEMUTIHAN (Global): ${notes}`,
+                      p: 0,
+                      loc: "Ruang BK / Admin",
+                      d: timestampStr,
+                    },
+                  ],
+                });
+              }
+              done();
+              sessionStorage.removeItem("master_siswa_cache");
+              alert("👑 Pemutihan penuh SELURUH SISWA berhasil dieksekusi!");
+            }
+            // 5. RESET FULL CLASS (PEMUTIHAN PER KELAS)
+            else if (act === "RESET_FULL_CLASS") {
+              const targetList = masterDataSiswa.filter(
+                (s) => s.kelas === kelasTarget,
+              );
+              for (let s of targetList) {
+                if (!s.nisn) continue;
+                const docRef = doc(window.db, "siswa", s.nisn);
+                await updateDoc(docRef, {
+                  hp: 200,
+                  shield: 0,
+                  totalPrestasi: 0,
+                  totalPelanggaran: 0,
+                  riwayat: [
+                    {
+                      t: `PEMUTIHAN (Kelas ${kelasTarget}): ${notes}`,
+                      p: 0,
+                      loc: "Ruang BK / Admin",
+                      d: timestampStr,
+                    },
+                  ],
+                });
+              }
+              done();
+              sessionStorage.removeItem("master_siswa_cache");
+              alert(
+                `👑 Pemutihan penuh kelas ${kelasTarget} berhasil dieksekusi!`,
+              );
+            }
+            // 6. RESET FULL INDIVIDUAL
+            else if (act === "RESET_FULL_INDIVIDUAL") {
+              const docRef = doc(window.db, "siswa", nisnTarget);
               await updateDoc(docRef, {
                 hp: 200,
                 shield: 0,
@@ -2874,125 +3641,26 @@
                 totalPelanggaran: 0,
                 riwayat: [
                   {
-                    t: `PEMUTIHAN (Admin): ${notes}`,
+                    t: `PEMUTIHAN (Individu): ${notes}`,
                     p: 0,
                     loc: "Ruang BK / Admin",
-                    d: new Date()
-                      .toISOString()
-                      .replace("T", " ")
-                      .substring(0, 16),
+                    d: timestampStr,
                   },
                 ],
               });
-
               done();
-
               sessionStorage.removeItem("master_siswa_cache");
-
-              alert(
-                `👑 PEMUTIHAN BERHASIL & TERSIMPAN KE CLOUD!\nTarget NISN: ${nisn}\nHP dikembalikan ke 200, Shield 0, dan riwayat di-reset.`,
-              );
-
-              document.getElementById("formAdminAction").reset();
-              document.getElementById("adminSiswaSelect").innerHTML =
-                `<option value="">-- Pilih Kelas Dulu --</option>`;
-
-              loadMasterSiswaFromCloud();
-            } else {
-              done();
-              alert(`👑 AKSI BERHASIL DIEKSEKUSI PADA NISN: ${nisn}`);
-              document.getElementById("formAdminAction").reset();
-              document.getElementById("adminSiswaSelect").innerHTML =
-                `<option value="">-- Pilih Kelas Dulu --</option>`;
+              alert(`👑 Pemutihan siswa perorangan berhasil!`);
             }
+
+            document.getElementById("formAdminAction").reset();
+            handleAdminActionTypeChange();
+            loadMasterSiswaFromCloud();
           } catch (err) {
             done();
             console.error("Gagal menjalankan aksi Admin:", err);
-            alert("Gagal mengeksekusi reset ke database Firestore.");
+            alert("Gagal mengeksekusi perintah ke database Firestore.");
           }
-        });
-      }
-
-      function handleCetakKategoriChange() {
-        const kat = document.getElementById("cetakKategori").value;
-        document
-          .getElementById("boxCetakKelas")
-          .classList.toggle("hidden", kat !== "kelas");
-        document
-          .getElementById("boxCetakSiswa")
-          .classList.toggle("hidden", kat !== "siswa");
-      }
-      function filterPilihanSiswaCetak() {
-        const kw = document.getElementById("searchSiswaInput")
-          ? document.getElementById("searchSiswaInput").value.toLowerCase()
-          : "";
-        const sel = document.getElementById("cetakSiswaSelect");
-        if (!sel) return;
-        sel.innerHTML = "";
-        const m = masterDataSiswa.filter(
-          (s) =>
-            s.nama.toLowerCase().includes(kw) ||
-            s.kelas.toLowerCase().includes(kw),
-        );
-        m.forEach(
-          (s) =>
-            (sel.innerHTML += `<option value="${s.nisn}">${s.nama} (${s.kelas})</option>`),
-        );
-      }
-
-      function prosesCetakLaporanWithLoading() {
-        const kategori = document.getElementById("cetakKategori").value;
-        let dataToExport = [];
-        let filename = "Laporan_Tatib_SMK_Wiraguna.csv";
-
-        if (kategori === "semua") {
-          dataToExport = masterDataSiswa;
-          filename = "Laporan_Semua_Siswa.csv";
-        } else if (kategori === "kelas") {
-          const kelasDipilih =
-            document.getElementById("cetakKelasSelect").value;
-          dataToExport = masterDataSiswa.filter(
-            (s) => s.kelas === kelasDipilih,
-          );
-          filename = `Laporan_Kelas_${kelasDipilih.replace(/\s+/g, "_")}.csv`;
-        } else if (kategori === "siswa") {
-          const nisnDipilih = document.getElementById("cetakSiswaSelect").value;
-          const siswaDitemukan = masterDataSiswa.find(
-            (s) => s.nisn === nisnDipilih,
-          );
-          if (!siswaDitemukan) return alert("Pilih siswa terlebih dahulu!");
-          dataToExport = [siswaDitemukan];
-          filename = `Laporan_Siswa_${siswaDitemukan.nama.replace(/\s+/g, "_")}.csv`;
-        }
-
-        if (dataToExport.length === 0) {
-          return alert("Tidak ada data untuk diekspor!");
-        }
-
-        showGamePreloader("GENERATING REPORT...", (done) => {
-          setTimeout(() => {
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent +=
-              "NISN,Nama Siswa,Kelas,Jenis Kelamin,HP,Shield,Total Prestasi,Total Pelanggaran\r\n";
-
-            dataToExport.forEach((s) => {
-              let row = `"${s.nisn}","${s.nama}","${s.kelas}","${s.jk || "-"}","${s.hp}","${s.shield}","${s.totalPrestasi}","${s.totalPelanggaran}"`;
-              csvContent += row + "\r\n";
-            });
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", filename);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            done();
-            alert(
-              "🖨️ Laporan Berhasil Diunduh! Silakan buka file dengan Microsoft Excel.",
-            );
-          }, 1000);
         });
       }
 
@@ -3003,11 +3671,9 @@
         const container = document.getElementById("questContainerUI");
 
         if (tipe === "prestasi") {
-          btnPres.className = "";
           btnPres.style.background = "#3498db";
           btnPres.style.color = "white";
           btnPelang.className = "btn-outline";
-          btnPelang.style.background = "transparent";
           btnPelang.style.color = "#e74c3c";
 
           let html = `<div class="accordion">
@@ -3017,19 +3683,11 @@
             html += `<div class="q-item"><span>${item.t}</span> <span class="badge-shield">+${item.p}</span></div>`;
           });
           html += `</div></div>`;
-
-          html += `
-            <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #cbd5e1; margin-bottom: -4px;">
-              <span style="font-size: 9px; color: #94a3b8; font-style: italic;">kamu mungkin bisa menemukan sesuatu yang menarik di web ini!</span>
-            </div>
-          `;
           container.innerHTML = html;
         } else {
-          btnPelang.className = "";
           btnPelang.style.background = "#e74c3c";
           btnPelang.style.color = "white";
           btnPres.className = "btn-outline";
-          btnPres.style.background = "transparent";
           btnPres.style.color = "#3498db";
 
           let html = "";
@@ -3042,12 +3700,6 @@
             });
             html += `</div></div>`;
           });
-
-          html += `
-            <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #cbd5e1; margin-bottom: -4px;">
-              <span style="font-size: 9px; color: #94a3b8; font-style: italic;">kamu mungkin bisa menemukan sesuatu yang menarik di web ini!</span>
-            </div>
-          `;
           container.innerHTML = html;
         }
       }
@@ -3063,6 +3715,12 @@
           body.classList.add("active");
         }
       }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        loadMasterSiswaFromCloud(() => {
+          loadTugasAktif();
+        });
+      });
     </script>
 
     <script type="module">
@@ -3075,6 +3733,7 @@
         getDoc,
         setDoc,
         updateDoc,
+        deleteDoc,
       } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
       const firebaseConfig = {
@@ -3097,11 +3756,9 @@
         getDoc,
         setDoc,
         updateDoc,
+        deleteDoc,
       };
-
-      console.log(
-        "🔥 Firebase Firestore Berhasil Terhubung ke Tatib SMK Wiraguna!",
-      );
+      console.log("🔥 Firebase Firestore Terhubung ke Tatib SMK Wiraguna!");
     </script>
   </body>
 </html>
