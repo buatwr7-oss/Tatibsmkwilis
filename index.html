@@ -1121,7 +1121,7 @@
           <h3>Portal Siswa</h3>
           <p>Status Karakter & Kedisiplinan</p>
         </div>
-        <button class="btn-logout" onclick="kembaliKeMenu()">Keluar</button>
+        <button class="btn-logout" onclick="keluarSiswa()">Keluar</button>
       </div>
 
       <!-- KOTAK INPUT NISN & TOMBOL -->
@@ -2419,7 +2419,16 @@
 
       let friendListeners = {};
 
-      function renderDaftarTeman(friendsArray = [], requestsArray = []) {
+      function renderDaftarTeman(friendsArray, requestsArray) {
+        if (!friendsArray && window.currentStudentDataCache) {
+          friendsArray = window.currentStudentDataCache.friends || [];
+        }
+        if (!requestsArray && window.currentStudentDataCache) {
+          requestsArray = window.currentStudentDataCache.requests || [];
+        }
+        friendsArray = friendsArray || [];
+        requestsArray = requestsArray || [];
+
         Object.values(friendListeners).forEach((unsub) => unsub());
         friendListeners = {};
 
@@ -2550,7 +2559,14 @@
           activeChatListener();
           activeChatListener = null;
         }
-        renderDaftarTeman();
+        if (window.currentStudentDataCache) {
+          renderDaftarTeman(
+            window.currentStudentDataCache.friends,
+            window.currentStudentDataCache.requests,
+          );
+        } else {
+          renderDaftarTeman();
+        }
       }
 
       function getChatRoomId(nisn1, nisn2) {
@@ -3058,11 +3074,6 @@
           document.getElementById("loginCard").classList.remove("hidden");
         } else if (screenId === "siswa") {
           document.getElementById("siswaCard").classList.remove("hidden");
-          document.getElementById("hasilPoinSiswa").classList.add("hidden");
-          document
-            .getElementById("boxInputNisnSiswa")
-            .classList.remove("hidden");
-          document.getElementById("nisnSiswaInput").value = "";
         } else if (screenId === "quest") {
           document.getElementById("questBoardCard").classList.remove("hidden");
           renderQuestUI("prestasi");
@@ -3117,6 +3128,11 @@
           showScreen("login");
         } else if (tipe === "siswa") {
           showScreen("siswa");
+          document.getElementById("hasilPoinSiswa").classList.add("hidden");
+          document
+            .getElementById("boxInputNisnSiswa")
+            .classList.remove("hidden");
+          document.getElementById("nisnSiswaInput").value = "";
         } else if (tipe === "quest") {
           showGamePreloader("LOADING KODE ETIK & TATIB...", (done) => {
             setTimeout(() => {
@@ -3137,6 +3153,16 @@
       function kembaliKeMenu() {
         showScreen("menu");
       }
+
+      function keluarSiswa() {
+        localStorage.removeItem("activeUser");
+        if (activeStudentDocListener) {
+          activeStudentDocListener();
+          activeStudentDocListener = null;
+        }
+        showScreen("menu");
+      }
+
       function logout() {
         showScreen("menu");
       }
@@ -4147,6 +4173,12 @@
       window.addEventListener("DOMContentLoaded", () => {
         loadMasterSiswaFromCloud(() => {
           loadTugasAktif();
+          const savedNisn = localStorage.getItem("activeUser");
+          if (savedNisn) {
+            document.getElementById("nisnSiswaInput").value = savedNisn;
+            showScreen("siswa");
+            cariPoinSiswaWithLoading();
+          }
         });
       });
     </script>
