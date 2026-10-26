@@ -87,7 +87,6 @@
         pointer-events: none;
         z-index: 1;
       }
-
       .particle {
         position: absolute;
         display: block;
@@ -939,7 +938,7 @@
           <input
             type="text"
             id="namaGuruInput"
-            placeholder="Nama Guru / Pengguna"
+            placeholder="Nama Guru / Email"
             required
             autocomplete="off"
           />
@@ -2444,14 +2443,14 @@
               const sender = masterDataSiswa.find((s) => s.nisn === senderNisn);
               const senderName = sender ? sender.nama : `NISN: ${senderNisn}`;
               reqHtml += `
-                <div style="background: rgba(241, 196, 15, 0.1); border: 1px solid #f1c40f; border-radius: 6px; padding: 6px 8px; display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px;">
-                  <span style="font-size: 10px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><strong>${senderName}</strong> mengundangmu</span>
-                  <div style="display: flex; gap: 4px; flex-shrink: 0;">
-                    <button type="button" onclick="terimaUndangan('${senderNisn}')" style="margin-top: 0; padding: 3px 6px; font-size: 8.5px; background: #2ecc71; color: #fff; width: auto; border-radius: 4px; box-shadow: none;">Terima</button>
-                    <button type="button" onclick="tolakUndangan('${senderNisn}')" style="margin-top: 0; padding: 3px 6px; font-size: 8.5px; background: #e74c3c; color: #fff; width: auto; border-radius: 4px; box-shadow: none;">Tolak</button>
-                  </div>
+              <div style="background: rgba(241, 196, 15, 0.1); border: 1px solid #f1c40f; border-radius: 6px; padding: 6px 8px; display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px;">
+                <span style="font-size: 10px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><strong>${senderName}</strong> mengundangmu</span>
+                <div style="display: flex; gap: 4px; flex-shrink: 0;">
+                  <button type="button" onclick="terimaUndangan('${senderNisn}')" style="margin-top: 0; padding: 3px 6px; font-size: 8.5px; background: #2ecc71; color: #fff; width: auto; border-radius: 4px; box-shadow: none;">Terima</button>
+                  <button type="button" onclick="tolakUndangan('${senderNisn}')" style="margin-top: 0; padding: 3px 6px; font-size: 8.5px; background: #e74c3c; color: #fff; width: auto; border-radius: 4px; box-shadow: none;">Tolak</button>
                 </div>
-              `;
+              </div>
+            `;
             });
             containerUndangan.innerHTML = reqHtml;
           }
@@ -2480,29 +2479,29 @@
           const roomId = getChatRoomId(myNisn, nisn);
 
           container.innerHTML += `
-            <div style="background: #111823; border: 1px solid #34495e; border-radius: 8px; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-              <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; flex: 1;">
-                <div style="width: 32px; height: 32px; border-radius: 6px; overflow: hidden; background: #2c3e50; flex-shrink: 0; border: 1px solid #f1c40f;">
-                  <img src="${avatarFile}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='assets/foto_siswa/avatar.webp'">
-                </div>
-                <div style="overflow: hidden; flex: 1;">
-                  <div style="display: flex; align-items: center; gap: 5px; overflow: hidden;">
-                    <div style="font-size: 11px; font-weight: bold; color: #f1c40f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${namaTeman}</div>
-                    <span id="badge_unread_${nisn}" style="display: none; background: #e74c3c; color: #fff; font-size: 8px; font-weight: bold; padding: 1px 5px; border-radius: 10px;">0</span>
-                  </div>
-                  <div style="font-size: 9px; color: #bdc3c7;">Kelas: ${kelasTeman}</div>
-                  <div style="font-size: 8.5px; color: ${dotColor}; display: flex; align-items: center; gap: 4px; margin-top: 1px;">
-                    <span style="width: 6px; height: 6px; border-radius: 50%; background: ${dotColor}; display: inline-block;"></span>
-                    <span>${statusInfo.text}</span>
-                  </div>
-                </div>
+          <div style="background: #111823; border: 1px solid #34495e; border-radius: 8px; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; flex: 1;">
+              <div style="width: 32px; height: 32px; border-radius: 6px; overflow: hidden; background: #2c3e50; flex-shrink: 0; border: 1px solid #f1c40f;">
+                <img src="${avatarFile}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='assets/foto_siswa/avatar.webp'">
               </div>
-              <div style="display: flex; gap: 4px; flex-shrink: 0;">
-                <button type="button" onclick="bukaChatTeman('${nisn}', '${namaTeman}')" style="margin-top: 0; padding: 4px 8px; font-size: 9px; background: #3498db; color: #fff; width: auto; border-radius: 6px; border: none; cursor: pointer; box-shadow: none;">Chat 💬</button>
-                <button type="button" onclick="hapusTeman('${nisn}')" style="margin-top: 0; padding: 4px 8px; font-size: 9px; background: #e74c3c; color: #fff; width: auto; border-radius: 6px; border: none; cursor: pointer; box-shadow: none;">Hapus</button>
+              <div style="overflow: hidden; flex: 1;">
+                <div style="display: flex; align-items: center; gap: 5px; overflow: hidden;">
+                  <div style="font-size: 11px; font-weight: bold; color: #f1c40f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${namaTeman}</div>
+                  <span id="badge_unread_${nisn}" style="display: none; background: #e74c3c; color: #fff; font-size: 8px; font-weight: bold; padding: 1px 5px; border-radius: 10px;">0</span>
+                </div>
+                <div style="font-size: 9px; color: #bdc3c7;">Kelas: ${kelasTeman}</div>
+                <div style="font-size: 8.5px; color: ${dotColor}; display: flex; align-items: center; gap: 4px; margin-top: 1px;">
+                  <span style="width: 6px; height: 6px; border-radius: 50%; background: ${dotColor}; display: inline-block;"></span>
+                  <span>${statusInfo.text}</span>
+                </div>
               </div>
             </div>
-          `;
+            <div style="display: flex; gap: 4px; flex-shrink: 0;">
+              <button type="button" onclick="bukaChatTeman('${nisn}', '${namaTeman}')" style="margin-top: 0; padding: 4px 8px; font-size: 9px; background: #3498db; color: #fff; width: auto; border-radius: 6px; border: none; cursor: pointer; box-shadow: none;">Chat 💬</button>
+              <button type="button" onclick="hapusTeman('${nisn}')" style="margin-top: 0; padding: 4px 8px; font-size: 9px; background: #e74c3c; color: #fff; width: auto; border-radius: 6px; border: none; cursor: pointer; box-shadow: none;">Hapus</button>
+            </div>
+          </div>
+        `;
 
           try {
             const { collection, onSnapshot } = window.fbFirestore;
@@ -2648,14 +2647,14 @@
               }
 
               container.innerHTML += `
-                <div style="${bubbleStyle} padding: 8px 12px; border-radius: 12px; max-width: 75%; font-size: 11px; word-break: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                  <div>${msg.text}</div>
-                  <div style="font-size: 7.5px; opacity: 0.8; text-align: right; margin-top: 3px; display: flex; justify-content: flex-end; align-items: center; gap: 2px;">
-                    <span>${timeFormatted}</span>
-                    ${tickStatus}
-                  </div>
+              <div style="${bubbleStyle} padding: 8px 12px; border-radius: 12px; max-width: 75%; font-size: 11px; word-break: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                <div>${msg.text}</div>
+                <div style="font-size: 7.5px; opacity: 0.8; text-align: right; margin-top: 3px; display: flex; justify-content: flex-end; align-items: center; gap: 2px;">
+                  <span>${timeFormatted}</span>
+                  ${tickStatus}
                 </div>
-              `;
+              </div>
+            `;
             });
             container.scrollTop = container.scrollHeight;
           });
@@ -2730,11 +2729,11 @@
             count++;
 
             roomListContainer.innerHTML += `
-              <div onclick="monitorAdminRoom('${roomId}')" style="padding: 8px 10px; background: #fff; border: 1.5px solid #cbd5e1; border-radius: 8px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">
-                <div style="font-size: 10px; font-weight: bold; color: #1e3c72;">💬 Chat:</div>
-                <div style="font-size: 9px; color: #334155; margin-top: 1px; font-weight: 500;">${nisn1} & ${nisn2}</div>
-              </div>
-            `;
+            <div onclick="monitorAdminRoom('${roomId}')" style="padding: 8px 10px; background: #fff; border: 1.5px solid #cbd5e1; border-radius: 8px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">
+              <div style="font-size: 10px; font-weight: bold; color: #1e3c72;">💬 Chat:</div>
+              <div style="font-size: 9px; color: #334155; margin-top: 1px; font-weight: 500;">${nisn1} & ${nisn2}</div>
+            </div>
+          `;
           });
 
           if (count === 0) {
@@ -2781,14 +2780,14 @@
               const namaPengirim = siswaObj ? siswaObj.nama : "Siswa";
 
               container.innerHTML += `
-                <div style="background: #ffffff; color: #1e293b; border: 1.5px solid #e2e8f0; padding: 10px 14px; border-radius: 10px; width: 100%; font-size: 11px; word-break: break-word; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; border-bottom: 1px solid #f1f5f9; padding-bottom: 3px;">
-                    <span style="font-size: 9.5px; font-weight: bold; color: #1e3c72;">👤 ${namaPengirim} - ${msg.senderNisn}</span>
-                    <span style="font-size: 8.5px; color: #64748b;">${msg.time || ""}</span>
-                  </div>
-                  <div style="font-size: 11.5px; color: #334155; line-height: 1.4;">${msg.text}</div>
+              <div style="background: #ffffff; color: #1e293b; border: 1.5px solid #e2e8f0; padding: 10px 14px; border-radius: 10px; width: 100%; font-size: 11px; word-break: break-word; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; border-bottom: 1px solid #f1f5f9; padding-bottom: 3px;">
+                  <span style="font-size: 9.5px; font-weight: bold; color: #1e3c72;">👤 ${namaPengirim} - ${msg.senderNisn}</span>
+                  <span style="font-size: 8.5px; color: #64748b;">${msg.time || ""}</span>
                 </div>
-              `;
+                <div style="font-size: 11.5px; color: #334155; line-height: 1.4;">${msg.text}</div>
+              </div>
+            `;
             });
             container.scrollTop = container.scrollHeight;
           });
@@ -2850,91 +2849,6 @@
         });
       }
 
-      // DATA GURU LENGKAP
-      const daftarGuru = [
-        {
-          nama: "Neneng Teti Cahyani",
-          usernama: "nenengcahyani",
-          pass: "wiraguna123",
-          role: "Kesiswaan",
-        },
-        {
-          nama: "ADE YUNIATI",
-          usernama: "adeyuniati",
-          pass: "wiraguna124",
-          role: "Wali Kelas",
-          kelasBinaan: "10 SMK",
-        },
-        {
-          nama: "Aulia Rahmi Sanfitriani",
-          usernama: "auliarahmi",
-          pass: "wiraguna125",
-          role: "Guru Mapel",
-        },
-        {
-          nama: "Dhillah Karina",
-          usernama: "dhillahkarina",
-          pass: "wiraguna126",
-          role: "Kesiswaan",
-        },
-        {
-          nama: "Dian Asri Paturrohmah",
-          usernama: "dianasri",
-          pass: "wiraguna127",
-          role: "Wali Kelas",
-          kelasBinaan: "11 SMK",
-        },
-        {
-          nama: "Dian Herdiana",
-          usernama: "dianherdiana",
-          pass: "wiraguna128",
-          role: "Guru Mapel",
-        },
-        {
-          nama: "Eneng Resti Kulsum",
-          usernama: "restikulsum",
-          pass: "wiraguna129",
-          role: "Guru Mapel",
-        },
-        {
-          nama: "Iwan Setiawan",
-          usernama: "iwansetiawan",
-          pass: "wiraguna130",
-          role: "Guru Mapel",
-        },
-        {
-          nama: "Livia Amalia",
-          usernama: "liviaamalia",
-          pass: "wiraguna131",
-          role: "Guru Mapel",
-        },
-        {
-          nama: "Wini Asiyah Nurwalifah",
-          usernama: "winiasiyah",
-          pass: "wiraguna136",
-          role: "Wali Kelas",
-          kelasBinaan: "12 SMK",
-        },
-        {
-          nama: "Ahmad Qabil Jaelani",
-          usernama: "ahmadqabil",
-          pass: "wiraguna139",
-          role: "Guru Mapel",
-        },
-        {
-          nama: "Ahmad Jauhari",
-          usernama: "ahmadjauhari",
-          pass: "wiraguna140",
-          role: "Guru Mapel",
-        },
-        {
-          nama: "Super Admin",
-          usernama: "AdminS",
-          pass: "admins123",
-          role: "Super Admin",
-        },
-      ];
-
       let masterDataSiswa = [];
       let masterDataTugas = [];
 
@@ -2995,18 +2909,18 @@
             } else {
               masterDataTugas.forEach((t) => {
                 container.innerHTML += `
-                  <div style="background: #f8f9fa; border-left: 3px solid #f1c40f; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px;">
-                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 11px; color: #1e3c72; margin-bottom: 2px;">
-                      <span>📌 ${t.judul}</span>
-                      <span style="font-size: 8.5px; background: #e2e8f0; padding: 2px 5px; border-radius: 4px; color: #555;">${t.targetKelas}</span>
-                    </div>
-                    <div style="font-size: 10px; color: #444; line-height: 1.4; margin-bottom: 4px;">${t.isi}</div>
-                    <div style="font-size: 8.5px; color: #888; display: flex; justify-content: space-between;">
-                      <span>👨‍🏫 Oleh: ${t.namaGuru}</span>
-                      <span>📅 ${t.tanggal}</span>
-                    </div>
+                <div style="background: #f8f9fa; border-left: 3px solid #f1c40f; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px;">
+                  <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 11px; color: #1e3c72; margin-bottom: 2px;">
+                    <span>📌 ${t.judul}</span>
+                    <span style="font-size: 8.5px; background: #e2e8f0; padding: 2px 5px; border-radius: 4px; color: #555;">${t.targetKelas}</span>
                   </div>
-                `;
+                  <div style="font-size: 10px; color: #444; line-height: 1.4; margin-bottom: 4px;">${t.isi}</div>
+                  <div style="font-size: 8.5px; color: #888; display: flex; justify-content: space-between;">
+                    <span>👨‍🏫 Oleh: ${t.namaGuru}</span>
+                    <span>📅 ${t.tanggal}</span>
+                  </div>
+                </div>
+              `;
               });
             }
           }
@@ -3018,14 +2932,14 @@
             } else {
               masterDataTugas.forEach((t) => {
                 teacherContainer.innerHTML += `
-                  <div style="background: #111823; border: 1px solid #34495e; border-radius: 8px; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                    <div style="overflow: hidden;">
-                      <div style="font-size: 11px; font-weight: bold; color: #f1c40f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.judul}</div>
-                      <div style="font-size: 9px; color: #bdc3c7;">Target: ${t.targetKelas} | ${t.tanggal}</div>
-                    </div>
-                    <button type="button" onclick="hapusTugas('${t.id}')" style="margin-top: 0; padding: 4px 8px; font-size: 9px; background: #e74c3c; color: #fff; width: auto; border-radius: 6px; box-shadow: none; flex-shrink: 0;">Hapus</button>
+                <div style="background: #111823; border: 1px solid #34495e; border-radius: 8px; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                  <div style="overflow: hidden;">
+                    <div style="font-size: 11px; font-weight: bold; color: #f1c40f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.judul}</div>
+                    <div style="font-size: 9px; color: #bdc3c7;">Target: ${t.targetKelas} | ${t.tanggal}</div>
                   </div>
-                `;
+                  <button type="button" onclick="hapusTugas('${t.id}')" style="margin-top: 0; padding: 4px 8px; font-size: 9px; background: #e74c3c; color: #fff; width: auto; border-radius: 6px; box-shadow: none; flex-shrink: 0;">Hapus</button>
+                </div>
+              `;
               });
             }
           }
@@ -3272,7 +3186,6 @@
       function kembaliKeMenu() {
         showScreen("menu");
       }
-
       function keluarSiswa() {
         localStorage.removeItem("activeUser");
         if (activeStudentDocListener) {
@@ -3281,7 +3194,6 @@
         }
         showScreen("menu");
       }
-
       function logout() {
         localStorage.removeItem("loggedInUser");
         showScreen("menu");
@@ -3338,46 +3250,61 @@
           }
 
           container.innerHTML += `
-            <div style="${rowStyle} border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-              <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
-                <div style="font-size: 13px; font-weight: bold; color: ${nameColor}; width: 32px; text-align: center; flex-shrink: 0;">${rankBadge}</div>
-                <div style="width: 36px; height: 36px; border-radius: 8px; overflow: hidden; background: #2c3e50; flex-shrink: 0; border: 1.5px solid ${nameColor};">
-                  <img src="${avatarFile}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='assets/foto_siswa/avatar.webp'">
-                </div>
-                <div style="overflow: hidden;">
-                  <div style="font-size: 12px; font-weight: bold; color: ${nameColor}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.nama}</div>
-                  <div style="font-size: 9.5px; color: #cbd5e1;">Kelas: ${s.kelas}</div>
-                </div>
+          <div style="${rowStyle} border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
+              <div style="font-size: 13px; font-weight: bold; color: ${nameColor}; width: 32px; text-align: center; flex-shrink: 0;">${rankBadge}</div>
+              <div style="width: 36px; height: 36px; border-radius: 8px; overflow: hidden; background: #2c3e50; flex-shrink: 0; border: 1.5px solid ${nameColor};">
+                <img src="${avatarFile}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='assets/foto_siswa/avatar.webp'">
               </div>
-              <div style="text-align: right; flex-shrink: 0;">
-                <div style="font-size: 13px; font-weight: bold; color: ${scoreColor};">${score} Pts</div>
-                <div style="font-size: 8px; color: #94a3b8;">Poin Tugas</div>
+              <div style="overflow: hidden;">
+                <div style="font-size: 12px; font-weight: bold; color: ${nameColor}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.nama}</div>
+                <div style="font-size: 9.5px; color: #cbd5e1;">Kelas: ${s.kelas}</div>
               </div>
             </div>
-          `;
+            <div style="text-align: right; flex-shrink: 0;">
+              <div style="font-size: 13px; font-weight: bold; color: ${scoreColor};">${score} Pts</div>
+              <div style="font-size: 8px; color: #94a3b8;">Poin Tugas</div>
+            </div>
+          </div>
+        `;
         });
       }
 
-      function login() {
+      // FUNGSI LOGIN MENGGUNAKAN FIREBASE AUTH & FIRESTORE
+      async function login() {
         const usernameIn = document
           .getElementById("namaGuruInput")
           .value.trim();
         const passIn = document.getElementById("password").value.trim();
 
-        showGamePreloader("VERIFYING CREDENTIALS...", (done) => {
-          const user = daftarGuru.find(
-            (u) =>
-              u.usernama.toLowerCase() === usernameIn.toLowerCase() &&
-              u.pass === passIn,
-          );
-          if (user) {
-            localStorage.setItem("loggedInUser", JSON.stringify(user));
-            prosesMasukUser(user, done);
-          } else {
-            setTimeout(() => {
-              done();
-              document.getElementById("pesanEror").style.display = "block";
-            }, 500);
+        const emailLogin = usernameIn.includes("@")
+          ? usernameIn
+          : `${usernameIn.toLowerCase()}@smkwiraguna.sch.id`;
+
+        showGamePreloader("VERIFYING CREDENTIALS...", async (done) => {
+          try {
+            await window.fbAuth.signInWithEmailAndPassword(
+              window.auth,
+              emailLogin,
+              passIn,
+            );
+
+            const { doc, getDoc } = window.fbFirestore;
+            const teacherDocSnap = await getDoc(
+              doc(window.db, "teachers", emailLogin),
+            );
+
+            let userData = { nama: "Petugas Sekolah", role: "Guru Mapel" };
+            if (teacherDocSnap.exists()) {
+              userData = teacherDocSnap.data();
+            }
+
+            localStorage.setItem("loggedInUser", JSON.stringify(userData));
+            prosesMasukUser(userData, done);
+          } catch (err) {
+            done();
+            console.error("Login gagal:", err);
+            document.getElementById("pesanEror").style.display = "block";
           }
         });
       }
@@ -3604,10 +3531,10 @@
 
               const rankInfo = getTierRank(siswa.shield || 0);
               document.getElementById("txtTierRankContainer").innerHTML = `
-                <span style="display: inline-block; background: ${rankInfo.bg}; color: ${rankInfo.color}; padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 700; margin-top: 1px;">
-                  ${rankInfo.title}
-                </span>
-              `;
+              <span style="display: inline-block; background: ${rankInfo.bg}; color: ${rankInfo.color}; padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 700; margin-top: 1px;">
+                ${rankInfo.title}
+              </span>
+            `;
 
               let hpValue = siswa.hp !== undefined ? siswa.hp : 200;
               document.getElementById("barHpFill").style.width =
@@ -3648,17 +3575,17 @@
                   let isPlus = Number(r.p) > 0;
                   let borderColor = isPlus ? "#2ecc71" : "#e74c3c";
                   historyListContainer.innerHTML += `
-                    <div style="background: #1a2536; border-left: 3px solid ${borderColor}; padding: 8px 10px; border-radius: 0 6px 6px 0; font-size: 10.5px; color: #ecf0f1; border: 1px solid #34495e; margin-bottom: 6px;">
-                      <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 2px;">
-                        <span style="color: ${borderColor};">${r.t}</span>
-                        <span style="color: ${borderColor};">${isPlus ? "+" + r.p : r.p} Pts</span>
-                      </div>
-                      <div style="font-size: 9.5px; color: #bdc3c7; display: flex; justify-content: space-between;">
-                        <span>📍 ${r.loc || "-"}</span>
-                        <span>📅 ${r.d || "-"}</span>
-                      </div>
+                  <div style="background: #1a2536; border-left: 3px solid ${borderColor}; padding: 8px 10px; border-radius: 0 6px 6px 0; font-size: 10.5px; color: #ecf0f1; border: 1px solid #34495e; margin-bottom: 6px;">
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 2px;">
+                      <span style="color: ${borderColor};">${r.t}</span>
+                      <span style="color: ${borderColor};">${isPlus ? "+" + r.p : r.p} Pts</span>
                     </div>
-                  `;
+                    <div style="font-size: 9.5px; color: #bdc3c7; display: flex; justify-content: space-between;">
+                      <span>📍 ${r.loc || "-"}</span>
+                      <span>📅 ${r.d || "-"}</span>
+                    </div>
+                  </div>
+                `;
                 });
               }
             } else {
@@ -3745,7 +3672,7 @@
           let labelPrefix =
             kat === "Prestasi" ? "+" : kat === "TugasHarian" ? "+" : "-";
           div.innerHTML = `<input type="radio" name="opsiPoin" value="${item.t}" data-poin="${item.p}" required>
-                           <span>${item.t} <strong>(${labelPrefix}${item.p} Pts)</strong></span>`;
+                         <span>${item.t} <strong>(${labelPrefix}${item.p} Pts)</strong></span>`;
           container.appendChild(div);
         });
       }
@@ -3813,11 +3740,11 @@
               : `-${selectedRadio.getAttribute("data-poin")} Pelanggaran`;
 
         document.getElementById("modalDetailContent").innerHTML = `
-          <strong>Target Siswa (${daftarSiswaDipilih.length}):</strong><br>${daftarSiswaDipilih.join(", ")}<br><br>
-          <strong>Aktivitas:</strong> ${selectedRadio.value}<br>
-          <strong>Dampak:</strong> ${efekText}<br>
-          <strong>Guru Pelapor:</strong> ${document.getElementById("txtNamaGuru").innerText}
-        `;
+        <strong>Target Siswa (${daftarSiswaDipilih.length}):</strong><br>${daftarSiswaDipilih.join(", ")}<br><br>
+        <strong>Aktivitas:</strong> ${selectedRadio.value}<br>
+        <strong>Dampak:</strong> ${efekText}<br>
+        <strong>Guru Pelapor:</strong> ${document.getElementById("txtNamaGuru").innerText}
+      `;
         document.getElementById("modalKonfirmasi").classList.remove("hidden");
       }
 
@@ -3990,11 +3917,11 @@
           let hukum = getStatusPembinaan(s.totalPelanggaran || 0);
 
           tbody.innerHTML += `<tr>
-            <td><strong>${s.nama}</strong></td>
-            <td>${s.kelas}</td>
-            <td>${badge}</td>
-            <td><span style="font-size: 9px; padding: 3px 6px; background: ${hukum.color}; color: #fff; border-radius: 4px; font-weight: bold;">${s.totalPelanggaran || 0} Pts</span></td>
-          </tr>`;
+          <td><strong>${s.nama}</strong></td>
+          <td>${s.kelas}</td>
+          <td>${badge}</td>
+          <td><span style="font-size: 9px; padding: 3px 6px; background: ${hukum.color}; color: #fff; border-radius: 4px; font-weight: bold;">${s.totalPelanggaran || 0} Pts</span></td>
+        </tr>`;
         });
 
         const ctx = document.getElementById("statistikChart").getContext("2d");
@@ -4037,19 +3964,11 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: {
-                position: "top",
-                labels: { font: { size: 10 } },
-              },
+              legend: { position: "top", labels: { font: { size: 10 } } },
             },
             scales: {
-              y: {
-                beginAtZero: true,
-                ticks: { font: { size: 10 } },
-              },
-              x: {
-                ticks: { font: { size: 10 } },
-              },
+              y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+              x: { ticks: { font: { size: 10 } } },
             },
           },
         });
@@ -4165,10 +4084,7 @@
                 loc: "Ruang BK / Admin",
                 d: timestampStr,
               });
-              await updateDoc(docRef, {
-                dailyScore: 0,
-                riwayat: riwayatList,
-              });
+              await updateDoc(docRef, { dailyScore: 0, riwayat: riwayatList });
               done();
               sessionStorage.removeItem("master_siswa_cache");
               alert(`⭐ Poin harian siswa berhasil di-reset jadi 0!`);
@@ -4265,8 +4181,8 @@
           btnPelang.style.color = "#e74c3c";
 
           let html = `<div class="accordion">
-                      <div class="accordion-header" onclick="toggleAccordion(this)"><span>⭐ Daftar Penghargaan (Reward)</span><span>▼</span></div>
-                      <div class="accordion-body active">`;
+                    <div class="accordion-header" onclick="toggleAccordion(this)"><span>⭐ Daftar Penghargaan (Reward)</span><span>▼</span></div>
+                    <div class="accordion-body active">`;
           dataPilihan.Prestasi.forEach((item) => {
             html += `<div class="q-item"><span>${item.t}</span> <span class="badge-shield">+${item.p}</span></div>`;
           });
@@ -4281,8 +4197,8 @@
           let html = "";
           ["Ringan", "Sedang", "Berat"].forEach((k, idx) => {
             html += `<div class="accordion">
-                        <div class="accordion-header" onclick="toggleAccordion(this)"><span>⚠️ Pelanggaran ${k}</span><span>▼</span></div>
-                        <div class="accordion-body ${idx === 0 ? "active" : ""}">`;
+                      <div class="accordion-header" onclick="toggleAccordion(this)"><span>⚠️ Pelanggaran ${k}</span><span>▼</span></div>
+                      <div class="accordion-body ${idx === 0 ? "active" : ""}">`;
             dataPilihan.Pelanggaran[k].forEach((item) => {
               html += `<div class="q-item"><span>${item.t}</span> <span class="badge-hp">-${item.p}</span></div>`;
             });
@@ -4343,9 +4259,13 @@
       });
     </script>
 
-    <!-- FIREBASE MODUL -->
+    <!-- FIREBASE MODUL (DIPERBARUI DENGAN AUTH) -->
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+      import {
+        getAuth,
+        signInWithEmailAndPassword,
+      } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
       import {
         getFirestore,
         collection,
@@ -4374,9 +4294,13 @@
       };
 
       const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
       const db = getFirestore(app);
 
+      // Ekspos ke window agar bisa diakses fungsi global
+      window.auth = auth;
       window.db = db;
+      window.fbAuth = { signInWithEmailAndPassword };
       window.fbFirestore = {
         collection,
         getDocs,
@@ -4393,7 +4317,9 @@
         arrayUnion,
         arrayRemove,
       };
-      console.log("🔥 Firebase Firestore Terhubung ke Tatib SMK Wiraguna!");
+      console.log(
+        "🔥 Firebase Firestore & Auth Terhubung ke Tatib SMK Wiraguna!",
+      );
     </script>
   </body>
 </html>
