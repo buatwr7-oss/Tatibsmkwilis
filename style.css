@@ -27,14 +27,15 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #f1c40f 100%);
   background-size: 400% 400%;
   animation: gradientMove 15s ease infinite;
-  padding: 15px;
+  padding: 8px 6px;
   position: relative;
   overflow-x: hidden;
+  width: 100%;
 }
 
 @keyframes gradientMove {
@@ -131,11 +132,11 @@ body {
 
 .card {
   background: rgba(255, 255, 255, 0.95);
-  padding: 25px 20px;
-  border-radius: 25px;
+  padding: 20px 15px;
+  border-radius: 20px;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
   width: 100%;
-  max-width: 480px;
+  max-width: 100% !important;
   backdrop-filter: blur(15px);
   position: relative;
   z-index: 2;
@@ -677,11 +678,6 @@ button:active {
 }
 
 .quest-card-btn {
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
-}
-.quest-card-btn {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -697,7 +693,7 @@ button:active {
 /* KELAS TAMBAHAN UNTUK MENGURANGI INLINE STYLING PADA HTML */
 .menu-wrapper-container {
   width: 100%;
-  max-width: 480px;
+  max-width: 100% !important;
   display: flex;
   flex-direction: column;
   gap: 12px;
