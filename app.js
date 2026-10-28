@@ -166,7 +166,6 @@ let isMultiMode = true;
 // ==========================================
 window.handleAvatarClick = function () {
   const fotoUrl = window.currentStudentDataCache?.fotoUrl;
-  // Jika belum mengganti foto atau masih menggunakan avatar bawaan, buka modal ganti foto
   if (
     !fotoUrl ||
     fotoUrl.includes("avatar.webp") ||
@@ -177,7 +176,6 @@ window.handleAvatarClick = function () {
       window.bukaModalGantiFoto();
     }
   } else {
-    // Jika sudah memiliki foto kustom, buka preview foto besar (gaya Facebook)
     if (typeof window.bukaPreviewFoto === "function") {
       window.bukaPreviewFoto();
     }
@@ -1082,7 +1080,10 @@ const dataPilihan = {
   },
 };
 
-function showScreen(screenId) {
+// ==========================================
+// PENGATURAN NAVIGASI LAYAR & HTML5 HISTORY API
+// ==========================================
+function showScreen(screenId, pushHistory = true) {
   document.getElementById("menuWrapper").classList.add("hidden");
   document.getElementById("mainMenuCard").classList.add("hidden");
   document.getElementById("loginCard").classList.add("hidden");
@@ -1117,6 +1118,11 @@ function showScreen(screenId) {
   } else if (screenId === "admin") {
     document.getElementById("adminCard").classList.remove("hidden");
     handleAdminActionTypeChange();
+  }
+
+  // Rekam riwayat navigasi untuk tombol Back / Swipe Back HP
+  if (pushHistory) {
+    window.history.pushState({ screen: screenId }, "", `#${screenId}`);
   }
 }
 
@@ -2502,7 +2508,6 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // PERBAIKAN: Sesi siswa otomatis dipulihkan saat refresh halaman
     const savedNisn = localStorage.getItem("activeUser");
     if (savedNisn) {
       showScreen("siswa");
@@ -2510,6 +2515,15 @@ window.addEventListener("DOMContentLoaded", () => {
       autoLoginSiswa(savedNisn);
     }
   });
+});
+
+// Menangani tombol Back / Gestur Swipe Back di HP agar kembali ke menu/screen sebelumnya
+window.addEventListener("popstate", (event) => {
+  if (event.state && event.state.screen) {
+    showScreen(event.state.screen, false);
+  } else {
+    showScreen("menu", false);
+  }
 });
 
 // ==========================================
@@ -2710,7 +2724,6 @@ window.bukaModalGantiFoto = async function () {
     const imageElement = document.getElementById("imageToCrop");
     imageElement.src = currentAvatar;
 
-    // Inisialisasi Cropper.js dengan bentuk lingkaran (aspectRatio 1:1)
     if (cropperInstance) {
       cropperInstance.destroy();
     }
@@ -2785,7 +2798,6 @@ window.simpanFotoProfilBaru = async function () {
     return;
   }
 
-  // Ambil hasil crop dalam bentuk canvas (ukuran diperkecil max 300x300 pixel agar ringan di database)
   const canvas = cropperInstance.getCroppedCanvas({
     width: 300,
     height: 300,
@@ -2923,6 +2935,5 @@ window.bukaPreviewFoto = function () {
 };
 
 window.tutupPreviewFoto = function (event) {
-  // Jika diklik di luar kotak modal atau tombol tutup
   document.getElementById("modalPreviewFoto").classList.add("hidden");
 };
