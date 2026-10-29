@@ -8,6 +8,7 @@
     />
     <title>Tatib SMK Wiraguna 🛡️</title>
 
+    <!-- CSS UTAMA (Sudah dibersihkan dari duplikasi) -->
     <link rel="stylesheet" href="style.css?v=3.1.0" />
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -30,8 +31,6 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"
     />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-
-    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <!-- PRELOADER -->
@@ -330,6 +329,87 @@
 
             <div id="containerUndanganMasuk" style="margin-bottom: 10px"></div>
             <div id="listTemanContainer" class="squad-friend-list-box"></div>
+          </div>
+
+          <!-- ================= PEMISAH & KOTAK GLOBAL CHAT ================= -->
+          <div style="border-top: 1px dashed #34495e; margin: 20px 0"></div>
+
+          <div class="rpg-card-container">
+            <!-- Header Chat (Bisa diklik untuk Hide / Unhide) -->
+            <div
+              class="squad-header-row"
+              style="margin-bottom: 8px; cursor: pointer; user-select: none"
+              onclick="toggleGlobalChat()"
+            >
+              <div style="display: flex; align-items: center; gap: 6px">
+                <span class="squad-title-txt">💬 Global Chat Sekolah</span>
+                <span style="font-size: 9px; color: #2ecc71; font-weight: bold"
+                  >● Online</span
+                >
+              </div>
+              <span
+                id="chatToggleIcon"
+                style="font-size: 11px; color: #f1c40f; font-weight: bold"
+                >▲ Sembunyikan</span
+              >
+            </div>
+
+            <!-- Body Chat (Area yang bisa disembunyikan/ditampilkan) -->
+            <div id="globalChatBody">
+              <!-- Kotak Tempat Pesan Muncul (Live Scroll) -->
+              <div
+                id="globalChatContainer"
+                class="chat-message-container-box"
+                style="
+                  height: 180px;
+                  max-height: 180px;
+                  overflow-y: auto;
+                  background: #111823;
+                  border: 1px solid #34495e;
+                  padding: 8px;
+                  border-radius: 6px;
+                  margin-bottom: 8px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 10px;
+                    color: #95a5a6;
+                    text-align: center;
+                    margin-top: 50px;
+                  "
+                >
+                  Memuat obrolan global hari ini...
+                </div>
+              </div>
+
+              <!-- Form Input Pesan & Tombol Kirim -->
+              <div class="chat-form-footer" style="display: flex; gap: 6px">
+                <input
+                  type="text"
+                  id="inputGlobalChat"
+                  class="chat-input-field"
+                  placeholder="Ketik pesan ke seluruh warga sekolah..."
+                  style="
+                    flex: 1;
+                    background: #111823;
+                    border: 1px solid #34495e;
+                    color: #fff;
+                    font-size: 10.5px;
+                    padding: 6px 10px;
+                    border-radius: 4px;
+                  "
+                />
+                <button
+                  type="button"
+                  id="btnKirimGlobalChat"
+                  class="squad-invite-btn"
+                  style="margin: 0; padding: 8px 12px; cursor: pointer"
+                >
+                  Kirim
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- KARTU GANTI PIN SISWA -->
@@ -1290,7 +1370,7 @@
           "
         >
           <h4 style="color: #f8fafc; font-size: 13px; margin: 0">
-            🖼️ Foto Profi
+            🖼️ Foto Profil
           </h4>
           <button
             type="button"
@@ -1337,27 +1417,6 @@
             style="width: 100%; height: 100%; object-fit: cover; display: block"
           />
         </div>
-
-        <!-- Note / Keterangan di Bawah Foto -->
-        <!-- <div
-          style="
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 6px;
-            padding: 8px;
-            text-align: left;
-            font-size: 10px;
-            color: #94a3b8;
-            line-height: 1.4;
-            margin-bottom: 12px;
-          "
-        >
-          <strong style="color: #38bdf8; display: block; margin-bottom: 2px"
-            >ℹ️ Informasi:</strong
-          >
-          Foto profil resmi akun Tatib SMK Wiraguna Limbangan. Gunakan foto yang
-          sopan, berwajah jelas, dan beratribut rapi sesuai ketentuan sekolah.
-        </div> -->
 
         <!-- Tombol Tutup -->
         <button
