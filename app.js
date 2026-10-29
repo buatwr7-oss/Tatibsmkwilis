@@ -164,6 +164,19 @@ let currentRole = "";
 let isMultiMode = true;
 
 // ==========================================
+// FUNGSI PEMBERSIH TEKS DARI INJEKSI HTML (ESCAPE)
+// ==========================================
+function escapeHtml(text) {
+  if (!text) return "";
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// ==========================================
 // FUNGSI PEMANGGIL CERDAS AVATAR KLIK
 // ==========================================
 window.handleAvatarClick = function () {
@@ -645,7 +658,7 @@ async function loadPesanChatRealtime(targetNisn) {
 
         chatHtml += `
         <div style="${bubbleStyle} padding: 8px 12px; border-radius: 12px; max-width: 75%; font-size: 11px; word-break: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-          <div>${msg.text}</div>
+          <div>${escapeHtml(msg.text)}</div>
           <div style="font-size: 7.5px; opacity: 0.8; text-align: right; margin-top: 3px; display: flex; justify-content: flex-end; align-items: center; gap: 2px;">
             <span>${timeFormatted}</span>
             ${tickStatus}
@@ -667,6 +680,13 @@ window.kirimPesanChat = async function () {
   const inputEl = document.getElementById("inputPesanChat");
   const text = inputEl.value.trim();
   if (!text) return;
+
+  // BATASAN ANTI-SPAM: Maksimal 250 karakter untuk Chat 1-on-1
+  if (text.length > 250) {
+    return window.customAlert(
+      `⚠️ Pesan terlalu panjang (${text.length}/250 karakter). Maksimal 250 karakter per pesan agar terhindar dari spam!`,
+    );
+  }
 
   const myNisn = getMyNisn();
   const targetNisn = currentChatTargetNisn;
@@ -780,7 +800,7 @@ window.monitorAdminRoom = function (roomId) {
             <span style="font-size: 9.5px; font-weight: bold; color: #1e3c72;">👤 ${namaPengirim} - ${msg.senderNisn}</span>
             <span style="font-size: 8.5px; color: #64748b;">${msg.time || ""}</span>
           </div>
-          <div style="font-size: 11.5px; color: #334155; line-height: 1.4;">${msg.text}</div>
+          <div style="font-size: 11.5px; color: #334155; line-height: 1.4;">${escapeHtml(msg.text)}</div>
         </div>
         `;
       });
@@ -3013,7 +3033,7 @@ window.initGlobalChat = function (siswaAktif) {
             <span>${namaPengirim} (${msg.kelas || "-"})</span>
             <span style="font-size: 7.5px; opacity: 0.7; color: #fff;">${waktuStr}</span>
           </div>
-          <div>${msg.text}</div>
+          <div>${escapeHtml(msg.text)}</div>
         </div>
         `;
         });
@@ -3030,6 +3050,13 @@ window.initGlobalChat = function (siswaAktif) {
     btnKirim.onclick = async function () {
       const text = inputEl.value.trim();
       if (!text) return;
+
+      // BATASAN ANTI-SPAM: Maksimal 250 karakter untuk Global Chat Sekolah
+      if (text.length > 250) {
+        return window.customAlert(
+          `⚠️ Pesan terlalu panjang (${text.length}/250 karakter). Maksimal 250 karakter per pesan agar terhindar dari spam!`,
+        );
+      }
 
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
@@ -3100,7 +3127,7 @@ window.loadAdminGlobalChat = function () {
             <span>👤 ${msg.nama || "Siswa"} (${msg.kelas || "-"} - ${msg.nisn})</span>
             <span style="color: #94a3b8; font-size: 8px;">${msg.time || ""}</span>
           </div>
-          <div style="color: #fff; font-size: 10.5px;">${msg.text}</div>
+          <div style="color: #fff; font-size: 10.5px;">${escapeHtml(msg.text)}</div>
         </div>
         `;
       });
