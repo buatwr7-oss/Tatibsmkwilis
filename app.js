@@ -19,6 +19,7 @@ import {
   onSnapshot,
   arrayUnion,
   arrayRemove,
+  limit,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -53,6 +54,7 @@ window.fbFirestore = {
   onSnapshot,
   arrayUnion,
   arrayRemove,
+  limit,
 };
 console.log("🔥 Firebase Firestore & Auth Terhubung ke Tatib SMK Wiraguna!");
 
@@ -1120,7 +1122,6 @@ function showScreen(screenId, pushHistory = true) {
     handleAdminActionTypeChange();
   }
 
-  // Rekam riwayat navigasi untuk tombol Back / Swipe Back HP
   if (pushHistory) {
     window.history.pushState({ screen: screenId }, "", `#${screenId}`);
   }
@@ -1625,6 +1626,11 @@ window.loginSiswaWithPin = async function () {
             if (newPinEl) newPinEl.value = "";
           }
         }
+
+        // PEMANGGILAN FITUR GLOBAL CHAT RPG
+        if (typeof window.initGlobalChat === "function") {
+          window.initGlobalChat(siswa);
+        }
       } else {
         document.getElementById("modalErrorSiswa").classList.remove("hidden");
       }
@@ -1747,6 +1753,11 @@ async function autoLoginSiswa(nisnInput) {
             const newPinEl = document.getElementById("newPinInput");
             if (newPinEl) newPinEl.value = "";
           }
+        }
+
+        // PEMANGGILAN FITUR GLOBAL CHAT RPG
+        if (typeof window.initGlobalChat === "function") {
+          window.initGlobalChat(siswa);
         }
       } else {
         localStorage.removeItem("activeUser");
@@ -2517,7 +2528,6 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Menangani tombol Back / Gestur Swipe Back di HP agar kembali ke menu/screen sebelumnya
 window.addEventListener("popstate", (event) => {
   if (event.state && event.state.screen) {
     showScreen(event.state.screen, false);
@@ -2674,7 +2684,6 @@ function cetakLaporanKeJendelaBaru(dataSiswa, judul) {
 // ==========================================
 // FITUR GANTI FOTO PROFIL SISWA & CROPPER
 // ==========================================
-
 let cropperInstance = null;
 
 window.cekBatasGantiAvatar = async function (nisnSiswa) {
@@ -2849,7 +2858,6 @@ window.simpanFotoProfilBaru = async function () {
 // ==========================================
 // FITUR RESET FOTO OLEH WALI KELAS (PANEL GURU)
 // ==========================================
-
 window.handleWaliKelasPilihKelas = function () {
   const kelas = document.getElementById("waliKelasSelectKelas").value;
   const selSiswa = document.getElementById("waliKelasSelectSiswa");
@@ -2921,7 +2929,6 @@ window.eksekusiResetFotoOlehWaliKelas = async function () {
 // ==========================================
 // FITUR PREVIEW FOTO PROFIL (FACEBOOK STYLE)
 // ==========================================
-
 window.bukaPreviewFoto = function () {
   const currentAvatar =
     window.currentStudentDataCache?.fotoUrl ||
@@ -2936,4 +2943,120 @@ window.bukaPreviewFoto = function () {
 
 window.tutupPreviewFoto = function (event) {
   document.getElementById("modalPreviewFoto").classList.add("hidden");
+};
+
+// ==========================================
+// SISTEM GLOBAL CHAT SEKOLAH (RPG CHATBOX)
+// ==========================================
+let globalChatActiveListener = null;
+
+window.toggleGlobalChat = function () {
+  const bodyEl = document.getElementById("globalChatBody");
+  const iconEl = document.getElementById("chatToggleIcon");
+  if (!bodyEl || !iconEl) return;
+
+  if (bodyEl.style.display === "none") {
+    bodyEl.style.display = "block";
+    iconEl.innerText = "▲ Sembunyikan";
+  } else {
+    bodyEl.style.display = "none";
+    iconEl.innerText = "▼ Tampilkan";
+  }
+};
+
+window.initGlobalChat = function (siswaAktif) {
+  const container = document.getElementById("globalChatContainer");
+  const inputEl = document.getElementById("inputGlobalChat");
+  const btnKirim = document.getElementById("btnKirimGlobalChat");
+
+  if (!container || !inputEl || !btnKirim) return;
+
+  if (globalChatActiveListener) {
+    globalChatActiveListener();
+    globalChatActiveListener = null;
+  }
+
+  try {
+    const { collection, query, limit, onSnapshot, addDoc } = window.fbFirestore;
+    const globalChatRef = collection(window.db, "global_chat");
+    const q = query(globalChatRef, limit(50));
+
+    container.innerHTML = `<div style="font-size: 10px; color: #888; text-align: center; margin-top: 50px;">Memuat obrolan global...</div>`;
+
+    globalChatActiveListener = onSnapshot(
+      q,
+      (snapshot) => {
+        if (snapshot.empty) {
+          container.innerHTML = `<div style="font-size: 10px; color: #888; text-align: center; margin-top: 50px;">Belum ada percakapan global hari ini. Yuk mulai sapa teman-temanmu! 👋</div>`;
+          return;
+        }
+
+        let messages = [];
+        snapshot.forEach((docSnap) => {
+          messages.push(docSnap.data());
+        });
+
+        messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+        let chatHtml = "";
+        messages.forEach((msg) => {
+          const isMe = msg.nisn === siswaAktif.nisn;
+          const bubbleBg = isMe
+            ? "background: #1e3c72; color: #fff; margin-left: auto;"
+            : "background: #1a2536; color: #cbd5e1; border: 1px solid #34495e;";
+          const namaPengirim = isMe ? "Kamu" : msg.nama || "Siswa";
+          const waktuStr = msg.time || "";
+
+          chatHtml += `
+        <div style="${bubbleBg} padding: 6px 10px; border-radius: 8px; margin-bottom: 6px; max-width: 85%; font-size: 10.5px; word-break: break-word;">
+          <div style="font-size: 9px; font-weight: bold; color: ${isMe ? "#f1c40f" : "#38bdf8"}; margin-bottom: 2px; display: flex; justify-content: space-between;">
+            <span>${namaPengirim} (${msg.kelas || "-"})</span>
+            <span style="font-size: 7.5px; opacity: 0.7; color: #fff;">${waktuStr}</span>
+          </div>
+          <div>${msg.text}</div>
+        </div>
+        `;
+        });
+
+        container.innerHTML = chatHtml;
+        container.scrollTop = container.scrollHeight;
+      },
+      (error) => {
+        console.error("Error listener global chat:", error);
+        container.innerHTML = `<div style="font-size: 10px; color: #e74c3c; text-align: center; margin-top: 50px;">Gagal memuat Global Chat. Periksa console (F12).</div>`;
+      },
+    );
+
+    btnKirim.onclick = async function () {
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+      try {
+        await addDoc(collection(window.db, "global_chat"), {
+          nisn: siswaAktif.nisn,
+          nama: siswaAktif.nama,
+          kelas: siswaAktif.kelas || "-",
+          text: text,
+          time: timeStr,
+          timestamp: Date.now(),
+        });
+        inputEl.value = "";
+      } catch (err) {
+        console.error("Gagal mengirim pesan global:", err);
+        window.customAlert("Gagal mengirim pesan. Periksa koneksi internetmu.");
+      }
+    };
+
+    inputEl.onkeydown = function (e) {
+      if (e.key === "Enter") {
+        btnKirim.click();
+      }
+    };
+  } catch (err) {
+    console.error("Gagal menginisialisasi global chat:", err);
+    container.innerHTML = `<div style="font-size: 10px; color: #e74c3c; text-align: center; margin-top: 50px;">Gagal memuat Global Chat.</div>`;
+  }
 };
