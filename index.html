@@ -1076,6 +1076,78 @@
               </div>
             </div>
           </div>
+
+          <!-- ================= TAMBAHAN FITUR MONITORING GLOBAL CHAT ================= -->
+          <div
+            style="
+              margin-top: 12px;
+              padding: 10px;
+              background: #111823;
+              border: 1px solid #34495e;
+              border-radius: 8px;
+            "
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 6px;
+              "
+            >
+              <span style="font-size: 11px; font-weight: bold; color: #f1c40f"
+                >🌍 Monitoring Global Chat Sekolah</span
+              >
+              <button
+                type="button"
+                onclick="loadAdminGlobalChat()"
+                style="
+                  padding: 3px 8px;
+                  font-size: 9px;
+                  background: #3498db;
+                  color: #fff;
+                  border: none;
+                  border-radius: 4px;
+                  cursor: pointer;
+                "
+              >
+                Muat Global Chat
+              </button>
+            </div>
+            <div
+              id="adminGlobalChatContainer"
+              style="
+                height: 150px;
+                overflow-y: auto;
+                background: #0b0f17;
+                border: 1px solid #222f3e;
+                border-radius: 6px;
+                padding: 8px;
+                font-size: 10px;
+                color: #cbd5e1;
+              "
+            >
+              Klik "Muat Global Chat" untuk memantau obrolan seluruh siswa.
+            </div>
+            <div style="margin-top: 6px; text-align: right">
+              <button
+                type="button"
+                onclick="adminHapusSemuaGlobalChat()"
+                style="
+                  padding: 3px 8px;
+                  font-size: 9px;
+                  background: #e74c3c;
+                  color: #fff;
+                  border: none;
+                  border-radius: 4px;
+                  cursor: pointer;
+                "
+              >
+                Hapus Semua Global Chat 🗑️
+              </button>
+            </div>
+          </div>
+          <!-- ======================================================================== -->
         </div>
       </div>
     </div>
