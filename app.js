@@ -3060,3 +3060,89 @@ window.initGlobalChat = function (siswaAktif) {
     container.innerHTML = `<div style="font-size: 10px; color: #e74c3c; text-align: center; margin-top: 50px;">Gagal memuat Global Chat.</div>`;
   }
 };
+
+// ==========================================
+// MONITORING GLOBAL CHAT OLEH ADMIN
+// ==========================================
+let adminGlobalChatListener = null;
+
+window.loadAdminGlobalChat = function () {
+  const container = document.getElementById("adminGlobalChatContainer");
+  if (!container) return;
+  container.innerHTML = `<div style="text-align: center; color: #888;">Memuat Global Chat...</div>`;
+
+  try {
+    const { collection, query, limit, onSnapshot } = window.fbFirestore;
+    const globalChatRef = collection(window.db, "global_chat");
+    const q = query(globalChatRef, limit(100));
+
+    if (adminGlobalChatListener) adminGlobalChatListener();
+
+    adminGlobalChatListener = onSnapshot(q, (snapshot) => {
+      if (snapshot.empty) {
+        container.innerHTML = `<div style="text-align: center; color: #888;">Belum ada pesan di Global Chat.</div>`;
+        return;
+      }
+
+      let messages = [];
+      snapshot.forEach((docSnap) => {
+        messages.push({ id: docSnap.id, ...docSnap.data() });
+      });
+
+      // Urutkan berdasarkan waktu
+      messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+      let html = "";
+      messages.forEach((msg) => {
+        html += `
+        <div style="background: #1a2536; border: 1px solid #34495e; padding: 6px 8px; border-radius: 6px; margin-bottom: 4px;">
+          <div style="display: flex; justify-content: space-between; font-weight: bold; color: #f1c40f; font-size: 9.5px; margin-bottom: 2px;">
+            <span>👤 ${msg.nama || "Siswa"} (${msg.kelas || "-"} - ${msg.nisn})</span>
+            <span style="color: #94a3b8; font-size: 8px;">${msg.time || ""}</span>
+          </div>
+          <div style="color: #fff; font-size: 10.5px;">${msg.text}</div>
+        </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      container.scrollTop = container.scrollHeight;
+    });
+  } catch (err) {
+    console.error("Gagal memuat admin global chat:", err);
+    container.innerHTML = `<div style="text-align: center; color: #e74c3c;">Gagal memuat data Global Chat.</div>`;
+  }
+};
+
+window.adminHapusSemuaGlobalChat = async function () {
+  const yakin = await window.customConfirm(
+    "Yakin ingin menghapus SEMUA pesan di Global Chat Sekolah?",
+  );
+  if (!yakin) return;
+
+  showGamePreloader("MENDELETING GLOBAL CHAT...", async (done) => {
+    try {
+      const { collection, getDocs, doc, deleteDoc } = window.fbFirestore;
+      const globalChatRef = collection(window.db, "global_chat");
+      const snapshot = await getDocs(globalChatRef);
+
+      const deletePromises = [];
+      snapshot.forEach((docSnap) => {
+        deletePromises.push(
+          deleteDoc(doc(window.db, "global_chat", docSnap.id)),
+        );
+      });
+
+      await Promise.all(deletePromises);
+      done();
+      window.customAlert(
+        "✅ Seluruh isi Global Chat berhasil dibersihkan oleh Admin!",
+      );
+      loadAdminGlobalChat();
+    } catch (err) {
+      done();
+      console.error("Gagal menghapus global chat:", err);
+      window.customAlert("Gagal menghapus pesan Global Chat.");
+    }
+  });
+};
