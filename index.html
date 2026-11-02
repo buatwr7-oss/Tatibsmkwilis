@@ -8,10 +8,10 @@
     />
     <title>Tatib SMK Wiraguna 🛡️</title>
 
-    <!-- CSS UTAMA (Sudah dibersihkan dari duplikasi) -->
-    <link rel="stylesheet" href="style.css?v=3.1.0" />
+    <!-- CSS UTAMA -->
+    <link rel="stylesheet" href="style.css?v=3.3.0" />
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
     <!-- favicon -->
     <link rel="icon" type="image/x-icon" href="logo.ico" />
@@ -208,297 +208,320 @@
         </button>
       </div>
 
-      <!-- KONTENER HASIL RPG PROFILE -->
-      <div id="hasilPoinSiswa" class="hidden">
-        <div class="rpg-card-container">
-          <div class="rpg-top-section">
-            <div class="rpg-avatar-wrapper-outer">
-              <!-- AVATAR UTAMA (MENGGUNAKAN FUNGSI CERDAS HANDLE AVATAR CLICK) -->
-              <div
-                class="rpg-avatar-box"
-                onclick="handleAvatarClick()"
-                style="cursor: pointer"
-                title="Ketuk untuk melihat atau mengganti foto profil"
-              >
-                <img
-                  id="avatarSiswaMain"
-                  src="assets/foto_siswa/avatar.webp"
-                  alt="Avatar"
-                  style="
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                    border-radius: 4px;
-                    cursor: pointer;
-                  "
-                  onerror="this.src = 'assets/foto_siswa/avatar.webp'"
+      <!-- ================= APLIKASI SISWA (setelah login) ================= -->
+      <div id="hasilPoinSiswa" class="siswa-app hidden">
+        <!-- HEADER MINI (selalu tampil di semua tab) -->
+        <div class="siswa-mini-header">
+          <div
+            class="mini-avatar"
+            onclick="switchSiswaTab('profil')"
+            title="Buka profil"
+          >
+            <img
+              id="miniAvatar"
+              src="assets/foto_siswa/avatar.webp"
+              alt="Avatar"
+              onerror="this.onerror = null; this.src = 'assets/foto_siswa/avatar.webp'"
+            />
+          </div>
+          <div class="mini-info">
+            <div id="miniNama" class="mini-nama">-</div>
+            <div class="mini-chips">
+              <span id="miniKelas" class="mini-kelas">-</span>
+              <span id="miniHp" class="mini-chip mini-hp">❤️ 200</span>
+              <span id="miniDaily" class="mini-chip mini-star">⭐ 0</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="btn-logout mini-logout"
+            onclick="keluarSiswa()"
+          >
+            Keluar
+          </button>
+        </div>
+
+        <!-- BAR NAVIGASI ATAS -->
+        <nav class="siswa-tabbar">
+          <button
+            type="button"
+            class="siswa-tab-btn active"
+            data-tab="profil"
+            onclick="switchSiswaTab('profil')"
+          >
+            <span class="tab-ico">🛡️</span><span class="tab-lbl">Profil</span>
+          </button>
+          <button
+            type="button"
+            class="siswa-tab-btn"
+            data-tab="teman"
+            onclick="switchSiswaTab('teman')"
+          >
+            <span class="tab-ico">👥</span><span class="tab-lbl">Teman</span>
+            <span id="tabBadgeTeman" class="tab-badge hidden">0</span>
+          </button>
+          <button
+            type="button"
+            class="siswa-tab-btn"
+            data-tab="chat"
+            onclick="switchSiswaTab('chat')"
+          >
+            <span class="tab-ico">💬</span><span class="tab-lbl">Chat</span>
+            <span id="tabBadgeChat" class="tab-badge hidden">0</span>
+          </button>
+          <button
+            type="button"
+            class="siswa-tab-btn"
+            data-tab="global"
+            onclick="switchSiswaTab('global')"
+          >
+            <span class="tab-ico">🌍</span><span class="tab-lbl">Global</span>
+            <span id="tabBadgeGlobal" class="tab-badge hidden">0</span>
+          </button>
+        </nav>
+
+        <div class="siswa-panels">
+          <!-- ============ TAB 1: PROFIL ============ -->
+          <section id="siswaTabProfil" class="siswa-panel">
+            <div class="rpg-card-container">
+              <div class="rpg-top-section">
+                <div class="rpg-avatar-wrapper-outer">
+                  <div
+                    class="rpg-avatar-box"
+                    onclick="handleAvatarClick()"
+                    style="cursor: pointer"
+                    title="Ketuk untuk melihat atau mengganti foto profil"
+                  >
+                    <img
+                      id="avatarSiswaMain"
+                      src="assets/foto_siswa/avatar.webp"
+                      alt="Avatar"
+                      style="
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        border-radius: 4px;
+                        cursor: pointer;
+                      "
+                      onerror="this.onerror = null; this.src = 'assets/foto_siswa/avatar.webp'"
+                    />
+                  </div>
+                  <div
+                    id="txtDailyScoreTextOnly"
+                    class="rpg-daily-score-badge"
+                  >
+                    ⭐ 0 Pts
+                  </div>
+                </div>
+                <div class="rpg-info-box">
+                  <div id="txtNamaSiswaHasil" class="rpg-name">-</div>
+                  <div id="txtKelasSiswaHasil" class="rpg-class-lvl">-</div>
+                  <div id="txtTierRankContainer" style="margin-top: 1px"></div>
+                </div>
+              </div>
+
+              <div class="rpg-bar-group">
+                <div class="rpg-bar-row">
+                  <div class="rpg-bar-meta">
+                    <span style="color: #2ecc71">❤️ HEALTH POINT (HP)</span>
+                    <span id="txtHpPercent" style="color: #2ecc71">200/200</span>
+                  </div>
+                  <div class="rpg-bar-outer">
+                    <div
+                      id="barHpFill"
+                      class="rpg-hp-fill"
+                      style="width: 100%"
+                    ></div>
+                  </div>
+                </div>
+                <div class="rpg-bar-row" style="margin-top: 4px">
+                  <div class="rpg-bar-meta">
+                    <span style="color: #3498db">🛡️ SHIELD POINT (BONUS)</span>
+                    <span id="txtShieldPercent" style="color: #3498db"
+                      >0 Pts</span
+                    >
+                  </div>
+                  <div class="rpg-bar-outer">
+                    <div
+                      id="barShieldFill"
+                      class="rpg-shield-fill"
+                      style="width: 0%"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="rpgStatusBanner" class="rpg-status-banner">
+                <strong id="txtStatusKondisi">STATUS: NORMAL</strong>
+                <span id="txtStatusPenanganan" style="color: #ecf0f1"
+                  >Tidak ada catatan pelanggaran.</span
+                >
+              </div>
+
+              <div class="rpg-stats-mini">
+                <div class="rpg-stat-item">
+                  <span class="rpg-stat-number-green" id="txtCountPrestasi"
+                    >0 Pts</span
+                  >
+                  <span class="rpg-stat-label">TOTAL PRESTASI</span>
+                </div>
+                <div class="rpg-stat-item">
+                  <span class="rpg-stat-number-red" id="txtCountPelanggaran"
+                    >0 Pts</span
+                  >
+                  <span class="rpg-stat-label">TOTAL PELANGGARAN</span>
+                </div>
+              </div>
+
+              <div class="history-container-main">
+                <div class="history-title-main">
+                  📜 Riwayat Kejadian & Poin:
+                </div>
+                <div id="historyListSiswa" class="history-list-box"></div>
+              </div>
+            </div>
+
+            <!-- KARTU GANTI PIN SISWA -->
+            <div id="cardGantiPin" class="rpg-card-container pin-card">
+              <div class="pin-card-title">🔐 Keamanan Akun (Ganti PIN)</div>
+
+              <div class="input-box" style="margin-bottom: 8px">
+                <label class="pin-label">PIN LAMA</label>
+                <input
+                  type="password"
+                  id="oldPinInput"
+                  class="pin-input"
+                  placeholder="Masukkan PIN lama"
+                  maxlength="6"
+                  inputmode="numeric"
+                  autocomplete="off"
                 />
               </div>
-              <div id="txtDailyScoreTextOnly" class="rpg-daily-score-badge">
-                ⭐ 0 Pts
-              </div>
-            </div>
-            <div class="rpg-info-box">
-              <div id="txtNamaSiswaHasil" class="rpg-name">-</div>
-              <div id="txtKelasSiswaHasil" class="rpg-class-lvl">-</div>
-              <div id="txtTierRankContainer" style="margin-top: 1px"></div>
-            </div>
-          </div>
 
-          <div class="rpg-bar-group">
-            <div class="rpg-bar-row">
-              <div class="rpg-bar-meta">
-                <span style="color: #2ecc71">❤️ HEALTH POINT (HP)</span>
-                <span id="txtHpPercent" style="color: #2ecc71">200/200</span>
+              <div class="input-box" style="margin-bottom: 12px">
+                <label class="pin-label">PIN BARU</label>
+                <input
+                  type="password"
+                  id="newPinInput"
+                  class="pin-input"
+                  placeholder="Masukkan PIN baru (4-6 angka)"
+                  maxlength="6"
+                  inputmode="numeric"
+                  autocomplete="off"
+                />
               </div>
-              <div class="rpg-bar-outer">
-                <div
-                  id="barHpFill"
-                  class="rpg-hp-fill"
-                  style="width: 100%"
-                ></div>
-              </div>
-            </div>
-            <div class="rpg-bar-row" style="margin-top: 4px">
-              <div class="rpg-bar-meta">
-                <span style="color: #3498db">🛡️ SHIELD POINT (BONUS)</span>
-                <span id="txtShieldPercent" style="color: #3498db">0 Pts</span>
-              </div>
-              <div class="rpg-bar-outer">
-                <div
-                  id="barShieldFill"
-                  class="rpg-shield-fill"
-                  style="width: 0%"
-                ></div>
-              </div>
-            </div>
-          </div>
 
-          <div id="rpgStatusBanner" class="rpg-status-banner">
-            <strong id="txtStatusKondisi">STATUS: NORMAL</strong>
-            <span id="txtStatusPenanganan" style="color: #ecf0f1"
-              >Tidak ada catatan pelanggaran.</span
-            >
-          </div>
-
-          <div class="rpg-stats-mini">
-            <div class="rpg-stat-item">
-              <span class="rpg-stat-number-green" id="txtCountPrestasi"
-                >0 Pts</span
+              <button
+                type="button"
+                onclick="gantiPinSiswa()"
+                class="pin-save-btn"
               >
-              <span class="rpg-stat-label">TOTAL PRESTASI</span>
+                Simpan PIN Baru 🔑
+              </button>
             </div>
-            <div class="rpg-stat-item">
-              <span class="rpg-stat-number-red" id="txtCountPelanggaran"
-                >0 Pts</span
-              >
-              <span class="rpg-stat-label">TOTAL PELANGGARAN</span>
-            </div>
-          </div>
+          </section>
 
-          <div class="history-container-main">
-            <div class="history-title-main">📜 Riwayat Kejadian & Poin:</div>
-            <div id="historyListSiswa" class="history-list-box"></div>
-          </div>
-
-          <!-- SQUAD / PERTEMANAN SECTION -->
-          <div class="rpg-card-container" style="margin-top: 15px">
-            <div class="squad-header-row">
-              <span class="squad-title-txt">👥 Daftar Teman</span>
-              <div class="squad-input-group">
-                <div style="display: flex; gap: 5px; width: 100%">
-                  <input
-                    type="text"
-                    id="inputNisnTeman"
-                    placeholder="Masukkan ID Teman..."
-                    class="squad-input-field"
-                  />
-                  <button
-                    type="button"
-                    onclick="tambahTeman()"
-                    class="squad-invite-btn"
-                  >
-                    Invite
-                  </button>
-                </div>
-                <span id="jumlahTemanTxt" style="font-size: 9px; color: #bdc3c7"
-                  >0 Teman</span
-                >
-              </div>
-            </div>
-
-            <div id="containerUndanganMasuk" style="margin-bottom: 10px"></div>
-            <div id="listTemanContainer" class="squad-friend-list-box"></div>
-          </div>
-
-          <!-- ================= PEMISAH & KOTAK GLOBAL CHAT ================= -->
-          <div style="border-top: 1px dashed #34495e; margin: 20px 0"></div>
-
-          <div class="rpg-card-container">
-            <!-- Header Chat (Bisa diklik untuk Hide / Unhide) -->
-            <div
-              class="squad-header-row"
-              style="margin-bottom: 8px; cursor: pointer; user-select: none"
-              onclick="toggleGlobalChat()"
-            >
-              <div style="display: flex; align-items: center; gap: 6px">
-                <span class="squad-title-txt">💬 Global Chat Sekolah</span>
-                </div>
-              <span
-                id="chatToggleIcon"
-                style="font-size: 11px; color: #f1c40f; font-weight: bold"
-                >▲ Sembunyikan</span
-              >
-            </div>
-
-            <!-- Body Chat (Area yang bisa disembunyikan/ditampilkan) -->
-            <div id="globalChatBody">
-              <!-- Kotak Tempat Pesan Muncul (Live Scroll) -->
-              <div
-                id="globalChatContainer"
-                class="chat-message-container-box"
-                style="
-                  height: 180px;
-                  max-height: 180px;
-                  overflow-y: auto;
-                  background: #111823;
-                  border: 1px solid #34495e;
-                  padding: 8px;
-                  border-radius: 6px;
-                  margin-bottom: 8px;
-                "
-              >
-                <div
-                  style="
-                    font-size: 10px;
-                    color: #95a5a6;
-                    text-align: center;
-                    margin-top: 50px;
-                  "
-                >
-                  Memuat obrolan global hari ini...
-                </div>
-              </div>
-
-              <!-- Form Input Pesan & Tombol Kirim -->
-              <div class="chat-form-footer" style="display: flex; gap: 6px">
+          <!-- ============ TAB 2: TEMAN ============ -->
+          <section id="siswaTabTeman" class="siswa-panel hidden">
+            <div class="rpg-card-container">
+              <div class="pin-card-title">➕ Tambah Teman</div>
+              <div class="friend-add-row">
                 <input
                   type="text"
-                  id="inputGlobalChat"
-                  class="chat-input-field"
-                  placeholder="Ketik pesan ke seluruh warga sekolah..."
-                  style="
-                    flex: 1;
-                    background: #111823;
-                    border: 1px solid #34495e;
-                    color: #fff;
-                    font-size: 10.5px;
-                    padding: 6px 10px;
-                    border-radius: 4px;
-                  "
+                  id="inputNisnTeman"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  placeholder="Masukkan NISN teman..."
                 />
+                <button type="button" onclick="tambahTeman()">Invite</button>
+              </div>
+              <div id="jumlahTemanTxt" class="friend-count">0 Teman</div>
+              <div id="containerUndanganMasuk"></div>
+              <div id="listTemanContainer" class="friend-list"></div>
+            </div>
+          </section>
+
+          <!-- ============ TAB 3: CHAT PRIBADI ============ -->
+          <section id="siswaTabChat" class="siswa-panel panel-chat hidden">
+            <!-- Daftar percakapan (seperti WhatsApp) -->
+            <div id="chatListView" class="chat-view">
+              <div class="chat-list-title">💬 Percakapan</div>
+              <div id="chatListContainer" class="chat-list"></div>
+            </div>
+
+            <!-- Ruang obrolan -->
+            <div id="chatRoomView" class="chat-view hidden">
+              <div class="chat-room-header">
                 <button
                   type="button"
-                  id="btnKirimGlobalChat"
-                  class="squad-invite-btn"
-                  style="margin: 0; padding: 8px 12px; cursor: pointer"
+                  class="chat-back-btn"
+                  onclick="tutupChatTeman()"
+                  title="Kembali ke daftar percakapan"
                 >
-                  Kirim
+                  ←
                 </button>
+                <div class="chat-room-avatar">
+                  <img
+                    id="chatRoomAvatar"
+                    src="assets/foto_siswa/avatar.webp"
+                    alt=""
+                    onerror="this.onerror = null; this.src = 'assets/foto_siswa/avatar.webp'"
+                  />
+                </div>
+                <div class="chat-room-info">
+                  <div id="chatTitleNama">Nama Teman</div>
+                  <div id="chatSubStatus">Offline</div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <!-- KARTU GANTI PIN SISWA -->
-          <div
-            class="rpg-card-container"
-            style="margin-top: 15px; text-align: left"
-          >
-            <div
-              style="
-                font-size: 11px;
-                font-weight: bold;
-                color: #f1c40f;
-                margin-bottom: 8px;
-              "
-            >
-              🔐 Keamanan Akun (Ganti PIN)
-            </div>
+              <div id="chatMessageContainer" class="chat-messages"></div>
 
-            <div class="input-box" style="margin-bottom: 8px">
-              <label
-                style="
-                  font-size: 9px;
-                  color: #cbd5e1;
-                  display: block;
-                  margin-bottom: 3px;
+              <form
+                id="formKirimChat"
+                class="chat-form-bar"
+                onsubmit="
+                  event.preventDefault();
+                  kirimPesanChat();
                 "
-                >PIN LAMA</label
               >
-              <input
-                type="password"
-                id="oldPinInput"
-                placeholder="Masukkan PIN lama"
-                maxlength="6"
-                autocomplete="off"
-                style="
-                  width: 100%;
-                  padding: 7px;
-                  border-radius: 6px;
-                  border: 1.5px solid #34495e;
-                  background: #1a2536;
-                  color: #fff;
-                  font-size: 10.5px;
-                "
-              />
+                <input
+                  type="text"
+                  id="inputPesanChat"
+                  maxlength="250"
+                  placeholder="Ketik pesan..."
+                  autocomplete="off"
+                  required
+                />
+                <button type="submit">Kirim 🚀</button>
+              </form>
+            </div>
+          </section>
+
+          <!-- ============ TAB 4: GLOBAL CHAT ============ -->
+          <section id="siswaTabGlobal" class="siswa-panel panel-chat hidden">
+            <div class="global-online-bar">
+              <div class="global-online-head">
+                <span class="online-pulse"></span>
+                <span id="globalOnlineCount">0 siswa online</span>
+              </div>
+              <div id="globalOnlineList" class="global-online-list"></div>
             </div>
 
-            <div class="input-box" style="margin-bottom: 12px">
-              <label
-                style="
-                  font-size: 9px;
-                  color: #cbd5e1;
-                  display: block;
-                  margin-bottom: 3px;
-                "
-                >PIN BARU</label
-              >
-              <input
-                type="password"
-                id="newPinInput"
-                placeholder="Masukkan PIN baru (min. 4 digit)"
-                maxlength="6"
-                autocomplete="off"
-                style="
-                  width: 100%;
-                  padding: 7px;
-                  border-radius: 6px;
-                  border: 1.5px solid #34495e;
-                  background: #1a2536;
-                  color: #fff;
-                  font-size: 10.5px;
-                "
-              />
+            <div id="globalChatContainer" class="chat-messages">
+              <div class="empty-note">Memuat obrolan global...</div>
             </div>
 
-            <button
-              type="button"
-              onclick="gantiPinSiswa()"
-              style="
-                background: #27ae60;
-                width: 100%;
-                padding: 8px;
-                font-size: 10.5px;
-                border-radius: 6px;
-                border: none;
-                font-weight: bold;
-                cursor: pointer;
-                color: #fff;
-              "
-            >
-              Simpan PIN Baru 🔑
-            </button>
-          </div>
+            <div class="chat-form-bar">
+              <input
+                type="text"
+                id="inputGlobalChat"
+                maxlength="250"
+                autocomplete="off"
+                placeholder="Ketik pesan ke seluruh warga sekolah..."
+              />
+              <button type="button" id="btnKirimGlobalChat">Kirim</button>
+            </div>
+          </section>
         </div>
       </div>
     </div>
@@ -551,6 +574,7 @@
                 <option value="Kamis">Kamis</option>
                 <option value="Jum'at">Jum'at</option>
                 <option value="Sabtu">Sabtu</option>
+                <option value="Minggu">Minggu</option>
               </select>
             </div>
             <div class="input-box" style="flex: 1.5">
@@ -608,7 +632,7 @@
                 🔄 <span id="txtModeSiswa">Mode: Banyak Siswa</span>
               </span>
             </div>
-            <select id="selectSingleSiswa" required class="hidden">
+            <select id="selectSingleSiswa" class="hidden">
               <option value="">-- Pilih Kelas Dulu --</option>
             </select>
             <div id="boxMultiSiswa" class="checkbox-container">
@@ -1217,74 +1241,6 @@
       <div id="globalLeaderboardList" class="global-leaderboard-list-box"></div>
     </div>
 
-    <!-- MODAL CHAT PERORANGAN -->
-    <div id="modalChatTeman" class="modal-overlay hidden">
-      <div class="card chat-modal-inner-card">
-        <div class="chat-modal-header">
-          <div style="display: flex; align-items: center; gap: 10px">
-            <div style="font-size: 24px">💬</div>
-            <div>
-              <h4
-                id="chatTitleNama"
-                style="
-                  font-size: 13px;
-                  color: #1e3c72;
-                  margin: 0;
-                  font-weight: bold;
-                "
-              >
-                Nama Teman
-              </h4>
-              <span
-                id="chatSubStatus"
-                style="font-size: 9px; color: #2ecc71; font-weight: bold"
-                >● Online</span
-              >
-            </div>
-          </div>
-          <button
-            type="button"
-            onclick="tutupChatTeman()"
-            class="chat-modal-close-btn"
-          >
-            Tutup ✕
-          </button>
-        </div>
-
-        <div id="chatMessageContainer" class="chat-message-container-box">
-          <div
-            style="
-              font-size: 11px;
-              color: #888;
-              text-align: center;
-              margin: auto;
-            "
-          >
-            Memuat percakapan...
-          </div>
-        </div>
-
-        <form
-          id="formKirimChat"
-          onsubmit="
-            event.preventDefault();
-            kirimPesanChat();
-          "
-          class="chat-form-footer"
-        >
-          <input
-            type="text"
-            id="inputPesanChat"
-            placeholder="Ketik pesan untuk teman..."
-            autocomplete="off"
-            class="chat-input-field"
-            required
-          />
-          <button type="submit" class="chat-send-btn">Kirim 🚀</button>
-        </form>
-      </div>
-    </div>
-
     <!-- MODAL KONFIRMASI -->
     <div id="modalKonfirmasi" class="modal-overlay hidden">
       <div class="modal-box">
@@ -1307,7 +1263,7 @@
       <div class="modal-box" style="text-align: center; max-width: 380px">
         <h4 style="color: #1e3a8a; margin-bottom: 10px">🖼️ ATUR FOTO PROFIL</h4>
         <p style="font-size: 9.5px; color: #64748b; margin-bottom: 10px">
-          Geser atau zoom foto agar pas di dalam lingkaran.
+          Pilih foto lewat tombol di bawah, lalu geser atau zoom agar pas di dalam bingkai.
         </p>
 
         <!-- Area Crop / Penyesuaian Foto -->
@@ -1350,7 +1306,7 @@
             width: auto;
           "
         >
-          📁 Pilih Berkas Foto Lain
+          📁 Pilih Berkas Foto
         </button>
 
         <!-- Kotak Himbauan & Catatan Disiplin -->
@@ -1528,7 +1484,7 @@
       </div>
     </div>
 
-    <div class="app-version-badge">Tatib v3.1.0 • Beta</div>
+    <div class="app-version-badge">Tatib v3.3.0 • Beta</div>
 
     <!-- JAVASCRIPT UTAMA & FIREBASE MODULE -->
     <script src="app.js" type="module"></script>
