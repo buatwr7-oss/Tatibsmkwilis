@@ -2,6 +2,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/fireba
 import {
   getAuth,
   signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 import {
   getFirestore,
@@ -20,6 +22,8 @@ import {
   arrayUnion,
   arrayRemove,
   limit,
+  runTransaction,
+  writeBatch,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -55,14 +59,72 @@ window.fbFirestore = {
   arrayUnion,
   arrayRemove,
   limit,
+  runTransaction,
+  writeBatch,
 };
 console.log("🔥 Firebase Firestore & Auth Terhubung ke Tatib SMK Wiraguna!");
+
+// Promise yang selesai saat Firebase Auth selesai memulihkan sesi guru
+const authReady = new Promise((resolve) => {
+  const unsub = onAuthStateChanged(auth, (user) => {
+    unsub();
+    resolve(user);
+  });
+});
+
+// ==========================================
+// KONSTANTA & HELPER UMUM
+// ==========================================
+const $ = (id) => document.getElementById(id);
+
+const SESSION_SISWA_MS = 12 * 60 * 60 * 1000; // sesi siswa berlaku 12 jam
+const CACHE_KEY = "master_siswa_cache_v2";
+const CACHE_TTL_MS = 2 * 60 * 1000; // cache data siswa 2 menit
+const MAX_RIWAYAT = 200; // batasi riwayat per siswa (limit dokumen Firestore 1MB)
+const CHAT_MAX_LEN = 250;
+const CHAT_COOLDOWN_MS = 1500;
+const HEARTBEAT_MS = 60000;
+const ONLINE_THRESHOLD_MS = 150000;
+const BATCH_CHUNK = 400;
+
+function escapeHtml(text) {
+  if (text === null || text === undefined) return "";
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// Tanggal & jam sesuai zona waktu perangkat (bukan UTC)
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+function localDateStr(d = new Date()) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+function localTimeStr(d = new Date()) {
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+function localDateTimeStr(d = new Date()) {
+  return `${localDateStr(d)} ${localTimeStr(d)}`;
+}
+
+function avatarFor(s) {
+  if (s && s.fotoUrl) return s.fotoUrl;
+  if (s && s.jk && String(s.jk).toUpperCase() === "P")
+    return "assets/foto_siswa/avatar_p.webp";
+  return "assets/foto_siswa/avatar_l.webp";
+}
+
+const AVATAR_ONERROR = "this.onerror=null;this.src='assets/foto_siswa/avatar.webp'";
 
 // ==========================================
 // CUSTOM MODAL (CUSTOM ALERT & CONFIRM)
 // ==========================================
 function injectCustomModalStyles() {
-  if (document.getElementById("customModalStyles")) return;
+  if ($("customModalStyles")) return;
   const style = document.createElement("style");
   style.id = "customModalStyles";
   style.innerHTML = `
@@ -82,12 +144,14 @@ function injectCustomModalStyles() {
       font-size: 15px; font-weight: bold; color: #f1c40f; margin-bottom: 8px;
     }
     #customPopupMessage {
-      font-size: 12px; color: #cbd5e1; line-height: 1.5; margin-bottom: 20px; word-break: break-word;
+      font-size: 12px; color: #cbd5e1; line-height: 1.5; margin-bottom: 20px;
+      word-break: break-word; white-space: pre-line;
     }
     #customPopupButtons {
       display: flex; gap: 10px; justify-content: center;
     }
     .custom-popup-btn {
+      width: auto; margin-top: 0;
       padding: 8px 18px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; border: none; transition: transform 0.1s;
     }
     .custom-popup-btn:active { transform: scale(0.95); }
@@ -95,7 +159,7 @@ function injectCustomModalStyles() {
       background: linear-gradient(135deg, #f1c40f, #d4ac0d); color: #111; box-shadow: 0 4px 10px rgba(241,196,15,0.4);
     }
     #customPopupBtnCancel {
-      background: #334155; color: #cbd5e1;
+      background: #334155; color: #cbd5e1; box-shadow: none;
     }
     @keyframes fadeInModal { from { opacity: 0; } to { opacity: 1; } }
     @keyframes scaleInModal { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -103,77 +167,144 @@ function injectCustomModalStyles() {
   document.head.appendChild(style);
 }
 
-window.customAlert = function (message, title = "INFORMASI SISTEM") {
+let activePopupResolve = null;
+
+// Pesan ditampilkan sebagai TEKS (bukan HTML) sehingga aman dari injeksi
+function buildPopup({ message, title, isConfirm }) {
   return new Promise((resolve) => {
     injectCustomModalStyles();
-    const existing = document.getElementById("customPopupOverlay");
-    if (existing) existing.remove();
+    const existing = $("customPopupOverlay");
+    if (existing) {
+      existing.remove();
+      if (activePopupResolve) activePopupResolve(false);
+    }
+    activePopupResolve = resolve;
 
     const overlay = document.createElement("div");
     overlay.id = "customPopupOverlay";
-    overlay.innerHTML = `
-      <div id="customPopupBox">
-        <div id="customPopupTitle">${title}</div>
-        <div id="customPopupMessage">${message}</div>
-        <div id="customPopupButtons">
-          <button id="customPopupBtnOk" class="custom-popup-btn">OK</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
 
-    document.getElementById("customPopupBtnOk").onclick = () => {
+    const box = document.createElement("div");
+    box.id = "customPopupBox";
+
+    const titleEl = document.createElement("div");
+    titleEl.id = "customPopupTitle";
+    titleEl.textContent = title;
+
+    const msgEl = document.createElement("div");
+    msgEl.id = "customPopupMessage";
+    msgEl.textContent = message;
+
+    const btnWrap = document.createElement("div");
+    btnWrap.id = "customPopupButtons";
+
+    const finish = (val) => {
       overlay.remove();
-      resolve(true);
+      activePopupResolve = null;
+      resolve(val);
     };
+
+    if (isConfirm) {
+      const btnCancel = document.createElement("button");
+      btnCancel.id = "customPopupBtnCancel";
+      btnCancel.type = "button";
+      btnCancel.className = "custom-popup-btn";
+      btnCancel.textContent = "Batal";
+      btnCancel.onclick = () => finish(false);
+      btnWrap.appendChild(btnCancel);
+    }
+
+    const btnOk = document.createElement("button");
+    btnOk.id = "customPopupBtnOk";
+    btnOk.type = "button";
+    btnOk.className = "custom-popup-btn";
+    btnOk.textContent = isConfirm ? "Ya, Lanjutkan" : "OK";
+    btnOk.onclick = () => finish(true);
+    btnWrap.appendChild(btnOk);
+
+    box.append(titleEl, msgEl, btnWrap);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    btnOk.focus();
   });
+}
+
+window.customAlert = function (message, title = "INFORMASI SISTEM") {
+  return buildPopup({ message, title, isConfirm: false });
 };
 
 window.customConfirm = function (message, title = "KONFIRMASI TINDAKAN") {
-  return new Promise((resolve) => {
-    injectCustomModalStyles();
-    const existing = document.getElementById("customPopupOverlay");
-    if (existing) existing.remove();
-
-    const overlay = document.createElement("div");
-    overlay.id = "customPopupOverlay";
-    overlay.innerHTML = `
-      <div id="customPopupBox">
-        <div id="customPopupTitle">${title}</div>
-        <div id="customPopupMessage">${message}</div>
-        <div id="customPopupButtons">
-          <button id="customPopupBtnCancel" class="custom-popup-btn">Batal</button>
-          <button id="customPopupBtnOk" class="custom-popup-btn">Ya, Lanjutkan</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-
-    document.getElementById("customPopupBtnOk").onclick = () => {
-      overlay.remove();
-      resolve(true);
-    };
-    document.getElementById("customPopupBtnCancel").onclick = () => {
-      overlay.remove();
-      resolve(false);
-    };
-  });
+  return buildPopup({ message, title, isConfirm: true });
 };
 
+// ==========================================
+// STATE GLOBAL
+// ==========================================
 let currentRole = "";
+let currentUser = null; // data guru/admin yang sedang login
 let isMultiMode = true;
+let currentNisnSiswa = ""; // NISN siswa yang sedang login
+let masterDataSiswa = [];
+let masterDataTugas = [];
+
+function getMyNisn() {
+  return currentNisnSiswa || localStorage.getItem("activeUser") || "";
+}
 
 // ==========================================
-// FUNGSI PEMBERSIH TEKS DARI INJEKSI HTML (ESCAPE)
+// PRELOADER (AMAN: tidak akan macet jika ada error)
 // ==========================================
-function escapeHtml(text) {
-  if (!text) return "";
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+let preloaderInterval = null;
+let preloaderHideTimeout = null;
+
+function showGamePreloader(customTitle, callback) {
+  const preloader = $("gamePreloader");
+  $("loadingTitleText").innerText = customTitle;
+  const fillEl = $("progressBarFill");
+  const percentEl = $("loadingPercentText");
+
+  if (preloaderInterval) clearInterval(preloaderInterval);
+  if (preloaderHideTimeout) clearTimeout(preloaderHideTimeout);
+
+  preloader.classList.remove("hidden");
+  let currentPercent = 0;
+  fillEl.style.width = "0%";
+  percentEl.innerText = "0%";
+
+  preloaderInterval = setInterval(() => {
+    if (currentPercent < 85) {
+      currentPercent += 15;
+      fillEl.style.width = currentPercent + "%";
+      percentEl.innerText = currentPercent + "%";
+    }
+  }, 80);
+
+  let finished = false;
+  const finishLoading = () => {
+    if (finished) return;
+    finished = true;
+    clearInterval(preloaderInterval);
+    preloaderInterval = null;
+    fillEl.style.width = "100%";
+    percentEl.innerText = "100%";
+    preloaderHideTimeout = setTimeout(() => {
+      preloader.classList.add("hidden");
+    }, 300);
+  };
+
+  if (callback) {
+    try {
+      const result = callback(finishLoading);
+      if (result && typeof result.catch === "function") {
+        result.catch((err) => {
+          console.error("Error tak tertangani di preloader:", err);
+          finishLoading();
+        });
+      }
+    } catch (err) {
+      console.error("Error di preloader:", err);
+      finishLoading();
+    }
+  }
 }
 
 // ==========================================
@@ -187,13 +318,9 @@ window.handleAvatarClick = function () {
     fotoUrl.includes("avatar_l.webp") ||
     fotoUrl.includes("avatar_p.webp")
   ) {
-    if (typeof window.bukaModalGantiFoto === "function") {
-      window.bukaModalGantiFoto();
-    }
+    window.bukaModalGantiFoto();
   } else {
-    if (typeof window.bukaPreviewFoto === "function") {
-      window.bukaPreviewFoto();
-    }
+    window.bukaPreviewFoto();
   }
 };
 
@@ -201,70 +328,50 @@ window.handleAvatarClick = function () {
 // SISTEM ONLINE STATUS (BERBASIS FIRESTORE)
 // ==========================================
 let heartbeatInterval = null;
+let presenceNisn = "";
 
-function initOnlineStatusEngine() {
-  const myNisn = getMyNisn();
-  if (!myNisn) return;
-
-  const { doc, setDoc } = window.fbFirestore;
-  const userStatusRef = doc(window.db, "status", myNisn);
-
-  const updatePresence = async (state) => {
-    try {
-      await setDoc(
-        userStatusRef,
-        {
-          state: state,
-          lastActive: Date.now(),
-        },
-        { merge: true },
-      );
-    } catch (e) {
-      console.error("Gagal update status online:", e);
-    }
-  };
-
-  updatePresence("online");
-
-  if (heartbeatInterval) clearInterval(heartbeatInterval);
-  heartbeatInterval = setInterval(() => {
-    updatePresence("online");
-  }, 10000);
-
-  window.addEventListener("beforeunload", () => {
-    updatePresence("offline");
-  });
+async function updatePresence(state) {
+  if (!presenceNisn) return;
+  try {
+    const { doc, setDoc } = window.fbFirestore;
+    await setDoc(
+      doc(window.db, "status", presenceNisn),
+      { state, lastActive: Date.now() },
+      { merge: true },
+    );
+  } catch (e) {
+    console.error("Gagal update status online:", e);
+  }
 }
 
-let friendStatusListeners = {};
-
-function listenToFriendStatus(friendNisn, callback) {
-  if (friendStatusListeners[friendNisn]) {
-    friendStatusListeners[friendNisn]();
+const onBeforeUnloadPresence = () => {
+  updatePresence("offline");
+};
+const onVisibilityPresence = () => {
+  if (presenceNisn && document.visibilityState === "visible") {
+    updatePresence("online");
   }
+};
 
-  const { doc, onSnapshot } = window.fbFirestore;
-  const friendStatusRef = doc(window.db, "status", friendNisn);
+function initOnlineStatusEngine(nisn) {
+  stopOnlineStatusEngine(false);
+  if (!nisn) return;
+  presenceNisn = nisn;
 
-  friendStatusListeners[friendNisn] = onSnapshot(friendStatusRef, (docSnap) => {
-    if (!docSnap.exists()) {
-      callback({ state: "offline", text: "Offline", isOnline: false });
-      return;
-    }
+  updatePresence("online");
+  heartbeatInterval = setInterval(() => updatePresence("online"), HEARTBEAT_MS);
 
-    const data = docSnap.data();
-    const timeElapsed = Date.now() - (data.lastActive || 0);
+  window.addEventListener("beforeunload", onBeforeUnloadPresence);
+  document.addEventListener("visibilitychange", onVisibilityPresence);
+}
 
-    if (data.state === "online" && timeElapsed < 20000) {
-      callback({ state: "online", text: "Online", isOnline: true });
-    } else {
-      callback({
-        state: "offline",
-        text: formatLastActive(data.lastActive),
-        isOnline: false,
-      });
-    }
-  });
+function stopOnlineStatusEngine(setOffline = true) {
+  if (heartbeatInterval) clearInterval(heartbeatInterval);
+  heartbeatInterval = null;
+  window.removeEventListener("beforeunload", onBeforeUnloadPresence);
+  document.removeEventListener("visibilitychange", onVisibilityPresence);
+  if (setOffline && presenceNisn) updatePresence("offline");
+  presenceNisn = "";
 }
 
 function formatLastActive(timestamp) {
@@ -278,45 +385,468 @@ function formatLastActive(timestamp) {
   return "Terakhir aktif kemarin";
 }
 
-// ==========================================
-// SISTEM PERTEMANAN & SQUAD (CLOUD FIRESTORE)
-// ==========================================
-function getMyNisn() {
-  const inputVal = document.getElementById("nisnSiswaInput")
-    ? document.getElementById("nisnSiswaInput").value.trim()
-    : "";
-  return inputVal || localStorage.getItem("activeUser") || "";
+// Mengembalikan fungsi unsubscribe. Status dievaluasi ulang berkala
+// agar teman yang menutup tab tanpa sempat "offline" tetap terdeteksi.
+function subscribeStatus(friendNisn, callback) {
+  const { doc, onSnapshot } = window.fbFirestore;
+  let last = null;
+
+  const evaluate = () => {
+    if (!last) {
+      callback({ state: "offline", text: "Offline", isOnline: false });
+      return;
+    }
+    const elapsed = Date.now() - (last.lastActive || 0);
+    if (last.state === "online" && elapsed < ONLINE_THRESHOLD_MS) {
+      callback({ state: "online", text: "Online", isOnline: true });
+    } else {
+      callback({
+        state: "offline",
+        text: formatLastActive(last.lastActive),
+        isOnline: false,
+      });
+    }
+  };
+
+  const unsub = onSnapshot(
+    doc(window.db, "status", friendNisn),
+    (docSnap) => {
+      last = docSnap.exists() ? docSnap.data() : null;
+      evaluate();
+    },
+    (err) => console.error("Gagal listen status teman:", err),
+  );
+  const timer = setInterval(evaluate, 30000);
+  return () => {
+    unsub();
+    clearInterval(timer);
+  };
 }
 
+let friendStatusListeners = {};
+let friendListeners = {};
+
+function unsubscribeAllFriendListeners() {
+  Object.values(friendListeners).forEach((u) => typeof u === "function" && u());
+  Object.values(friendStatusListeners).forEach(
+    (u) => typeof u === "function" && u(),
+  );
+  friendListeners = {};
+  friendStatusListeners = {};
+}
+
+// ==========================================
+// SESI SISWA
+// ==========================================
 let activeStudentDocListener = null;
+let lastFriendSignature = "";
+
+function cleanupStudentSession() {
+  if (activeStudentDocListener) {
+    activeStudentDocListener();
+    activeStudentDocListener = null;
+  }
+  unsubscribeAllFriendListeners();
+  detachChatRoomListener();
+  currentChatTargetNisn = "";
+  if (globalChatActiveListener) {
+    globalChatActiveListener();
+    globalChatActiveListener = null;
+  }
+  stopGlobalOnlineListener();
+  stopOnlineStatusEngine(true);
+
+  currentNisnSiswa = "";
+  lastFriendSignature = "";
+  friendState = {};
+  globalUnread = 0;
+  globalSeenTs = 0;
+  siswaActiveTab = "profil";
+  window.currentStudentDataCache = null;
+  window.currentStudentNisn = "";
+
+  [
+    "listTemanContainer",
+    "containerUndanganMasuk",
+    "chatListContainer",
+    "chatMessageContainer",
+    "globalChatContainer",
+    "globalOnlineList",
+  ].forEach((id) => {
+    const el = $(id);
+    if (el) el.innerHTML = "";
+  });
+
+  const roomView = $("chatRoomView");
+  const listView = $("chatListView");
+  if (roomView) roomView.classList.add("hidden");
+  if (listView) listView.classList.remove("hidden");
+
+  setSiswaAppMode(false);
+}
 
 function initStudentRealtimeListener(nisn) {
   if (activeStudentDocListener) activeStudentDocListener();
+  lastFriendSignature = "";
   try {
     const { doc, onSnapshot } = window.fbFirestore;
     activeStudentDocListener = onSnapshot(
       doc(window.db, "siswa", nisn),
       (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          window.currentStudentDataCache = data;
-          window.currentStudentNisn = nisn;
-          renderDaftarTeman(data.friends || [], data.requests || []);
+        if (!docSnap.exists()) return;
+        const data = docSnap.data();
+        window.currentStudentDataCache = data;
+        window.currentStudentNisn = nisn;
+
+        // Profil (HP, poin, riwayat) ikut diperbarui secara realtime
+        tampilkanProfilSiswa(data, nisn);
+
+        // Daftar teman hanya dirender ulang jika memang berubah
+        const sig = JSON.stringify([data.friends || [], data.requests || []]);
+        if (sig !== lastFriendSignature) {
+          lastFriendSignature = sig;
+          setupFriendHub(data.friends || [], data.requests || []);
         }
       },
+      (err) => console.error("Gagal listen student doc:", err),
     );
   } catch (e) {
     console.error("Gagal listen student doc:", e);
   }
 }
 
+function getTierRank(shield) {
+  if (shield >= 290)
+    return {
+      title: "🌌 MYTHIC LEGEND",
+      color: "#ffffff",
+      bg: "linear-gradient(135deg, #ff0844, #ffb199)",
+    };
+  if (shield >= 251)
+    return {
+      title: "👑 MASTER CHAMPION",
+      color: "#ffffff",
+      bg: "linear-gradient(135deg, #b224ef, #7579ff)",
+    };
+  if (shield >= 211)
+    return {
+      title: "💠 DIAMOND VANGUARD",
+      color: "#ffffff",
+      bg: "linear-gradient(135deg, #00c6ff, #0072ff)",
+    };
+  if (shield >= 171)
+    return {
+      title: "💎 PLATINUM GUARDIAN",
+      color: "#ffffff",
+      bg: "linear-gradient(135deg, #11998e, #38ef7d)",
+    };
+  if (shield >= 131)
+    return {
+      title: "🥇 GOLD PALADIN",
+      color: "#1a2536",
+      bg: "linear-gradient(135deg, #f7971e, #ffd200)",
+    };
+  if (shield >= 91)
+    return {
+      title: "🥈 SILVER WARRIOR",
+      color: "#1a2536",
+      bg: "linear-gradient(135deg, #e0eafc, #cfdef3)",
+    };
+  if (shield >= 51)
+    return {
+      title: "🥉 BRONZE KNIGHT",
+      color: "#ffffff",
+      bg: "linear-gradient(135deg, #d38312, #a83279)",
+    };
+  if (shield >= 11)
+    return {
+      title: "🛡️ IRON SQUIRE",
+      color: "#ffffff",
+      bg: "linear-gradient(135deg, #485563, #29323c)",
+    };
+  return {
+    title: "🔰 NOVICE",
+    color: "#ffffff",
+    bg: "linear-gradient(135deg, #7f8c8d, #95a5a6)",
+  };
+}
+
+function getStatusPembinaan(tp) {
+  if (tp < 10)
+    return {
+      title: "NORMAL",
+      desc: "Tidak ada catatan pelanggaran.",
+      color: "#2ecc71",
+    };
+  if (tp <= 20)
+    return {
+      title: "TEGURAN LISAN",
+      desc: "Sanksi: Teguran lisan langsung oleh guru.",
+      color: "#f1c40f",
+    };
+  if (tp <= 40)
+    return {
+      title: "TEGURAN TERTULIS",
+      desc: "Sanksi: Teguran tertulis peringatan.",
+      color: "#e67e22",
+    };
+  if (tp <= 80)
+    return {
+      title: "KONSELING BK",
+      desc: "Sanksi: Pemanggilan konseling Guru BK.",
+      color: "#e74c3c",
+    };
+  return {
+    title: "TINDAKAN KEPALA SEKOLAH",
+    desc: "Sanksi: Keputusan mutlak Kepala Sekolah.",
+    color: "#2c3e50",
+  };
+}
+
+function renderRiwayatHtml(list) {
+  if (!list || list.length === 0) {
+    return `<div style="font-size: 10px; color: #95a5a6; text-align: center; padding: 6px;">Tidak ada catatan riwayat.</div>`;
+  }
+  return list
+    .map((r) => {
+      const p = Number(r.p) || 0;
+      const isPlus = p > 0;
+      const borderColor = isPlus ? "#2ecc71" : "#e74c3c";
+      return `
+      <div style="background: #1a2536; border-left: 3px solid ${borderColor}; padding: 8px 10px; border-radius: 0 6px 6px 0; font-size: 12.5px; color: #ecf0f1; border: 1px solid #34495e; margin-bottom: 6px;">
+        <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 2px;">
+          <span style="color: ${borderColor};">${escapeHtml(r.t)}</span>
+          <span style="color: ${borderColor};">${isPlus ? "+" + p : p} Pts</span>
+        </div>
+        <div style="font-size: 11px; color: #bdc3c7; display: flex; justify-content: space-between;">
+          <span>📍 ${escapeHtml(r.loc || "-")}</span>
+          <span>📅 ${escapeHtml(r.d || "-")}</span>
+        </div>
+      </div>`;
+    })
+    .join("");
+}
+
+// Satu-satunya fungsi untuk menampilkan profil siswa
+// (menggantikan kode ganda di login & auto-login)
+function tampilkanProfilSiswa(siswa, nisn) {
+  const avatarImg =
+    $("avatarSiswaMain") || document.querySelector(".rpg-avatar-box img");
+  if (avatarImg) avatarImg.src = avatarFor(siswa);
+
+  $("txtNamaSiswaHasil").textContent = (siswa.nama || "").toUpperCase();
+  $("txtKelasSiswaHasil").textContent =
+    `Kelas: ${siswa.kelas || "-"} | NISN: ${siswa.nisn || nisn}`;
+
+  const shieldValue = siswa.shield || 0;
+  const rankInfo = getTierRank(shieldValue);
+  $("txtTierRankContainer").innerHTML = `
+    <span style="display: inline-block; background: ${rankInfo.bg}; color: ${rankInfo.color}; padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 700; margin-top: 1px;">
+      ${rankInfo.title}
+    </span>`;
+
+  const hpValue = siswa.hp !== undefined ? siswa.hp : 200;
+  $("barHpFill").style.width =
+    `${Math.max(0, Math.min(100, (hpValue / 200) * 100))}%`;
+  $("txtHpPercent").innerText = `${Math.max(0, hpValue)}/200`;
+
+  $("txtShieldPercent").innerText = `${shieldValue} Pts`;
+  $("barShieldFill").style.width =
+    `${Math.max(0, Math.min(100, (shieldValue / 300) * 100))}%`;
+
+  $("txtDailyScoreTextOnly").innerText = `⭐ ${siswa.dailyScore || 0} Pts`;
+
+  // Header mini (tampil di semua tab)
+  const miniAv = $("miniAvatar");
+  if (miniAv) miniAv.src = avatarFor(siswa);
+  $("miniNama").textContent = siswa.nama || "-";
+  $("miniKelas").textContent = siswa.kelas || "-";
+  $("miniHp").textContent = `❤️ ${Math.max(0, hpValue)}`;
+  $("miniDaily").textContent = `⭐ ${siswa.dailyScore || 0}`;
+
+  const statusHukum = getStatusPembinaan(siswa.totalPelanggaran || 0);
+  $("txtStatusKondisi").innerText = `STATUS: ${statusHukum.title}`;
+  $("txtStatusPenanganan").innerText = statusHukum.desc;
+
+  $("txtCountPrestasi").innerText = `${siswa.totalPrestasi || 0} Pts`;
+  $("txtCountPelanggaran").innerText = `${siswa.totalPelanggaran || 0} Pts`;
+
+  $("historyListSiswa").innerHTML = renderRiwayatHtml(siswa.riwayat);
+
+  // Kartu ganti PIN: tampil hanya jika PIN masih default
+  const serverPin = siswa.pin !== undefined ? String(siswa.pin) : "123456";
+  const cardGantiPin = $("cardGantiPin");
+  if (cardGantiPin) {
+    if (siswa.hasChangedPin || serverPin !== "123456") {
+      cardGantiPin.style.display = "none";
+    } else if (cardGantiPin.style.display === "none") {
+      cardGantiPin.style.display = "block";
+      $("oldPinInput").value = "";
+      $("newPinInput").value = "";
+    }
+  }
+}
+
+function startStudentSession(nisn, siswa) {
+  localStorage.setItem("activeUser", nisn);
+  localStorage.setItem("activeUserExpiry", String(Date.now() + SESSION_SISWA_MS));
+  currentNisnSiswa = nisn;
+  window.currentStudentNisn = nisn;
+  window.currentStudentDataCache = siswa;
+
+  initStudentRealtimeListener(nisn);
+  initOnlineStatusEngine(nisn);
+
+  $("boxInputNisnSiswa").classList.add("hidden");
+  $("hasilPoinSiswa").classList.remove("hidden");
+
+  const cardGantiPin = $("cardGantiPin");
+  if (cardGantiPin) cardGantiPin.style.display = "block";
+
+  tampilkanProfilSiswa(siswa, nisn);
+  window.initGlobalChat(siswa);
+  setSiswaAppMode(true);
+  window.switchSiswaTab("profil");
+}
+
+function validNisnFormat(v) {
+  return /^[A-Za-z0-9_-]{3,30}$/.test(v);
+}
+
+window.loginSiswaWithPin = async function () {
+  const nisnInput = $("nisnSiswaInput").value.trim();
+  const pinInput = $("pinSiswaInput").value.trim();
+
+  if (!nisnInput) return window.customAlert("Silakan ketik nomor NISN kamu!");
+  if (!validNisnFormat(nisnInput))
+    return window.customAlert("Format NISN tidak valid!");
+  if (!pinInput) return window.customAlert("Silakan ketik PIN keamanan kamu!");
+
+  showGamePreloader("MEMVERIFIKASI AKUN SISWA...", async (done) => {
+    try {
+      const { doc, getDoc } = window.fbFirestore;
+      const docSnap = await getDoc(doc(window.db, "siswa", nisnInput));
+      done();
+
+      if (!docSnap.exists()) {
+        $("modalErrorSiswa").classList.remove("hidden");
+        return;
+      }
+
+      const siswa = docSnap.data();
+      const serverPin = siswa.pin !== undefined ? String(siswa.pin) : "123456";
+      if (pinInput !== serverPin) {
+        return window.customAlert(
+          "❌ PIN yang kamu masukkan salah! Periksa kembali PIN kamu.",
+        );
+      }
+
+      if (siswa.dailyScore === undefined) siswa.dailyScore = 0;
+      startStudentSession(nisnInput, siswa);
+    } catch (err) {
+      done();
+      console.error("Gagal verifikasi login siswa:", err);
+      window.customAlert("Gagal login. Periksa koneksi internet kamu.");
+    }
+  });
+};
+
+async function autoLoginSiswa(nisnInput) {
+  showGamePreloader("MEMULIHKAN SESI SISWA...", async (done) => {
+    try {
+      const { doc, getDoc } = window.fbFirestore;
+      const docSnap = await getDoc(doc(window.db, "siswa", nisnInput));
+      done();
+
+      if (docSnap.exists()) {
+        const siswa = docSnap.data();
+        if (siswa.dailyScore === undefined) siswa.dailyScore = 0;
+        startStudentSession(nisnInput, siswa);
+      } else {
+        localStorage.removeItem("activeUser");
+        localStorage.removeItem("activeUserExpiry");
+        showScreen("siswa");
+      }
+    } catch (err) {
+      done();
+      console.error("Gagal memulihkan sesi siswa:", err);
+    }
+  });
+}
+
+window.gantiPinSiswa = async function () {
+  const myNisn = getMyNisn();
+  const oldPin = $("oldPinInput").value.trim();
+  const newPin = $("newPinInput").value.trim();
+
+  if (!myNisn) return window.customAlert("Silakan login terlebih dahulu!");
+  if (!oldPin || !newPin) {
+    return window.customAlert("⚠️ Mohon isi PIN lama dan PIN baru Anda!");
+  }
+  if (!/^\d{4,6}$/.test(newPin)) {
+    return window.customAlert(
+      "⚠️ PIN baru harus berupa 4 sampai 6 angka!",
+    );
+  }
+  if (newPin === "123456") {
+    return window.customAlert(
+      "⚠️ PIN baru tidak boleh sama dengan PIN bawaan (123456)!",
+    );
+  }
+
+  showGamePreloader("MENYIMPAN PIN BARU...", async (done) => {
+    try {
+      const { doc, getDoc, updateDoc } = window.fbFirestore;
+      const docRef = doc(window.db, "siswa", myNisn);
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists()) {
+        done();
+        return window.customAlert("Data siswa tidak ditemukan.");
+      }
+
+      const dataSiswa = docSnap.data();
+      const currentPin =
+        dataSiswa.pin !== undefined ? String(dataSiswa.pin) : "123456";
+
+      if (oldPin !== currentPin) {
+        done();
+        return window.customAlert("❌ PIN lama yang Anda masukkan salah!");
+      }
+
+      await updateDoc(docRef, { pin: newPin, hasChangedPin: true });
+
+      done();
+      window.customAlert(
+        "✅ PIN berhasil diubah! Kotak ganti PIN disembunyikan untuk keamanan.",
+      );
+
+      const cardGantiPin = $("cardGantiPin");
+      if (cardGantiPin) cardGantiPin.style.display = "none";
+      $("oldPinInput").value = "";
+      $("newPinInput").value = "";
+    } catch (err) {
+      done();
+      console.error("Gagal mengganti PIN:", err);
+      window.customAlert(
+        "Gagal memperbarui PIN. Periksa koneksi internet Anda.",
+      );
+    }
+  });
+};
+
+// ==========================================
+// SISTEM PERTEMANAN & SQUAD (CLOUD FIRESTORE)
+// ==========================================
 window.tambahTeman = async function () {
-  const targetNisn = document.getElementById("inputNisnTeman").value.trim();
+  const targetNisn = $("inputNisnTeman").value.trim();
   const myNisn = getMyNisn();
   if (!targetNisn)
     return window.customAlert("Ketik NISN teman yang mau di-invite!");
   if (targetNisn === myNisn)
     return window.customAlert("Tidak bisa mengundang diri sendiri ke Squad!");
+  if (!validNisnFormat(targetNisn))
+    return window.customAlert("Format NISN tidak valid!");
 
   const temanObj = masterDataSiswa.find((s) => s.nisn === targetNisn);
   if (!temanObj)
@@ -324,12 +854,14 @@ window.tambahTeman = async function () {
       "NISN teman tidak ditemukan di database sekolah!",
     );
 
-  if (
-    window.currentStudentDataCache &&
-    window.currentStudentDataCache.friends &&
-    window.currentStudentDataCache.friends.includes(targetNisn)
-  ) {
+  const cache = window.currentStudentDataCache || {};
+  if ((cache.friends || []).includes(targetNisn)) {
     return window.customAlert("Teman ini sudah ada di daftar Squad kamu!");
+  }
+  if ((cache.requests || []).includes(targetNisn)) {
+    return window.customAlert(
+      `${temanObj.nama} sudah mengundangmu! Terima undangannya di bagian "Undangan Masuk".`,
+    );
   }
 
   try {
@@ -339,8 +871,7 @@ window.tambahTeman = async function () {
 
     if (!targetSnap.exists())
       return window.customAlert("Data siswa tujuan tidak ditemukan di cloud.");
-    const targetData = targetSnap.data();
-    const targetRequests = targetData.requests || [];
+    const targetRequests = targetSnap.data().requests || [];
 
     if (targetRequests.includes(myNisn)) {
       return window.customAlert(
@@ -348,11 +879,9 @@ window.tambahTeman = async function () {
       );
     }
 
-    await updateDoc(targetRef, {
-      requests: arrayUnion(myNisn),
-    });
+    await updateDoc(targetRef, { requests: arrayUnion(myNisn) });
 
-    document.getElementById("inputNisnTeman").value = "";
+    $("inputNisnTeman").value = "";
     window.customAlert(
       `📨 Undangan Squad berhasil dikirim ke ${temanObj.nama}! Menunggu konfirmasi.`,
     );
@@ -366,18 +895,13 @@ window.terimaUndangan = async function (senderNisn) {
   const myNisn = getMyNisn();
   try {
     const { doc, updateDoc, arrayUnion, arrayRemove } = window.fbFirestore;
-    const myRef = doc(window.db, "siswa", myNisn);
-    const senderRef = doc(window.db, "siswa", senderNisn);
-
-    await updateDoc(myRef, {
+    await updateDoc(doc(window.db, "siswa", myNisn), {
       requests: arrayRemove(senderNisn),
       friends: arrayUnion(senderNisn),
     });
-
-    await updateDoc(senderRef, {
+    await updateDoc(doc(window.db, "siswa", senderNisn), {
       friends: arrayUnion(myNisn),
     });
-
     window.customAlert(
       "✅ Undangan diterima! Kalian sekarang resmi berteman di Squad.",
     );
@@ -407,12 +931,12 @@ window.hapusTeman = async function (targetNisn) {
   const myNisn = getMyNisn();
   try {
     const { doc, updateDoc, arrayRemove } = window.fbFirestore;
-    const myRef = doc(window.db, "siswa", myNisn);
-    const targetRef = doc(window.db, "siswa", targetNisn);
-
-    await updateDoc(myRef, { friends: arrayRemove(targetNisn) });
-    await updateDoc(targetRef, { friends: arrayRemove(myNisn) });
-
+    await updateDoc(doc(window.db, "siswa", myNisn), {
+      friends: arrayRemove(targetNisn),
+    });
+    await updateDoc(doc(window.db, "siswa", targetNisn), {
+      friends: arrayRemove(myNisn),
+    });
     window.customAlert("Teman berhasil dihapus dari Squad.");
   } catch (err) {
     console.error("Gagal menghapus teman:", err);
@@ -420,201 +944,399 @@ window.hapusTeman = async function (targetNisn) {
   }
 };
 
-let friendListeners = {};
-
-function renderDaftarTeman(friendsArray, requestsArray) {
-  if (!friendsArray && window.currentStudentDataCache) {
-    friendsArray = window.currentStudentDataCache.friends || [];
-  }
-  if (!requestsArray && window.currentStudentDataCache) {
-    requestsArray = window.currentStudentDataCache.requests || [];
-  }
-  friendsArray = friendsArray || [];
-  requestsArray = requestsArray || [];
-
-  Object.values(friendListeners).forEach((unsub) => unsub());
-  friendListeners = {};
-
-  const container = document.getElementById("listTemanContainer");
-  const containerUndangan = document.getElementById("containerUndanganMasuk");
-  const counterTxt = document.getElementById("jumlahTemanTxt");
-  if (!container) return;
-
-  if (containerUndangan) {
-    containerUndangan.innerHTML = "";
-    if (requestsArray.length > 0) {
-      let reqHtml = `<div style="font-size: 10px; color: #f1c40f; font-weight: bold; margin-bottom: 4px;">📩 Undangan Masuk (${requestsArray.length}):</div>`;
-      requestsArray.forEach((senderNisn) => {
-        const sender = masterDataSiswa.find((s) => s.nisn === senderNisn);
-        const senderName = sender ? sender.nama : `NISN: ${senderNisn}`;
-        reqHtml += `
-        <div style="background: rgba(241, 196, 15, 0.1); border: 1px solid #f1c40f; border-radius: 6px; padding: 6px 8px; display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px;">
-          <span style="font-size: 10px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><strong>${senderName}</strong> mengundangmu</span>
-          <div style="display: flex; gap: 4px; flex-shrink: 0;">
-            <button type="button" onclick="terimaUndangan('${senderNisn}')" style="margin-top: 0; padding: 3px 6px; font-size: 8.5px; background: #2ecc71; color: #fff; width: auto; border-radius: 4px; box-shadow: none;">Terima</button>
-            <button type="button" onclick="tolakUndangan('${senderNisn}')" style="margin-top: 0; padding: 3px 6px; font-size: 8.5px; background: #e74c3c; color: #fff; width: auto; border-radius: 4px; box-shadow: none;">Tolak</button>
-          </div>
-        </div>
-        `;
-      });
-      containerUndangan.innerHTML = reqHtml;
-    }
-  }
-
-  counterTxt.innerText = `${friendsArray.length} Teman`;
-
-  if (friendsArray.length === 0) {
-    container.innerHTML = `<div style="font-size: 10px; color: #95a5a6; text-align: center; padding: 10px;">Belum ada teman di Squad. Yuk invite temanmu!</div>`;
-    return;
-  }
-
-  let friendsHtml = "";
-
-  friendsArray.forEach((nisn) => {
-    const teman = masterDataSiswa.find((s) => s.nisn === nisn);
-    const namaTeman = teman ? teman.nama : `NISN: ${nisn}`;
-    const kelasTeman = teman ? teman.kelas : "-";
-    const avatarFile =
-      teman && teman.fotoUrl
-        ? teman.fotoUrl
-        : teman && teman.jk && teman.jk.toUpperCase() === "P"
-          ? "assets/foto_siswa/avatar_p.webp"
-          : "assets/foto_siswa/avatar_l.webp";
-
-    friendsHtml += `
-    <div style="background: #111823; border: 1px solid #34495e; border-radius: 8px; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px;">
-      <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; flex: 1;">
-        <div style="width: 32px; height: 32px; border-radius: 6px; overflow: hidden; background: #2c3e50; flex-shrink: 0; border: 1px solid #f1c40f;">
-          <img src="${avatarFile}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='assets/foto_siswa/avatar.webp'">
-        </div>
-        <div style="overflow: hidden; flex: 1;">
-          <div style="display: flex; align-items: center; gap: 5px; overflow: hidden;">
-            <div style="font-size: 11px; font-weight: bold; color: #f1c40f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${namaTeman}</div>
-            <span id="badge_unread_${nisn}" style="display: none; background: #e74c3c; color: #fff; font-size: 8px; font-weight: bold; padding: 1px 5px; border-radius: 10px;">0</span>
-          </div>
-          <div style="font-size: 9px; color: #bdc3c7;">Kelas: ${kelasTeman}</div>
-          <div id="status_container_${nisn}" style="font-size: 8.5px; color: #e74c3c; display: flex; align-items: center; gap: 4px; margin-top: 1px;">
-            <span id="status_dot_${nisn}" style="width: 6px; height: 6px; border-radius: 50%; background: #e74c3c; display: inline-block;"></span>
-            <span id="status_txt_${nisn}">Memuat status...</span>
-          </div>
-        </div>
-      </div>
-      <div style="display: flex; gap: 4px; flex-shrink: 0;">
-        <button type="button" onclick="bukaChatTeman('${nisn}', '${namaTeman}')" style="margin-top: 0; padding: 4px 8px; font-size: 9px; background: #3498db; color: #fff; width: auto; border-radius: 6px; border: none; cursor: pointer; box-shadow: none;">Chat 💬</button>
-        <button type="button" onclick="hapusTeman('${nisn}')" style="margin-top: 0; padding: 4px 8px; font-size: 9px; background: #e74c3c; color: #fff; width: auto; border-radius: 6px; border: none; cursor: pointer; box-shadow: none;">Hapus</button>
-      </div>
-    </div>
-    `;
-
-    listenToFriendStatus(nisn, (statusInfo) => {
-      const dotEl = document.getElementById(`status_dot_${nisn}`);
-      const txtEl = document.getElementById(`status_txt_${nisn}`);
-      if (dotEl && txtEl) {
-        dotEl.style.background = statusInfo.isOnline ? "#2ecc71" : "#e74c3c";
-        txtEl.style.color = statusInfo.isOnline ? "#2ecc71" : "#bdc3c7";
-        txtEl.innerText = statusInfo.text;
-      }
-    });
-
-    try {
-      const { collection, onSnapshot } = window.fbFirestore;
-      const roomQuery = collection(
-        window.db,
-        "chats",
-        getChatRoomId(getMyNisn(), nisn),
-        "messages",
-      );
-      const unsub = onSnapshot(roomQuery, (snapshot) => {
-        let unreadCount = 0;
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          if (data.senderNisn === nisn && data.read === false) {
-            unreadCount++;
-          }
-        });
-        const badgeEl = document.getElementById(`badge_unread_${nisn}`);
-        if (badgeEl) {
-          if (unreadCount > 0) {
-            badgeEl.style.display = "inline-block";
-            badgeEl.innerText = unreadCount;
-          } else {
-            badgeEl.style.display = "none";
-          }
-        }
-      });
-      friendListeners[nisn] = unsub;
-    } catch (e) {
-      console.error("Gagal melacak unread:", e);
-    }
-  });
-
-  container.innerHTML = friendsHtml;
-}
-
-// ==========================================
-// SISTEM CHAT PERORANGAN (MESSENGER 1-ON-1)
-// ==========================================
-let activeChatListener = null;
-let currentChatTargetNisn = "";
-
-window.bukaChatTeman = function (targetNisn, targetNama) {
-  currentChatTargetNisn = targetNisn;
-  document.getElementById("chatTitleNama").innerText = targetNama;
-  document.getElementById("modalChatTeman").classList.remove("hidden");
-  loadPesanChatRealtime(targetNisn);
-};
-
-window.tutupChatTeman = function () {
-  document.getElementById("modalChatTeman").classList.add("hidden");
-
-  if (activeChatListener) {
-    activeChatListener();
-    activeChatListener = null;
-  }
-
-  if (window.currentStudentDataCache) {
-    renderDaftarTeman(
-      window.currentStudentDataCache.friends,
-      window.currentStudentDataCache.requests,
-    );
-  } else {
-    renderDaftarTeman();
-  }
-};
-
 function getChatRoomId(nisn1, nisn2) {
   return [nisn1, nisn2].sort().join("_");
 }
 
+// ==========================================
+// NAVIGASI TAB SISWA (PROFIL / TEMAN / CHAT / GLOBAL)
+// ==========================================
+const SISWA_TABS = ["profil", "teman", "chat", "global"];
+let siswaActiveTab = "profil";
+let friendState = {}; // nisn -> { online, statusText, unread, last }
+let friendRenderQueued = false;
+let globalUnread = 0;
+let globalSeenTs = 0;
+
+function setSiswaAppMode(on) {
+  $("siswaCard").classList.toggle("siswa-app-mode", !!on);
+}
+
+function scrollToBottom(id) {
+  const el = $(id);
+  if (el) el.scrollTop = el.scrollHeight;
+}
+
+function setBadge(id, n) {
+  const el = $(id);
+  if (!el) return;
+  if (n > 0) {
+    el.textContent = n > 99 ? "99+" : String(n);
+    el.classList.remove("hidden");
+  } else {
+    el.classList.add("hidden");
+  }
+}
+
+function updateTabBadges() {
+  const requests = (window.currentStudentDataCache?.requests || []).length;
+  const unreadChat = Object.values(friendState).reduce(
+    (sum, st) => sum + (st.unread || 0),
+    0,
+  );
+  setBadge("tabBadgeTeman", requests);
+  setBadge("tabBadgeChat", unreadChat);
+  setBadge("tabBadgeGlobal", globalUnread);
+}
+
+window.switchSiswaTab = function (tab) {
+  if (!SISWA_TABS.includes(tab)) tab = "profil";
+  const prev = siswaActiveTab;
+  siswaActiveTab = tab;
+
+  SISWA_TABS.forEach((t) => {
+    const panel = $("siswaTab" + t.charAt(0).toUpperCase() + t.slice(1));
+    const btn = document.querySelector(`.siswa-tab-btn[data-tab="${t}"]`);
+    if (panel) panel.classList.toggle("hidden", t !== tab);
+    if (btn) btn.classList.toggle("active", t === tab);
+  });
+
+  // Listener berat hanya aktif saat tab-nya terlihat
+  if (prev === "chat" && tab !== "chat") detachChatRoomListener();
+  if (prev === "global" && tab !== "global") stopGlobalOnlineListener();
+
+  if (tab === "chat") {
+    renderChatList();
+    if (prev !== "chat" && currentChatTargetNisn) {
+      attachChatHeaderStatus(currentChatTargetNisn);
+      loadPesanChatRealtime(currentChatTargetNisn);
+    }
+  } else if (tab === "global") {
+    markGlobalSeen();
+    startGlobalOnlineListener();
+    scrollToBottom("globalChatContainer");
+  }
+};
+
+// ==========================================
+// HUB TEMAN: status online, pesan belum dibaca, pesan terakhir
+// ==========================================
+function scheduleFriendRender() {
+  if (friendRenderQueued) return;
+  friendRenderQueued = true;
+  requestAnimationFrame(() => {
+    friendRenderQueued = false;
+    renderTemanList();
+    renderChatList();
+    updateTabBadges();
+  });
+}
+
+function formatChatTime(last) {
+  if (!last) return "";
+  const ts = last.timestamp || 0;
+  if (!ts) return last.time || "";
+  const d = new Date(ts);
+  if (localDateStr(d) === localDateStr()) return last.time || localTimeStr(d);
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}`;
+}
+
+function avatarWithDot(teman, online) {
+  const src = teman ? avatarFor(teman) : "assets/foto_siswa/avatar_l.webp";
+  return `<div class="avatar-wrap"><img src="${escapeHtml(src)}" alt="" onerror="${AVATAR_ONERROR}"><span class="presence-dot ${online ? "on" : ""}"></span></div>`;
+}
+
+function renderRequests(requestsArray) {
+  const containerUndangan = $("containerUndanganMasuk");
+  if (!containerUndangan) return;
+  if (!requestsArray || requestsArray.length === 0) {
+    containerUndangan.innerHTML = "";
+    return;
+  }
+  let html = `<div class="request-title">📩 Undangan Masuk (${requestsArray.length}):</div>`;
+  requestsArray.forEach((senderNisn) => {
+    const sender = masterDataSiswa.find((s) => s.nisn === senderNisn);
+    const senderName = sender ? sender.nama : `NISN: ${senderNisn}`;
+    const sNisn = escapeHtml(senderNisn);
+    html += `
+    <div class="request-row">
+      <span class="request-text"><strong>${escapeHtml(senderName)}</strong> mengundangmu</span>
+      <div class="request-actions">
+        <button type="button" class="mini-btn ok" data-nisn="${sNisn}" onclick="terimaUndangan(this.dataset.nisn)">Terima</button>
+        <button type="button" class="mini-btn del" data-nisn="${sNisn}" onclick="tolakUndangan(this.dataset.nisn)">Tolak</button>
+      </div>
+    </div>`;
+  });
+  containerUndangan.innerHTML = html;
+}
+
+function renderTemanList() {
+  const container = $("listTemanContainer");
+  const counter = $("jumlahTemanTxt");
+  if (!container) return;
+
+  const friends = window.currentStudentDataCache?.friends || [];
+  if (counter) counter.innerText = `${friends.length} Teman`;
+
+  if (friends.length === 0) {
+    container.innerHTML = `<div class="empty-note">Belum ada teman di Squad. Yuk invite temanmu!</div>`;
+    return;
+  }
+
+  const items = friends.map((nisn) => ({
+    nisn,
+    teman: masterDataSiswa.find((s) => s.nisn === nisn),
+    st: friendState[nisn] || {},
+  }));
+  // Yang online di atas, lalu urut nama
+  items.sort((a, b) => {
+    if (!!b.st.online !== !!a.st.online) return b.st.online ? 1 : -1;
+    return String(a.teman?.nama || a.nisn).localeCompare(
+      String(b.teman?.nama || b.nisn),
+    );
+  });
+
+  container.innerHTML = items
+    .map(({ nisn, teman, st }) => {
+      const nama = teman ? teman.nama : `NISN: ${nisn}`;
+      const kelas = teman ? teman.kelas : "-";
+      const sNisn = escapeHtml(nisn);
+      const unread = st.unread
+        ? ` <span class="row-unread">${st.unread}</span>`
+        : "";
+      return `
+      <div class="friend-row">
+        ${avatarWithDot(teman, st.online)}
+        <div class="row-main">
+          <div class="row-name">${escapeHtml(nama)}</div>
+          <div class="row-sub">Kelas: ${escapeHtml(kelas)}</div>
+          <div class="row-status ${st.online ? "on" : ""}">${escapeHtml(st.statusText || "Memuat status...")}</div>
+        </div>
+        <div class="row-actions">
+          <button type="button" class="mini-btn chat" data-nisn="${sNisn}" data-nama="${escapeHtml(nama)}" onclick="bukaChatTeman(this.dataset.nisn, this.dataset.nama)">Chat 💬${unread}</button>
+          <button type="button" class="mini-btn del" data-nisn="${sNisn}" onclick="hapusTeman(this.dataset.nisn)">Hapus</button>
+        </div>
+      </div>`;
+    })
+    .join("");
+}
+
+function renderChatList() {
+  const container = $("chatListContainer");
+  if (!container) return;
+
+  const friends = window.currentStudentDataCache?.friends || [];
+  if (friends.length === 0) {
+    container.innerHTML = `<div class="empty-note">Belum ada teman untuk diajak ngobrol.<br>Tambahkan teman dulu di tab <strong>Teman</strong>.</div>`;
+    return;
+  }
+
+  const me = getMyNisn();
+  const items = friends.map((nisn) => ({
+    nisn,
+    teman: masterDataSiswa.find((s) => s.nisn === nisn),
+    st: friendState[nisn] || {},
+  }));
+  // Percakapan terbaru di atas, teman tanpa pesan di bawah (urut nama)
+  items.sort((a, b) => {
+    const ta = a.st.last?.timestamp || 0;
+    const tb = b.st.last?.timestamp || 0;
+    if (tb !== ta) return tb - ta;
+    return String(a.teman?.nama || a.nisn).localeCompare(
+      String(b.teman?.nama || b.nisn),
+    );
+  });
+
+  container.innerHTML = items
+    .map(({ nisn, teman, st }) => {
+      const nama = teman ? teman.nama : `NISN: ${nisn}`;
+      let preview = "Belum ada pesan. Ketuk untuk menyapa 👋";
+      if (st.last) {
+        preview = (st.last.senderNisn === me ? "Kamu: " : "") + (st.last.text || "");
+      }
+      return `
+      <div class="chat-row ${st.unread ? "has-unread" : ""}" data-nisn="${escapeHtml(nisn)}" data-nama="${escapeHtml(nama)}" onclick="bukaChatTeman(this.dataset.nisn, this.dataset.nama)">
+        ${avatarWithDot(teman, st.online)}
+        <div class="row-main">
+          <div class="row-top">
+            <span class="row-name">${escapeHtml(nama)}</span>
+            <span class="row-time">${escapeHtml(formatChatTime(st.last))}</span>
+          </div>
+          <div class="row-bottom">
+            <span class="row-preview">${escapeHtml(preview)}</span>
+            ${st.unread ? `<span class="row-unread">${st.unread}</span>` : ""}
+          </div>
+        </div>
+      </div>`;
+    })
+    .join("");
+}
+
+function setupFriendHub(friendsArray, requestsArray) {
+  friendsArray = friendsArray || [];
+  requestsArray = requestsArray || [];
+
+  unsubscribeAllFriendListeners();
+
+  // Pertahankan state lama agar tampilan tidak berkedip
+  const prev = friendState;
+  friendState = {};
+  friendsArray.forEach((nisn) => {
+    friendState[nisn] = prev[nisn] || {
+      online: false,
+      statusText: "Memuat status...",
+      unread: 0,
+      last: null,
+    };
+  });
+
+  renderRequests(requestsArray);
+
+  const myNisn = getMyNisn();
+  const { collection, query, where, orderBy, limit, onSnapshot } =
+    window.fbFirestore;
+
+  friendsArray.forEach((nisn) => {
+    friendStatusListeners[nisn] = subscribeStatus(nisn, (info) => {
+      const st = friendState[nisn];
+      if (!st) return;
+      st.online = info.isOnline;
+      st.statusText = info.text;
+      scheduleFriendRender();
+    });
+
+    try {
+      const roomRef = collection(
+        window.db,
+        "chats",
+        getChatRoomId(myNisn, nisn),
+        "messages",
+      );
+
+      // Hanya pesan teman yang belum dibaca
+      const unsubUnread = onSnapshot(
+        query(roomRef, where("senderNisn", "==", nisn), where("read", "==", false)),
+        (snap) => {
+          const st = friendState[nisn];
+          if (!st) return;
+          st.unread = snap.size;
+          scheduleFriendRender();
+        },
+        (err) => console.error("Gagal melacak unread:", err),
+      );
+
+      // Pesan terakhir untuk pratinjau daftar percakapan
+      const unsubLast = onSnapshot(
+        query(roomRef, orderBy("timestamp", "desc"), limit(1)),
+        (snap) => {
+          const st = friendState[nisn];
+          if (!st) return;
+          st.last = snap.empty ? null : snap.docs[0].data();
+          scheduleFriendRender();
+        },
+        (err) => console.error("Gagal memuat pesan terakhir:", err),
+      );
+
+      friendListeners[nisn] = () => {
+        unsubUnread();
+        unsubLast();
+      };
+    } catch (e) {
+      console.error("Gagal memasang listener chat teman:", e);
+    }
+  });
+
+  scheduleFriendRender();
+}
+
+// ==========================================
+// SISTEM CHAT PERORANGAN (MESSENGER 1-ON-1) - TAB CHAT
+// ==========================================
+let activeChatListener = null;
+let chatStatusUnsub = null;
+let currentChatTargetNisn = "";
+let lastChatSendAt = 0;
+
+function detachChatRoomListener() {
+  if (activeChatListener) {
+    activeChatListener();
+    activeChatListener = null;
+  }
+  if (chatStatusUnsub) {
+    chatStatusUnsub();
+    chatStatusUnsub = null;
+  }
+}
+
+function attachChatHeaderStatus(nisn) {
+  if (chatStatusUnsub) chatStatusUnsub();
+  const subEl = $("chatSubStatus");
+  chatStatusUnsub = subscribeStatus(nisn, (info) => {
+    if (!subEl) return;
+    subEl.textContent = (info.isOnline ? "● " : "○ ") + info.text;
+    subEl.style.color = info.isOnline ? "#2ecc71" : "#94a3b8";
+  });
+}
+
+window.bukaChatTeman = function (targetNisn, targetNama) {
+  currentChatTargetNisn = targetNisn;
+
+  const teman = masterDataSiswa.find((s) => s.nisn === targetNisn);
+  $("chatTitleNama").textContent = targetNama;
+  const av = $("chatRoomAvatar");
+  if (av) av.src = teman ? avatarFor(teman) : "assets/foto_siswa/avatar_l.webp";
+
+  $("chatListView").classList.add("hidden");
+  $("chatRoomView").classList.remove("hidden");
+  $("chatMessageContainer").innerHTML =
+    `<div class="empty-note">Menghubungkan ke ruang aman...</div>`;
+
+  if (siswaActiveTab !== "chat") {
+    // switchSiswaTab akan memasang listener & status header
+    window.switchSiswaTab("chat");
+  } else {
+    detachChatRoomListener();
+    attachChatHeaderStatus(targetNisn);
+    loadPesanChatRealtime(targetNisn);
+  }
+};
+
+// Tombol kembali: kembali ke daftar percakapan
+window.tutupChatTeman = function () {
+  detachChatRoomListener();
+  currentChatTargetNisn = "";
+  $("chatRoomView").classList.add("hidden");
+  $("chatListView").classList.remove("hidden");
+  renderChatList();
+};
+
 async function loadPesanChatRealtime(targetNisn) {
   const myNisn = getMyNisn();
   const roomId = getChatRoomId(myNisn, targetNisn);
-  const container = document.getElementById("chatMessageContainer");
-  container.innerHTML = `<div style="font-size: 11px; color: #888; text-align: center; margin: auto;">Menghubungkan ke ruang aman...</div>`;
+  const container = $("chatMessageContainer");
 
   try {
-    const {
-      collection,
-      query,
-      orderBy,
-      where,
-      onSnapshot,
-      doc,
-      updateDoc,
-      getDocs,
-      deleteDoc,
-    } = window.fbFirestore;
+    const { collection, query, orderBy, where, onSnapshot, doc, updateDoc, getDocs, deleteDoc } =
+      window.fbFirestore;
     const messagesRef = collection(window.db, "chats", roomId, "messages");
-
     const tujuhHariLalu = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const qExpired = query(messagesRef, where("timestamp", "<", tujuhHariLalu));
-    const expiredSnap = await getDocs(qExpired);
 
-    expiredSnap.forEach((docSnap) => {
-      deleteDoc(doc(window.db, "chats", roomId, "messages", docSnap.id)).catch(
-        (err) => console.log("Gagal hapus pesan lama:", err),
+    // Bersihkan pesan kedaluwarsa (gagal tidak boleh menggagalkan chat)
+    try {
+      const expiredSnap = await getDocs(
+        query(messagesRef, where("timestamp", "<", tujuhHariLalu)),
       );
-    });
+      expiredSnap.forEach((docSnap) => {
+        deleteDoc(doc(window.db, "chats", roomId, "messages", docSnap.id)).catch(
+          (err) => console.log("Gagal hapus pesan lama:", err),
+        );
+      });
+    } catch (e) {
+      console.log("Lewati pembersihan pesan lama:", e);
+    }
+
+    // Pengguna mungkin sudah pindah tab / ganti chat selama proses di atas
+    if (siswaActiveTab !== "chat" || currentChatTargetNisn !== targetNisn) return;
 
     const qValid = query(
       messagesRef,
@@ -624,83 +1346,76 @@ async function loadPesanChatRealtime(targetNisn) {
 
     if (activeChatListener) activeChatListener();
 
-    activeChatListener = onSnapshot(qValid, (snapshot) => {
-      if (snapshot.empty) {
-        container.innerHTML = `<div style="font-size: 11px; color: #888; text-align: center; margin: auto;">Belum ada riwayat pesan. Mulai sapa temanmu sekarang! 👋</div>`;
-        return;
-      }
-
-      let chatHtml = "";
-
-      snapshot.forEach((docSnap) => {
-        const msg = docSnap.data();
-        const msgId = docSnap.id;
-        const isMe = msg.senderNisn === myNisn;
-
-        if (!isMe && !msg.read) {
-          updateDoc(doc(window.db, "chats", roomId, "messages", msgId), {
-            read: true,
-          });
+    activeChatListener = onSnapshot(
+      qValid,
+      (snapshot) => {
+        if (snapshot.empty) {
+          container.innerHTML = `<div class="empty-note">Belum ada riwayat pesan. Mulai sapa temanmu sekarang! 👋</div>`;
+          return;
         }
 
-        let bubbleStyle = isMe
-          ? "align-self: flex-end; background: #1e3c72; color: #fff; border-bottom-right-radius: 2px;"
-          : "align-self: flex-start; background: #ffffff; color: #333; border: 1.5px solid #e2e8f0; border-bottom-left-radius: 2px;";
+        let chatHtml = "";
+        snapshot.forEach((docSnap) => {
+          const msg = docSnap.data();
+          const isMe = msg.senderNisn === myNisn;
 
-        let timeFormatted = msg.time || "";
-        let tickStatus = "";
+          if (!isMe && !msg.read) {
+            updateDoc(doc(window.db, "chats", roomId, "messages", docSnap.id), {
+              read: true,
+            }).catch((e) => console.log("Gagal tandai dibaca:", e));
+          }
 
-        if (isMe) {
-          tickStatus = msg.read
-            ? `<span style="color: #38bdf8; margin-left: 4px; font-weight: bold;" title="Sudah Dibaca">✓✓</span>`
-            : `<span style="color: #cbd5e1; margin-left: 4px;" title="Terkirim">✓</span>`;
-        }
+          const tick = isMe
+            ? msg.read
+              ? `<span class="tick read" title="Sudah Dibaca">✓✓</span>`
+              : `<span class="tick" title="Terkirim">✓</span>`
+            : "";
 
-        chatHtml += `
-        <div style="${bubbleStyle} padding: 8px 12px; border-radius: 12px; max-width: 75%; font-size: 11px; word-break: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-          <div>${escapeHtml(msg.text)}</div>
-          <div style="font-size: 7.5px; opacity: 0.8; text-align: right; margin-top: 3px; display: flex; justify-content: flex-end; align-items: center; gap: 2px;">
-            <span>${timeFormatted}</span>
-            ${tickStatus}
-          </div>
-        </div>
-        `;
-      });
+          chatHtml += `
+          <div class="bubble ${isMe ? "me" : "them"}">
+            <div class="bubble-text">${escapeHtml(msg.text)}</div>
+            <div class="bubble-meta"><span>${escapeHtml(msg.time || "")}</span>${tick}</div>
+          </div>`;
+        });
 
-      container.innerHTML = chatHtml;
-      container.scrollTop = container.scrollHeight;
-    });
+        container.innerHTML = chatHtml;
+        container.scrollTop = container.scrollHeight;
+      },
+      (err) => {
+        console.error("Gagal memuat chat:", err);
+        container.innerHTML = `<div class="empty-note" style="color:#e74c3c">Gagal memuat ruang obrolan.</div>`;
+      },
+    );
   } catch (err) {
     console.error("Gagal memuat chat:", err);
-    container.innerHTML = `<div style="font-size: 11px; color: #e74c3c; text-align: center; margin: auto;">Gagal memuat ruang obrolan.</div>`;
+    container.innerHTML = `<div class="empty-note" style="color:#e74c3c">Gagal memuat ruang obrolan.</div>`;
   }
 }
 
 window.kirimPesanChat = async function () {
-  const inputEl = document.getElementById("inputPesanChat");
+  const inputEl = $("inputPesanChat");
   const text = inputEl.value.trim();
   if (!text) return;
+  if (!currentChatTargetNisn) return;
 
-  // BATASAN ANTI-SPAM: Maksimal 250 karakter untuk Chat 1-on-1
-  if (text.length > 250) {
+  if (text.length > CHAT_MAX_LEN) {
     return window.customAlert(
-      `⚠️ Pesan terlalu panjang (${text.length}/250 karakter). Maksimal 250 karakter per pesan agar terhindar dari spam!`,
+      `⚠️ Pesan terlalu panjang (${text.length}/${CHAT_MAX_LEN} karakter). Maksimal ${CHAT_MAX_LEN} karakter per pesan agar terhindar dari spam!`,
     );
   }
+  if (Date.now() - lastChatSendAt < CHAT_COOLDOWN_MS) return;
+  lastChatSendAt = Date.now();
 
   const myNisn = getMyNisn();
   const targetNisn = currentChatTargetNisn;
   const roomId = getChatRoomId(myNisn, targetNisn);
-
-  const now = new Date();
-  const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
   try {
     const { collection, addDoc, doc, setDoc } = window.fbFirestore;
     await setDoc(
       doc(window.db, "chats", roomId),
       {
-        roomId: roomId,
+        roomId,
         nisn1: myNisn,
         nisn2: targetNisn,
         lastUpdated: Date.now(),
@@ -710,8 +1425,8 @@ window.kirimPesanChat = async function () {
 
     await addDoc(collection(window.db, "chats", roomId, "messages"), {
       senderNisn: myNisn,
-      text: text,
-      time: timeStr,
+      text,
+      time: localTimeStr(),
       timestamp: Date.now(),
       read: false,
     });
@@ -724,42 +1439,56 @@ window.kirimPesanChat = async function () {
 };
 
 // ==========================================
-// SISTEM MONITORING CHAT ADMIN (GLOBAL)
+// SISTEM MONITORING CHAT ADMIN (CHAT PERORANGAN)
 // ==========================================
 let adminActiveChatListener = null;
 let currentAdminSelectedRoomId = "";
 
+function namaDariNisn(nisn) {
+  const s = masterDataSiswa.find((x) => x.nisn === nisn);
+  return s ? s.nama : nisn;
+}
+
+// Hapus banyak dokumen dengan batch (maks 500 per batch)
+async function deleteDocsInChunks(docRefs) {
+  const { writeBatch } = window.fbFirestore;
+  for (let i = 0; i < docRefs.length; i += BATCH_CHUNK) {
+    const batch = writeBatch(window.db);
+    docRefs.slice(i, i + BATCH_CHUNK).forEach((ref) => batch.delete(ref));
+    await batch.commit();
+  }
+}
+
 window.loadAdminChatRooms = async function () {
-  const roomListContainer = document.getElementById("adminRoomList");
+  const roomListContainer = $("adminRoomList");
   if (!roomListContainer) return;
   roomListContainer.innerHTML = `<div style="font-size: 10px; color: #888; text-align: center; margin: auto;">Memuat seluruh daftar percakapan...</div>`;
 
   try {
     const { collection, getDocs } = window.fbFirestore;
-    const chatsRef = collection(window.db, "chats");
-    const snapshot = await getDocs(chatsRef);
+    const snapshot = await getDocs(collection(window.db, "chats"));
 
-    let roomsHtml = "";
-    let count = 0;
-
+    const rooms = [];
     snapshot.forEach((docSnap) => {
-      const roomId = docSnap.id;
-      const [nisn1, nisn2] = roomId.split("_");
-      count++;
-
-      roomsHtml += `
-      <div onclick="monitorAdminRoom('${roomId}')" style="padding: 8px 10px; background: #fff; border: 1.5px solid #cbd5e1; border-radius: 8px; cursor: pointer; transition: background 0.2s; margin-bottom: 4px;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">
-        <div style="font-size: 10px; font-weight: bold; color: #1e3c72;">💬 Chat:</div>
-        <div style="font-size: 9px; color: #334155; margin-top: 1px; font-weight: 500;">${nisn1} & ${nisn2}</div>
-      </div>
-      `;
+      rooms.push({ id: docSnap.id, lastUpdated: docSnap.data().lastUpdated || 0 });
     });
+    rooms.sort((a, b) => b.lastUpdated - a.lastUpdated);
 
-    if (count === 0) {
+    if (rooms.length === 0) {
       roomListContainer.innerHTML = `<div style="font-size: 10px; color: #888; text-align: center; margin: auto;">Belum ada ruang chat aktif dari siswa.</div>`;
-    } else {
-      roomListContainer.innerHTML = roomsHtml;
+      return;
     }
+
+    roomListContainer.innerHTML = rooms
+      .map((r) => {
+        const [nisn1, nisn2] = r.id.split("_");
+        return `
+        <div data-room="${escapeHtml(r.id)}" onclick="monitorAdminRoom(this.dataset.room)" style="padding: 8px 10px; background: #fff; border: 1.5px solid #cbd5e1; border-radius: 8px; cursor: pointer; margin-bottom: 4px;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">
+          <div style="font-size: 10px; font-weight: bold; color: #1e3c72;">💬 Chat:</div>
+          <div style="font-size: 9px; color: #334155; margin-top: 1px; font-weight: 500;">${escapeHtml(namaDariNisn(nisn1))} &amp; ${escapeHtml(namaDariNisn(nisn2))}</div>
+        </div>`;
+      })
+      .join("");
   } catch (err) {
     console.error("Gagal memuat room chat admin:", err);
     roomListContainer.innerHTML = `<div style="font-size: 10px; color: #e74c3c; text-align: center; margin: auto;">Gagal memuat data chat.</div>`;
@@ -768,46 +1497,51 @@ window.loadAdminChatRooms = async function () {
 
 window.monitorAdminRoom = function (roomId) {
   currentAdminSelectedRoomId = roomId;
-  const headerEl = document.getElementById("adminChatHeader");
-  const container = document.getElementById("adminMessageContainer");
+  const headerEl = $("adminChatHeader");
+  const container = $("adminMessageContainer");
   if (!headerEl || !container) return;
 
-  headerEl.innerText = `Memantau Ruang: ${roomId}`;
+  const [n1, n2] = roomId.split("_");
+  headerEl.innerText = `Memantau: ${namaDariNisn(n1)} & ${namaDariNisn(n2)}`;
 
   try {
-    const { collection, query, orderBy, onSnapshot } = window.fbFirestore;
-    const messagesRef = collection(window.db, "chats", roomId, "messages");
-    const q = query(messagesRef, orderBy("timestamp", "asc"));
+    const { collection, query, orderBy, onSnapshot, limit } = window.fbFirestore;
+    const q = query(
+      collection(window.db, "chats", roomId, "messages"),
+      orderBy("timestamp", "desc"),
+      limit(200),
+    );
 
     if (adminActiveChatListener) adminActiveChatListener();
 
-    adminActiveChatListener = onSnapshot(q, (snapshot) => {
-      if (snapshot.empty) {
-        container.innerHTML = `<div style="font-size: 11px; color: #888; text-align: center; margin: auto;">Belum ada pesan di ruang ini.</div>`;
-        return;
-      }
+    adminActiveChatListener = onSnapshot(
+      q,
+      (snapshot) => {
+        if (snapshot.empty) {
+          container.innerHTML = `<div style="font-size: 11px; color: #888; text-align: center; margin: auto;">Belum ada pesan di ruang ini.</div>`;
+          return;
+        }
 
-      let adminChatHtml = "";
+        const msgs = [];
+        snapshot.forEach((d) => msgs.push(d.data()));
+        msgs.reverse();
 
-      snapshot.forEach((docSnap) => {
-        const msg = docSnap.data();
-        const siswaObj = masterDataSiswa.find((s) => s.nisn === msg.senderNisn);
-        const namaPengirim = siswaObj ? siswaObj.nama : "Siswa";
-
-        adminChatHtml += `
-        <div style="background: #ffffff; color: #1e293b; border: 1.5px solid #e2e8f0; padding: 10px 14px; border-radius: 10px; width: 100%; font-size: 11px; word-break: break-word; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 6px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; border-bottom: 1px solid #f1f5f9; padding-bottom: 3px;">
-            <span style="font-size: 9.5px; font-weight: bold; color: #1e3c72;">👤 ${namaPengirim} - ${msg.senderNisn}</span>
-            <span style="font-size: 8.5px; color: #64748b;">${msg.time || ""}</span>
-          </div>
-          <div style="font-size: 11.5px; color: #334155; line-height: 1.4;">${escapeHtml(msg.text)}</div>
-        </div>
-        `;
-      });
-
-      container.innerHTML = adminChatHtml;
-      container.scrollTop = container.scrollHeight;
-    });
+        container.innerHTML = msgs
+          .map(
+            (msg) => `
+          <div style="background: #ffffff; color: #1e293b; border: 1.5px solid #e2e8f0; padding: 10px 14px; border-radius: 10px; width: 100%; font-size: 11px; word-break: break-word; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; border-bottom: 1px solid #f1f5f9; padding-bottom: 3px;">
+              <span style="font-size: 9.5px; font-weight: bold; color: #1e3c72;">👤 ${escapeHtml(namaDariNisn(msg.senderNisn))} - ${escapeHtml(msg.senderNisn)}</span>
+              <span style="font-size: 8.5px; color: #64748b;">${escapeHtml(msg.time || "")}</span>
+            </div>
+            <div style="font-size: 11.5px; color: #334155; line-height: 1.4;">${escapeHtml(msg.text)}</div>
+          </div>`,
+          )
+          .join("");
+        container.scrollTop = container.scrollHeight;
+      },
+      (err) => console.error("Gagal memantau pesan admin:", err),
+    );
   } catch (err) {
     console.error("Gagal memantau pesan admin:", err);
   }
@@ -819,40 +1553,19 @@ window.adminHapusSemuaChatRoom = async function () {
       "Pilih ruang chat terlebih dahulu dari daftar di sebelah kiri!",
     );
   }
+  const roomId = currentAdminSelectedRoomId;
   const yakin = await window.customConfirm(
-    `Yakin ingin menghapus SEMUA pesan di ruang chat ${currentAdminSelectedRoomId}?`,
+    `Yakin ingin menghapus SEMUA pesan di ruang chat ini?`,
   );
-  if (!yakin) {
-    return;
-  }
+  if (!yakin) return;
 
   showGamePreloader("MENDELETING ALL MESSAGES...", async (done) => {
     try {
-      const { collection, getDocs, doc, deleteDoc } = window.fbFirestore;
-      const messagesRef = collection(
-        window.db,
-        "chats",
-        currentAdminSelectedRoomId,
-        "messages",
+      const { collection, getDocs } = window.fbFirestore;
+      const snapshot = await getDocs(
+        collection(window.db, "chats", roomId, "messages"),
       );
-      const snapshot = await getDocs(messagesRef);
-
-      const deletePromises = [];
-      snapshot.forEach((docSnap) => {
-        deletePromises.push(
-          deleteDoc(
-            doc(
-              window.db,
-              "chats",
-              currentAdminSelectedRoomId,
-              "messages",
-              docSnap.id,
-            ),
-          ),
-        );
-      });
-
-      await Promise.all(deletePromises);
+      await deleteDocsInChunks(snapshot.docs.map((d) => d.ref));
       done();
       window.customAlert(
         "✅ Semua pesan di ruang chat ini berhasil dihapus oleh Admin!",
@@ -865,104 +1578,138 @@ window.adminHapusSemuaChatRoom = async function () {
   });
 };
 
-let masterDataSiswa = [];
-let masterDataTugas = [];
+// ==========================================
+// DATA MASTER SISWA (DENGAN CACHE BERBATAS WAKTU)
+// ==========================================
+function invalidateMasterCache() {
+  try {
+    sessionStorage.removeItem(CACHE_KEY);
+    sessionStorage.removeItem("master_siswa_cache"); // cache versi lama
+  } catch (e) {
+    /* abaikan */
+  }
+}
 
-async function loadMasterSiswaFromCloud(callback) {
-  const cachedData = sessionStorage.getItem("master_siswa_cache");
-  if (cachedData) {
-    masterDataSiswa = JSON.parse(cachedData);
-    masterDataSiswa.forEach((s) => {
-      if (s.dailyScore === undefined) s.dailyScore = 0;
-    });
-    if (callback) callback();
-    return;
+async function loadMasterSiswaFromCloud(callback, force = false) {
+  if (!force) {
+    try {
+      const raw = sessionStorage.getItem(CACHE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Date.now() - parsed.t < CACHE_TTL_MS) {
+          masterDataSiswa = parsed.data || [];
+          if (callback) callback();
+          return;
+        }
+      }
+    } catch (e) {
+      /* cache rusak -> ambil ulang */
+    }
   }
 
   try {
     const { collection, getDocs } = window.fbFirestore;
     const querySnapshot = await getDocs(collection(window.db, "siswa"));
-    masterDataSiswa = [];
-    querySnapshot.forEach((doc) => {
-      let sData = doc.data();
+    const list = [];
+    querySnapshot.forEach((d) => {
+      const sData = d.data();
       if (sData.dailyScore === undefined) sData.dailyScore = 0;
-      masterDataSiswa.push(sData);
+      // PIN & riwayat tidak perlu disimpan di memori/cache global
+      delete sData.pin;
+      delete sData.riwayat;
+      list.push(sData);
     });
-    sessionStorage.setItem(
-      "master_siswa_cache",
-      JSON.stringify(masterDataSiswa),
-    );
-    if (callback) callback();
+    masterDataSiswa = list;
+    try {
+      sessionStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify({ t: Date.now(), data: masterDataSiswa }),
+      );
+    } catch (e) {
+      console.warn("Cache sessionStorage penuh, lanjut tanpa cache.", e);
+    }
   } catch (err) {
     console.error("Gagal memuat data siswa:", err);
-    if (callback) callback();
   }
+  if (callback) callback();
 }
 
+async function refreshMasterSiswa() {
+  invalidateMasterCache();
+  await loadMasterSiswaFromCloud(null, true);
+}
+
+// ==========================================
+// TUGAS / PR
+// ==========================================
 async function loadTugasAktif() {
-  const container = document.getElementById("mainTaskBoardList");
-  const teacherContainer = document.getElementById("teacherTaskList");
+  const container = $("mainTaskBoardList");
+  const teacherContainer = $("teacherTaskList");
+  if (!container && !teacherContainer) return;
 
   try {
-    const { collection, getDocs } = window.fbFirestore;
-    const querySnapshot = await getDocs(collection(window.db, "tugas"));
+    const { collection, getDocs, query, where } = window.fbFirestore;
+    const satuMinggu = 7 * 24 * 60 * 60 * 1000;
+    const querySnapshot = await getDocs(
+      query(
+        collection(window.db, "tugas"),
+        where("timestamp", ">=", Date.now() - satuMinggu),
+      ),
+    );
 
     masterDataTugas = [];
-    const now = Date.now();
-    const satuMingguMs = 7 * 24 * 60 * 60 * 1000;
-
-    querySnapshot.forEach((docSnap) => {
-      let tData = docSnap.data();
-      if (tData.timestamp && now - tData.timestamp < satuMingguMs) {
-        masterDataTugas.push(tData);
-      }
-    });
+    querySnapshot.forEach((docSnap) => masterDataTugas.push(docSnap.data()));
+    masterDataTugas.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
     if (container) {
       if (masterDataTugas.length === 0) {
         container.innerHTML = `<div style="font-size: 10.5px; color: #888; text-align: center; padding: 10px;">Belum ada tugas atau PR aktif minggu ini.</div>`;
       } else {
-        let tugasHtml = "";
-        masterDataTugas.forEach((t) => {
-          tugasHtml += `
+        container.innerHTML = masterDataTugas
+          .map(
+            (t) => `
           <div style="background: #f8f9fa; border-left: 3px solid #f1c40f; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px;">
             <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 11px; color: #1e3c72; margin-bottom: 2px;">
-              <span>📌 ${t.judul}</span>
-              <span style="font-size: 8.5px; background: #e2e8f0; padding: 2px 5px; border-radius: 4px; color: #555;">${t.targetKelas}</span>
+              <span>📌 ${escapeHtml(t.judul)}</span>
+              <span style="font-size: 8.5px; background: #e2e8f0; padding: 2px 5px; border-radius: 4px; color: #555;">${escapeHtml(t.targetKelas)}</span>
             </div>
-            <div style="font-size: 10px; color: #444; line-height: 1.4; margin-bottom: 4px;">${t.isi}</div>
+            <div style="font-size: 10px; color: #444; line-height: 1.4; margin-bottom: 4px; white-space: pre-line;">${escapeHtml(t.isi)}</div>
             <div style="font-size: 8.5px; color: #888; display: flex; justify-content: space-between;">
-              <span>👨‍🏫 Oleh: ${t.namaGuru}</span>
-              <span>📅 ${t.tanggal}</span>
+              <span>👨‍🏫 Oleh: ${escapeHtml(t.namaGuru)}</span>
+              <span>📅 ${escapeHtml(t.tanggal)}</span>
             </div>
-          </div>
-          `;
-        });
-        container.innerHTML = tugasHtml;
+          </div>`,
+          )
+          .join("");
       }
     }
 
     if (teacherContainer) {
-      if (masterDataTugas.length === 0) {
-        teacherContainer.innerHTML = `<div style="font-size: 10px; color: #888; text-align: center; padding: 8px;">Tidak ada tugas aktif yang bisa dikelola.</div>`;
+      // Guru hanya mengelola tugas miliknya sendiri
+      const namaGuru = currentUser?.nama;
+      const milikku = masterDataTugas.filter((t) => t.namaGuru === namaGuru);
+      if (milikku.length === 0) {
+        teacherContainer.innerHTML = `<div style="font-size: 10px; color: #888; text-align: center; padding: 8px;">Tidak ada tugas aktif milikmu yang bisa dikelola.</div>`;
       } else {
-        let teacherTugasHtml = "";
-        masterDataTugas.forEach((t) => {
-          teacherTugasHtml += `
+        teacherContainer.innerHTML = milikku
+          .map(
+            (t) => `
           <div style="background: #111823; border: 1px solid #34495e; border-radius: 8px; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px;">
             <div style="overflow: hidden;">
-              <div style="font-size: 11px; font-weight: bold; color: #f1c40f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.judul}</div>
-              <div style="font-size: 9px; color: #bdc3c7;">Target: ${t.targetKelas} | ${t.tanggal}</div>
+              <div style="font-size: 11px; font-weight: bold; color: #f1c40f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(t.judul)}</div>
+              <div style="font-size: 9px; color: #bdc3c7;">Target: ${escapeHtml(t.targetKelas)} | ${escapeHtml(t.tanggal)}</div>
             </div>
-            <button type="button" onclick="hapusTugas('${t.id}')" style="margin-top: 0; padding: 4px 8px; font-size: 9px; background: #e74c3c; color: #fff; width: auto; border-radius: 6px; box-shadow: none; flex-shrink: 0;">Hapus</button>
-          </div>
-          `;
-        });
-        teacherContainer.innerHTML = teacherTugasHtml;
+            <button type="button" data-id="${escapeHtml(t.id)}" onclick="hapusTugas(this.dataset.id)" style="margin-top: 0; padding: 4px 8px; font-size: 9px; background: #e74c3c; color: #fff; width: auto; border-radius: 6px; box-shadow: none; flex-shrink: 0;">Hapus</button>
+          </div>`,
+          )
+          .join("");
       }
     }
   } catch (err) {
     console.error("Gagal memuat daftar tugas:", err);
+    if (container) {
+      container.innerHTML = `<div style="font-size: 10.5px; color: #e74c3c; text-align: center; padding: 10px;">Gagal memuat tugas. Periksa koneksi internet.</div>`;
+    }
   }
 }
 
@@ -976,7 +1723,6 @@ window.hapusTugas = async function (tugasId) {
     try {
       const { doc, deleteDoc } = window.fbFirestore;
       await deleteDoc(doc(window.db, "tugas", tugasId));
-
       done();
       window.customAlert("✅ Tugas berhasil dihapus!");
       loadTugasAktif();
@@ -988,6 +1734,49 @@ window.hapusTugas = async function (tugasId) {
   });
 };
 
+window.simpanPengumumanTugas = async function () {
+  const targetKelas = $("postKelasTarget").value;
+  const judul = $("postJudul").value.trim();
+  const isi = $("postIsi").value.trim();
+  const namaGuru = currentUser?.nama || $("txtNamaGuru").innerText;
+
+  if (!judul || !isi)
+    return window.customAlert("Judul dan isi tugas wajib diisi!");
+  if (judul.length > 120)
+    return window.customAlert("Judul maksimal 120 karakter!");
+  if (isi.length > 1500)
+    return window.customAlert("Isi tugas maksimal 1500 karakter!");
+
+  showGamePreloader("PUBLISHING TASK TO CLOUD...", async (done) => {
+    try {
+      const { doc, setDoc } = window.fbFirestore;
+      const tugasId = "tugas_" + Date.now();
+
+      await setDoc(doc(window.db, "tugas", tugasId), {
+        id: tugasId,
+        targetKelas,
+        judul,
+        isi,
+        namaGuru,
+        tanggal: localDateStr(),
+        timestamp: Date.now(),
+      });
+
+      done();
+      window.customAlert("✅ Tugas & PR berhasil dipublikasikan!");
+      $("formPostTugas").reset();
+      loadTugasAktif();
+    } catch (err) {
+      done();
+      console.error("Gagal mempublikasikan tugas:", err);
+      window.customAlert("Gagal menyimpan tugas ke database.");
+    }
+  });
+};
+
+// ==========================================
+// DATA PILIHAN POIN
+// ==========================================
 const dataPilihan = {
   Prestasi: [
     { t: "Juara tingkat Nasional", p: 30 },
@@ -1105,41 +1894,51 @@ const dataPilihan = {
 // ==========================================
 // PENGATURAN NAVIGASI LAYAR & HTML5 HISTORY API
 // ==========================================
+const SCREEN_IDS = [
+  "menuWrapper",
+  "mainMenuCard",
+  "loginCard",
+  "siswaCard",
+  "entryCard",
+  "adminCard",
+  "questBoardCard",
+  "leaderboardCard",
+];
+
 function showScreen(screenId, pushHistory = true) {
-  document.getElementById("menuWrapper").classList.add("hidden");
-  document.getElementById("mainMenuCard").classList.add("hidden");
-  document.getElementById("loginCard").classList.add("hidden");
-  document.getElementById("siswaCard").classList.add("hidden");
-  document.getElementById("entryCard").classList.add("hidden");
-  document.getElementById("adminCard").classList.add("hidden");
-  document.getElementById("questBoardCard").classList.add("hidden");
-  document.getElementById("leaderboardCard").classList.add("hidden");
+  SCREEN_IDS.forEach((id) => $(id).classList.add("hidden"));
 
   if (screenId === "menu") {
-    document.getElementById("menuWrapper").classList.remove("hidden");
-    document.getElementById("mainMenuCard").classList.remove("hidden");
+    $("menuWrapper").classList.remove("hidden");
+    $("mainMenuCard").classList.remove("hidden");
     loadTugasAktif();
   } else if (screenId === "login") {
-    document.getElementById("loginCard").classList.remove("hidden");
+    $("loginCard").classList.remove("hidden");
   } else if (screenId === "siswa") {
-    document.getElementById("siswaCard").classList.remove("hidden");
-    document.getElementById("hasilPoinSiswa").classList.add("hidden");
-    document.getElementById("boxInputNisnSiswa").classList.remove("hidden");
-    document.getElementById("nisnSiswaInput").value = "";
-    if (document.getElementById("pinSiswaInput")) {
-      document.getElementById("pinSiswaInput").value = "";
+    $("siswaCard").classList.remove("hidden");
+    if (currentNisnSiswa) {
+      // Siswa masih login: jangan reset tampilan
+      $("hasilPoinSiswa").classList.remove("hidden");
+      $("boxInputNisnSiswa").classList.add("hidden");
+      setSiswaAppMode(true);
+    } else {
+      setSiswaAppMode(false);
+      $("hasilPoinSiswa").classList.add("hidden");
+      $("boxInputNisnSiswa").classList.remove("hidden");
+      $("nisnSiswaInput").value = "";
+      if ($("pinSiswaInput")) $("pinSiswaInput").value = "";
     }
   } else if (screenId === "quest") {
-    document.getElementById("questBoardCard").classList.remove("hidden");
-    renderQuestUI("prestasi");
+    $("questBoardCard").classList.remove("hidden");
+    window.renderQuestUI("prestasi");
   } else if (screenId === "leaderboard") {
-    document.getElementById("leaderboardCard").classList.remove("hidden");
-    loadMasterSiswaFromCloud(() => renderGlobalLeaderboard());
+    $("leaderboardCard").classList.remove("hidden");
+    loadMasterSiswaFromCloud(() => window.renderGlobalLeaderboard());
   } else if (screenId === "entry") {
-    document.getElementById("entryCard").classList.remove("hidden");
+    $("entryCard").classList.remove("hidden");
   } else if (screenId === "admin") {
-    document.getElementById("adminCard").classList.remove("hidden");
-    handleAdminActionTypeChange();
+    $("adminCard").classList.remove("hidden");
+    window.handleAdminActionTypeChange();
   }
 
   if (pushHistory) {
@@ -1147,39 +1946,12 @@ function showScreen(screenId, pushHistory = true) {
   }
 }
 
-function showGamePreloader(customTitle, callback) {
-  const preloader = document.getElementById("gamePreloader");
-  document.getElementById("loadingTitleText").innerText = customTitle;
-  const fillEl = document.getElementById("progressBarFill");
-  const percentEl = document.getElementById("loadingPercentText");
-
-  preloader.classList.remove("hidden");
-  let currentPercent = 0;
-  fillEl.style.width = "0%";
-  percentEl.innerText = "0%";
-
-  let progressInterval = setInterval(() => {
-    if (currentPercent < 85) {
-      currentPercent += 15;
-      fillEl.style.width = currentPercent + "%";
-      percentEl.innerText = currentPercent + "%";
-    }
-  }, 80);
-
-  const finishLoading = () => {
-    clearInterval(progressInterval);
-    fillEl.style.width = "100%";
-    percentEl.innerText = "100%";
-    setTimeout(() => {
-      preloader.classList.add("hidden");
-    }, 300);
-  };
-  if (callback) callback(finishLoading);
-}
-
 window.togglePassword = function () {
-  const pwd = document.getElementById("password");
-  pwd.type = pwd.type === "password" ? "text" : "password";
+  const pwd = $("password");
+  const showing = pwd.type === "password";
+  pwd.type = showing ? "text" : "password";
+  const eye = $("eyeIcon");
+  if (eye) eye.textContent = showing ? "🙈" : "👁️";
 };
 
 window.bukaPortal = function (tipe) {
@@ -1187,12 +1959,6 @@ window.bukaPortal = function (tipe) {
     showScreen("login");
   } else if (tipe === "siswa") {
     showScreen("siswa");
-    document.getElementById("hasilPoinSiswa").classList.add("hidden");
-    document.getElementById("boxInputNisnSiswa").classList.remove("hidden");
-    document.getElementById("nisnSiswaInput").value = "";
-    if (document.getElementById("pinSiswaInput")) {
-      document.getElementById("pinSiswaInput").value = "";
-    }
   } else if (tipe === "quest") {
     showGamePreloader("LOADING KODE ETIK & TATIB...", (done) => {
       setTimeout(() => {
@@ -1215,33 +1981,42 @@ window.kembaliKeMenu = function () {
 };
 
 window.keluarSiswa = function () {
-  if (activeStudentDocListener) {
-    activeStudentDocListener();
-    activeStudentDocListener = null;
-  }
-
-  if (typeof friendListeners === "object") {
-    Object.values(friendListeners).forEach((unsub) => {
-      if (typeof unsub === "function") unsub();
-    });
-    friendListeners = {};
-  }
-
+  cleanupStudentSession();
   localStorage.removeItem("activeUser");
+  localStorage.removeItem("activeUserExpiry");
   showScreen("menu");
 };
+
+function cleanupAdminListeners() {
+  if (adminActiveChatListener) {
+    adminActiveChatListener();
+    adminActiveChatListener = null;
+  }
+  if (adminGlobalChatListener) {
+    adminGlobalChatListener();
+    adminGlobalChatListener = null;
+  }
+  currentAdminSelectedRoomId = "";
+}
 
 window.logout = function () {
+  cleanupAdminListeners();
   localStorage.removeItem("loggedInUser");
+  currentUser = null;
+  currentRole = "";
+  signOut(auth).catch((e) => console.warn("Gagal signOut:", e));
   showScreen("menu");
 };
 
-function renderGlobalLeaderboard() {
-  const filter = document.getElementById("filterLeaderboardKelas").value;
-  const container = document.getElementById("globalLeaderboardList");
+// ==========================================
+// LEADERBOARD
+// ==========================================
+window.renderGlobalLeaderboard = function () {
+  const filter = $("filterLeaderboardKelas").value;
+  const container = $("globalLeaderboardList");
   if (!container) return;
 
-  let filtered =
+  const filtered =
     filter === "SEMUA"
       ? [...masterDataSiswa]
       : masterDataSiswa.filter((s) => s.kelas === filter);
@@ -1257,11 +2032,6 @@ function renderGlobalLeaderboard() {
   filtered.forEach((s, index) => {
     const rank = index + 1;
     const score = s.dailyScore || 0;
-    const avatarFile = s.fotoUrl
-      ? s.fotoUrl
-      : s.jk && s.jk.toUpperCase() === "P"
-        ? "assets/foto_siswa/avatar_p.webp"
-        : "assets/foto_siswa/avatar_l.webp";
 
     let rankBadge = `#${rank}`;
     let rowStyle = "background: #1a2536; border: 1px solid #34495e;";
@@ -1293,27 +2063,30 @@ function renderGlobalLeaderboard() {
       <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
         <div style="font-size: 13px; font-weight: bold; color: ${nameColor}; width: 32px; text-align: center; flex-shrink: 0;">${rankBadge}</div>
         <div style="width: 36px; height: 36px; border-radius: 8px; overflow: hidden; background: #2c3e50; flex-shrink: 0; border: 1.5px solid ${nameColor};">
-          <img src="${avatarFile}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='assets/foto_siswa/avatar.webp'">
+          <img src="${escapeHtml(avatarFor(s))}" style="width: 100%; height: 100%; object-fit: cover;" onerror="${AVATAR_ONERROR}">
         </div>
         <div style="overflow: hidden;">
-          <div style="font-size: 12px; font-weight: bold; color: ${nameColor}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.nama}</div>
-          <div style="font-size: 9.5px; color: #cbd5e1;">Kelas: ${s.kelas}</div>
+          <div style="font-size: 12px; font-weight: bold; color: ${nameColor}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(s.nama)}</div>
+          <div style="font-size: 9.5px; color: #cbd5e1;">Kelas: ${escapeHtml(s.kelas)}</div>
         </div>
       </div>
       <div style="text-align: right; flex-shrink: 0;">
         <div style="font-size: 13px; font-weight: bold; color: ${scoreColor};">${score} Pts</div>
         <div style="font-size: 8px; color: #94a3b8;">Poin Tugas</div>
       </div>
-    </div>
-    `;
+    </div>`;
   });
 
   container.innerHTML = leaderboardHtml;
-}
+};
 
+// ==========================================
+// LOGIN GURU / ADMIN (FIREBASE AUTH)
+// ==========================================
 window.login = async function () {
-  const usernameIn = document.getElementById("namaGuruInput").value.trim();
-  const passIn = document.getElementById("password").value.trim();
+  const usernameIn = $("namaGuruInput").value.trim();
+  const passIn = $("password").value.trim();
+  $("pesanEror").style.display = "none";
 
   const emailLogin = usernameIn.includes("@")
     ? usernameIn
@@ -1328,13 +2101,12 @@ window.login = async function () {
       );
 
       const { doc, getDoc } = window.fbFirestore;
-      const teacherDocSnap = await getDoc(
-        doc(window.db, "teachers", emailLogin),
-      );
-
       let userData = { nama: "Petugas Sekolah", role: "Guru Mapel" };
-      if (teacherDocSnap.exists()) {
-        userData = teacherDocSnap.data();
+      try {
+        const teacherDocSnap = await getDoc(doc(window.db, "teachers", emailLogin));
+        if (teacherDocSnap.exists()) userData = teacherDocSnap.data();
+      } catch (e) {
+        console.warn("Profil guru tidak terbaca, pakai peran default:", e);
       }
 
       localStorage.setItem("loggedInUser", JSON.stringify(userData));
@@ -1342,27 +2114,28 @@ window.login = async function () {
     } catch (err) {
       done();
       console.error("Login gagal:", err);
-      document.getElementById("pesanEror").style.display = "block";
+      $("pesanEror").style.display = "block";
     }
   });
 };
 
 function prosesMasukUser(user, doneCallback) {
+  currentUser = user;
   currentRole = user.role;
-  document.getElementById("pesanEror").style.display = "none";
+  $("pesanEror").style.display = "none";
 
   if (user.role === "Super Admin") {
     loadMasterSiswaFromCloud(() => {
       setTimeout(() => {
         if (doneCallback) doneCallback();
-        document.getElementById("txtNamaAdmin").innerText = user.nama;
+        $("txtNamaAdmin").innerText = user.nama;
         showScreen("admin");
         window.switchAdminTab("rekap");
       }, 400);
     });
   } else {
-    document.getElementById("txtNamaGuru").innerText = user.nama;
-    document.getElementById("txtRoleGuru").innerText = "Jabatan: " + user.role;
+    $("txtNamaGuru").innerText = user.nama;
+    $("txtRoleGuru").innerText = "Jabatan: " + user.role;
     loadMasterSiswaFromCloud(() => {
       if (doneCallback) doneCallback();
       showScreen("entry");
@@ -1374,10 +2147,10 @@ function prosesMasukUser(user, doneCallback) {
 }
 
 window.switchTeacherTab = function (tab) {
-  const tabPoin = document.getElementById("teacherTabPoin");
-  const tabPosting = document.getElementById("teacherTabPosting");
-  const btnPoin = document.getElementById("navBtnInputPoin");
-  const btnPosting = document.getElementById("navBtnPostTugas");
+  const tabPoin = $("teacherTabPoin");
+  const tabPosting = $("teacherTabPosting");
+  const btnPoin = $("navBtnInputPoin");
+  const btnPosting = $("navBtnPostTugas");
 
   tabPoin.classList.add("hidden");
   tabPosting.classList.add("hidden");
@@ -1399,492 +2172,29 @@ window.switchTeacherTab = function (tab) {
   }
 };
 
-window.simpanPengumumanTugas = async function () {
-  const targetKelas = document.getElementById("postKelasTarget").value;
-  const judul = document.getElementById("postJudul").value.trim();
-  const isi = document.getElementById("postIsi").value.trim();
-  const namaGuru = document.getElementById("txtNamaGuru").innerText;
-
-  if (!judul || !isi)
-    return window.customAlert("Judul dan isi tugas wajib diisi!");
-
-  showGamePreloader("PUBLISHING TASK TO CLOUD...", async (done) => {
-    try {
-      const { doc: firestoreDoc, setDoc: firestoreSetDoc } = window.fbFirestore;
-      const tugasId = "tugas_" + Date.now();
-
-      await firestoreSetDoc(firestoreDoc(window.db, "tugas", tugasId), {
-        id: tugasId,
-        targetKelas: targetKelas,
-        judul: judul,
-        isi: isi,
-        namaGuru: namaGuru,
-        tanggal: new Date().toISOString().split("T")[0],
-        timestamp: Date.now(),
-      });
-
-      done();
-      window.customAlert("✅ Tugas & PR berhasil dipublikasikan!");
-      document.getElementById("formPostTugas").reset();
-      loadTugasAktif();
-    } catch (err) {
-      done();
-      console.error("Gagal mempublikasikan tugas:", err);
-      window.customAlert("Gagal menyimpan tugas ke database.");
-    }
-  });
-};
-
-function getTierRank(shield) {
-  if (shield >= 290)
-    return {
-      title: "🌌 MYTHIC LEGEND",
-      color: "#ffffff",
-      bg: "linear-gradient(135deg, #ff0844, #ffb199)",
-    };
-  if (shield >= 251)
-    return {
-      title: "👑 MASTER CHAMPION",
-      color: "#ffffff",
-      bg: "linear-gradient(135deg, #b224ef, #7579ff)",
-    };
-  if (shield >= 211)
-    return {
-      title: "💠 DIAMOND VANGUARD",
-      color: "#ffffff",
-      bg: "linear-gradient(135deg, #00c6ff, #0072ff)",
-    };
-  if (shield >= 171)
-    return {
-      title: "💎 PLATINUM GUARDIAN",
-      color: "#ffffff",
-      bg: "linear-gradient(135deg, #11998e, #38ef7d)",
-    };
-  if (shield >= 131)
-    return {
-      title: "🥇 GOLD PALADIN",
-      color: "#1a2536",
-      bg: "linear-gradient(135deg, #f7971e, #ffd200)",
-    };
-  if (shield >= 91)
-    return {
-      title: "🥈 SILVER WARRIOR",
-      color: "#1a2536",
-      bg: "linear-gradient(135deg, #e0eafc, #cfdef3)",
-    };
-  if (shield >= 51)
-    return {
-      title: "🥉 BRONZE KNIGHT",
-      color: "#ffffff",
-      bg: "linear-gradient(135deg, #d38312, #a83279)",
-    };
-  if (shield >= 11)
-    return {
-      title: "🛡️ IRON SQUIRE",
-      color: "#ffffff",
-      bg: "linear-gradient(135deg, #485563, #29323c)",
-    };
-  return {
-    title: "🔰 NOVICE",
-    color: "#ffffff",
-    bg: "linear-gradient(135deg, #7f8c8d, #95a5a6)",
-  };
-}
-
-function getStatusPembinaan(tp) {
-  if (tp < 10)
-    return {
-      title: "NORMAL",
-      desc: "Tidak ada catatan pelanggaran.",
-      color: "#2ecc71",
-    };
-  if (tp <= 20)
-    return {
-      title: "TEGURAN LISAN",
-      desc: "Sanksi: Teguran lisan langsung oleh guru.",
-      color: "#f1c40f",
-    };
-  if (tp <= 40)
-    return {
-      title: "TEGURAN TERTULIS",
-      desc: "Sanksi: Teguran tertulis peringatan.",
-      color: "#e67e22",
-    };
-  if (tp <= 80)
-    return {
-      title: "KONSELING BK",
-      desc: "Sanksi: Pemanggilan konseling Guru BK.",
-      color: "#e74c3c",
-    };
-  return {
-    title: "TINDAKAN KEPALA SEKOLAH",
-    desc: "Sanksi: Keputusan mutlak Kepala Sekolah.",
-    color: "#2c3e50",
-  };
-}
-
-window.loginSiswaWithPin = async function () {
-  const nisnInput = document.getElementById("nisnSiswaInput").value.trim();
-  const pinInput = document.getElementById("pinSiswaInput").value.trim();
-
-  if (!nisnInput) return window.customAlert("Silakan ketik nomor NISN kamu!");
-  if (!pinInput) return window.customAlert("Silakan ketik PIN keamanan kamu!");
-
-  showGamePreloader("MEMVERIFIKASI AKUN SISWA...", async (done) => {
-    try {
-      const { doc, getDoc } = window.fbFirestore;
-      const docRef = doc(window.db, "siswa", nisnInput);
-      const docSnap = await getDoc(docRef);
-      done();
-
-      if (docSnap.exists()) {
-        const siswa = docSnap.data();
-
-        const serverPin =
-          siswa.pin !== undefined ? String(siswa.pin) : "123456";
-
-        if (pinInput !== serverPin) {
-          return window.customAlert(
-            "❌ PIN yang kamu masukkan salah! Periksa kembali PIN kamu.",
-          );
-        }
-
-        if (siswa.dailyScore === undefined) siswa.dailyScore = 0;
-        localStorage.setItem("activeUser", nisnInput);
-        initStudentRealtimeListener(nisnInput);
-        initOnlineStatusEngine();
-
-        document.getElementById("boxInputNisnSiswa").classList.add("hidden");
-        document.getElementById("hasilPoinSiswa").classList.remove("hidden");
-
-        const avatarImg =
-          document.getElementById("avatarSiswaMain") ||
-          document.querySelector(".rpg-avatar-box img");
-        if (avatarImg) {
-          avatarImg.src = siswa.fotoUrl
-            ? siswa.fotoUrl
-            : siswa.jk && siswa.jk.toUpperCase() === "P"
-              ? "assets/foto_siswa/avatar_p.webp"
-              : "assets/foto_siswa/avatar_l.webp";
-        }
-
-        document.getElementById("txtNamaSiswaHasil").innerHTML = (
-          siswa.nama || ""
-        ).toUpperCase();
-        document.getElementById("txtKelasSiswaHasil").innerText =
-          `Kelas: ${siswa.kelas || "-"} | NISN: ${siswa.nisn || nisnInput}`;
-
-        const rankInfo = getTierRank(siswa.shield || 0);
-        document.getElementById("txtTierRankContainer").innerHTML = `
-        <span style="display: inline-block; background: ${rankInfo.bg}; color: ${rankInfo.color}; padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 700; margin-top: 1px;">
-          ${rankInfo.title}
-        </span>
-        `;
-
-        let hpValue = siswa.hp !== undefined ? siswa.hp : 200;
-        document.getElementById("barHpFill").style.width =
-          `${Math.max(0, Math.min(100, (hpValue / 200) * 100))}%`;
-        document.getElementById("txtHpPercent").innerText =
-          `${Math.max(0, hpValue)}/200`;
-
-        let shieldValue = siswa.shield || 0;
-        document.getElementById("txtShieldPercent").innerText =
-          `${shieldValue} Pts`;
-        document.getElementById("barShieldFill").style.width =
-          `${Math.max(0, Math.min(100, (shieldValue / 300) * 100))}%`;
-
-        let dailyValue = siswa.dailyScore || 0;
-        document.getElementById("txtDailyScoreTextOnly").innerText =
-          `⭐ ${dailyValue} Pts`;
-
-        const statusHukum = getStatusPembinaan(siswa.totalPelanggaran || 0);
-        document.getElementById("txtStatusKondisi").innerText =
-          `STATUS: ${statusHukum.title}`;
-        document.getElementById("txtStatusPenanganan").innerText =
-          statusHukum.desc;
-
-        document.getElementById("txtCountPrestasi").innerText =
-          `${siswa.totalPrestasi || 0} Pts`;
-        document.getElementById("txtCountPelanggaran").innerText =
-          `${siswa.totalPelanggaran || 0} Pts`;
-
-        let historyListContainer = document.getElementById("historyListSiswa");
-        if (!siswa.riwayat || siswa.riwayat.length === 0) {
-          historyListContainer.innerHTML = `<div style="font-size: 10px; color: #95a5a6; text-align: center; padding: 6px;">Tidak ada catatan riwayat.</div>`;
-        } else {
-          let riwayatHtml = "";
-          siswa.riwayat.forEach((r) => {
-            let isPlus = Number(r.p) > 0;
-            let borderColor = isPlus ? "#2ecc71" : "#e74c3c";
-            riwayatHtml += `
-            <div style="background: #1a2536; border-left: 3px solid ${borderColor}; padding: 8px 10px; border-radius: 0 6px 6px 0; font-size: 10.5px; color: #ecf0f1; border: 1px solid #34495e; margin-bottom: 6px;">
-              <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 2px;">
-                <span style="color: ${borderColor};">${r.t}</span>
-                <span style="color: ${borderColor};">${isPlus ? "+" + r.p : r.p} Pts</span>
-              </div>
-              <div style="font-size: 9.5px; color: #bdc3c7; display: flex; justify-content: space-between;">
-                <span>📍 ${r.loc || "-"}</span>
-                <span>📅 ${r.d || "-"}</span>
-              </div>
-            </div>
-            `;
-          });
-          historyListContainer.innerHTML = riwayatHtml;
-        }
-
-        const oldPinInputEl = document.getElementById("oldPinInput");
-        const cardGantiPin = oldPinInputEl
-          ? oldPinInputEl.closest(".rpg-card-container")
-          : null;
-        if (cardGantiPin) {
-          if (siswa.hasChangedPin || serverPin !== "123456") {
-            cardGantiPin.style.display = "none";
-          } else {
-            cardGantiPin.style.display = "block";
-            oldPinInputEl.value = "";
-            const newPinEl = document.getElementById("newPinInput");
-            if (newPinEl) newPinEl.value = "";
-          }
-        }
-
-        // PEMANGGILAN FITUR GLOBAL CHAT RPG
-        if (typeof window.initGlobalChat === "function") {
-          window.initGlobalChat(siswa);
-        }
-      } else {
-        document.getElementById("modalErrorSiswa").classList.remove("hidden");
-      }
-    } catch (err) {
-      done();
-      console.error("Gagal verifikasi login siswa:", err);
-    }
-  });
-};
-
 // ==========================================
-// FUNGSI AUTO LOGIN SISWA (UNTUK REFRESH HALAMAN)
+// FORM INPUT POIN (GURU)
 // ==========================================
-async function autoLoginSiswa(nisnInput) {
-  showGamePreloader("MEMULIHKAN SESI SISWA...", async (done) => {
-    try {
-      const { doc, getDoc } = window.fbFirestore;
-      const docRef = doc(window.db, "siswa", nisnInput);
-      const docSnap = await getDoc(docRef);
-      done();
-
-      if (docSnap.exists()) {
-        const siswa = docSnap.data();
-
-        if (siswa.dailyScore === undefined) siswa.dailyScore = 0;
-        localStorage.setItem("activeUser", nisnInput);
-        initStudentRealtimeListener(nisnInput);
-        initOnlineStatusEngine();
-
-        document.getElementById("boxInputNisnSiswa").classList.add("hidden");
-        document.getElementById("hasilPoinSiswa").classList.remove("hidden");
-
-        const avatarImg =
-          document.getElementById("avatarSiswaMain") ||
-          document.querySelector(".rpg-avatar-box img");
-        if (avatarImg) {
-          avatarImg.src = siswa.fotoUrl
-            ? siswa.fotoUrl
-            : siswa.jk && siswa.jk.toUpperCase() === "P"
-              ? "assets/foto_siswa/avatar_p.webp"
-              : "assets/foto_siswa/avatar_l.webp";
-        }
-
-        document.getElementById("txtNamaSiswaHasil").innerHTML = (
-          siswa.nama || ""
-        ).toUpperCase();
-        document.getElementById("txtKelasSiswaHasil").innerText =
-          `Kelas: ${siswa.kelas || "-"} | NISN: ${siswa.nisn || nisnInput}`;
-
-        const rankInfo = getTierRank(siswa.shield || 0);
-        document.getElementById("txtTierRankContainer").innerHTML = `
-        <span style="display: inline-block; background: ${rankInfo.bg}; color: ${rankInfo.color}; padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 700; margin-top: 1px;">
-          ${rankInfo.title}
-        </span>
-        `;
-
-        let hpValue = siswa.hp !== undefined ? siswa.hp : 200;
-        document.getElementById("barHpFill").style.width =
-          `${Math.max(0, Math.min(100, (hpValue / 200) * 100))}%`;
-        document.getElementById("txtHpPercent").innerText =
-          `${Math.max(0, hpValue)}/200`;
-
-        let shieldValue = siswa.shield || 0;
-        document.getElementById("txtShieldPercent").innerText =
-          `${shieldValue} Pts`;
-        document.getElementById("barShieldFill").style.width =
-          `${Math.max(0, Math.min(100, (shieldValue / 300) * 100))}%`;
-
-        let dailyValue = siswa.dailyScore || 0;
-        document.getElementById("txtDailyScoreTextOnly").innerText =
-          `⭐ ${dailyValue} Pts`;
-
-        const statusHukum = getStatusPembinaan(siswa.totalPelanggaran || 0);
-        document.getElementById("txtStatusKondisi").innerText =
-          `STATUS: ${statusHukum.title}`;
-        document.getElementById("txtStatusPenanganan").innerText =
-          statusHukum.desc;
-
-        document.getElementById("txtCountPrestasi").innerText =
-          `${siswa.totalPrestasi || 0} Pts`;
-        document.getElementById("txtCountPelanggaran").innerText =
-          `${siswa.totalPelanggaran || 0} Pts`;
-
-        let historyListContainer = document.getElementById("historyListSiswa");
-        if (!siswa.riwayat || siswa.riwayat.length === 0) {
-          historyListContainer.innerHTML = `<div style="font-size: 10px; color: #95a5a6; text-align: center; padding: 6px;">Tidak ada catatan riwayat.</div>`;
-        } else {
-          let riwayatHtml = "";
-          siswa.riwayat.forEach((r) => {
-            let isPlus = Number(r.p) > 0;
-            let borderColor = isPlus ? "#2ecc71" : "#e74c3c";
-            riwayatHtml += `
-            <div style="background: #1a2536; border-left: 3px solid ${borderColor}; padding: 8px 10px; border-radius: 0 6px 6px 0; font-size: 10.5px; color: #ecf0f1; border: 1px solid #34495e; margin-bottom: 6px;">
-              <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 2px;">
-                <span style="color: ${borderColor};">${r.t}</span>
-                <span style="color: ${borderColor};">${isPlus ? "+" + r.p : r.p} Pts</span>
-              </div>
-              <div style="font-size: 9.5px; color: #bdc3c7; display: flex; justify-content: space-between;">
-                <span>📍 ${r.loc || "-"}</span>
-                <span>📅 ${r.d || "-"}</span>
-              </div>
-            </div>
-            `;
-          });
-          historyListContainer.innerHTML = riwayatHtml;
-        }
-
-        const serverPin =
-          siswa.pin !== undefined ? String(siswa.pin) : "123456";
-        const oldPinInputEl = document.getElementById("oldPinInput");
-        const cardGantiPin = oldPinInputEl
-          ? oldPinInputEl.closest(".rpg-card-container")
-          : null;
-        if (cardGantiPin) {
-          if (siswa.hasChangedPin || serverPin !== "123456") {
-            cardGantiPin.style.display = "none";
-          } else {
-            cardGantiPin.style.display = "block";
-            oldPinInputEl.value = "";
-            const newPinEl = document.getElementById("newPinInput");
-            if (newPinEl) newPinEl.value = "";
-          }
-        }
-
-        // PEMANGGILAN FITUR GLOBAL CHAT RPG
-        if (typeof window.initGlobalChat === "function") {
-          window.initGlobalChat(siswa);
-        }
-      } else {
-        localStorage.removeItem("activeUser");
-        showScreen("siswa");
-      }
-    } catch (err) {
-      done();
-      console.error("Gagal memulihkan sesi siswa:", err);
-    }
-  });
-}
-
-window.gantiPinSiswa = async function () {
-  const myNisn = getMyNisn();
-  const oldPin = document.getElementById("oldPinInput").value.trim();
-  const newPin = document.getElementById("newPinInput").value.trim();
-
-  if (!oldPin || !newPin) {
-    return window.customAlert("⚠️ Mohon isi PIN lama dan PIN baru Anda!");
-  }
-
-  if (newPin.length < 4) {
-    return window.customAlert(
-      "⚠️ PIN baru minimal harus terdiri dari 4 karakter/angka!",
-    );
-  }
-
-  showGamePreloader("MENYIMPAN PIN BARU...", async (done) => {
-    try {
-      const { doc, getDoc, updateDoc } = window.fbFirestore;
-      const docRef = doc(window.db, "siswa", myNisn);
-      const docSnap = await getDoc(docRef);
-
-      if (!docSnap.exists()) {
-        done();
-        return window.customAlert("Data siswa tidak ditemukan.");
-      }
-
-      const dataSiswa = docSnap.data();
-      const currentPin =
-        dataSiswa.pin !== undefined ? String(dataSiswa.pin) : "123456";
-
-      if (oldPin !== currentPin) {
-        done();
-        return window.customAlert("❌ PIN lama yang Anda masukkan salah!");
-      }
-
-      await updateDoc(docRef, {
-        pin: newPin,
-        hasChangedPin: true,
-      });
-
-      done();
-      window.customAlert(
-        "✅ PIN berhasil diubah! Kotak ganti PIN disembunyikan untuk keamanan.",
-      );
-
-      const oldPinEl = document.getElementById("oldPinInput");
-      const cardGantiPin = oldPinEl
-        ? oldPinEl.closest(".rpg-card-container")
-        : null;
-      if (cardGantiPin) {
-        cardGantiPin.style.display = "none";
-      }
-
-      if (oldPinEl) oldPinEl.value = "";
-      const newPinEl = document.getElementById("newPinInput");
-      if (newPinEl) newPinEl.value = "";
-    } catch (err) {
-      done();
-      console.error("Gagal mengganti PIN:", err);
-      window.customAlert(
-        "Gagal memperbarui PIN. Periksa koneksi internet Anda.",
-      );
-    }
-  });
-};
-
 function initFormEntry() {
   const now = new Date();
-  const namaHari = [
-    "Minggu",
-    "Senin",
-    "Selasa",
-    "Rabu",
-    "Kamis",
-    "Jum'at",
-    "Sabtu",
-  ];
-  document.getElementById("hari").value = namaHari[now.getDay()];
-  document.getElementById("tanggal").value = now.toISOString().split("T")[0];
-  document.getElementById("jam").value =
-    `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const namaHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at", "Sabtu"];
+  $("hari").value = namaHari[now.getDay()];
+  $("tanggal").value = localDateStr(now);
+  $("jam").value = localTimeStr(now);
   window.handleKategoriChange();
   window.updateEntrySiswaList();
 }
 
 window.handleKategoriChange = function () {
-  const kat = document.getElementById("kategori").value;
-  const boxSub = document.getElementById("boxSubKategori");
-  const container = document.getElementById("containerOpsi");
-  const label = document.getElementById("lblDetailOpsi");
+  const kat = $("kategori").value;
+  const boxSub = $("boxSubKategori");
+  const container = $("containerOpsi");
+  const label = $("lblDetailOpsi");
   container.innerHTML = "";
 
   if (kat === "Pelanggaran") {
     boxSub.classList.remove("hidden");
-    const subKategori = document.getElementById("subKategori");
+    const subKategori = $("subKategori");
     subKategori.innerHTML =
       '<option value="">-- Pilih Tingkat --</option><option value="Ringan">Pelanggaran Ringan (5-10 Pts)</option>';
     if (currentRole !== "Guru Mapel") {
@@ -1899,12 +2209,10 @@ window.handleKategoriChange = function () {
 };
 
 window.renderOpsiPoin = function () {
-  const kat = document.getElementById("kategori").value;
-  const sub = document.getElementById("subKategori")
-    ? document.getElementById("subKategori").value
-    : "";
-  const container = document.getElementById("containerOpsi");
-  const label = document.getElementById("lblDetailOpsi");
+  const kat = $("kategori").value;
+  const sub = $("subKategori") ? $("subKategori").value : "";
+  const container = $("containerOpsi");
+  const label = $("lblDetailOpsi");
   container.innerHTML = "";
   let listTampil = [];
 
@@ -1917,216 +2225,218 @@ window.renderOpsiPoin = function () {
   } else {
     if (!sub) return;
     label.innerText = "DETAIL PELANGGARAN (- HP) *";
-    listTampil = dataPilihan.Pelanggaran[sub];
+    listTampil = dataPilihan.Pelanggaran[sub] || [];
   }
 
-  let opsiHtml = "";
-  listTampil.forEach((item) => {
-    let labelPrefix =
-      kat === "Prestasi" ? "+" : kat === "TugasHarian" ? "+" : "-";
-    opsiHtml += `<label class="option-item"><input type="radio" name="opsiPoin" value="${item.t}" data-poin="${item.p}" required>
-                <span>${item.t} <strong>(${labelPrefix}${item.p} Pts)</strong></span></label>`;
-  });
-  container.innerHTML = opsiHtml;
+  const prefix = kat === "Pelanggaran" ? "-" : "+";
+  container.innerHTML = listTampil
+    .map(
+      (item) => `<label class="option-item"><input type="radio" name="opsiPoin" value="${escapeHtml(item.t)}" data-poin="${item.p}" required>
+                <span>${escapeHtml(item.t)} <strong>(${prefix}${item.p} Pts)</strong></span></label>`,
+    )
+    .join("");
 };
 
 window.updateEntrySiswaList = function () {
-  const kelas = document.getElementById("kelas").value;
-  const singleSelect = document.getElementById("selectSingleSiswa");
-  const multiBox = document.getElementById("boxMultiSiswa");
-  singleSelect.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+  const kelas = $("kelas").value;
+  const singleSelect = $("selectSingleSiswa");
+  const multiBox = $("boxMultiSiswa");
 
   if (!kelas) {
+    singleSelect.innerHTML = '<option value="">-- Pilih Kelas Dulu --</option>';
     multiBox.innerHTML =
       '<span style="font-size:11px; color:#888;">Pilih kelas dulu...</span>';
     return;
   }
 
+  // Nilai opsi memakai NISN (bukan nama) agar siswa bernama sama tidak tertukar
+  const daftar = masterDataSiswa
+    .filter((s) => s.kelas === kelas)
+    .sort((a, b) => String(a.nama).localeCompare(String(b.nama)));
+
   let singleHtml = '<option value="">-- Pilih Siswa --</option>';
   let multiHtml = "";
+  daftar.forEach((s) => {
+    singleHtml += `<option value="${escapeHtml(s.nisn)}">${escapeHtml(s.nama)}</option>`;
+    multiHtml += `<label class="checkbox-item"><input type="checkbox" name="multiSiswa" value="${escapeHtml(s.nisn)}" data-nama="${escapeHtml(s.nama)}"> ${escapeHtml(s.nama)}</label>`;
+  });
 
-  masterDataSiswa
-    .filter((s) => s.kelas === kelas)
-    .forEach((s) => {
-      singleHtml += `<option value="${s.nama}">${s.nama}</option>`;
-      multiHtml += `<label class="checkbox-item"><input type="checkbox" name="multiSiswa" value="${s.nama}"> ${s.nama}</label>`;
-    });
-
+  if (daftar.length === 0) {
+    multiHtml =
+      '<span style="font-size:11px; color:#888;">Tidak ada siswa di kelas ini.</span>';
+  }
   singleSelect.innerHTML = singleHtml;
   multiBox.innerHTML = multiHtml;
 };
 
 window.toggleModeSiswa = function () {
   isMultiMode = !isMultiMode;
-  document.getElementById("txtModeSiswa").innerText = isMultiMode
+  $("txtModeSiswa").innerText = isMultiMode
     ? "Mode: Banyak Siswa"
     : "Mode: Satu Siswa";
-  document
-    .getElementById("selectSingleSiswa")
-    .classList.toggle("hidden", isMultiMode);
-  document.getElementById("selectSingleSiswa").required = !isMultiMode;
-  document
-    .getElementById("boxMultiSiswa")
-    .classList.toggle("hidden", !isMultiMode);
+  $("selectSingleSiswa").classList.toggle("hidden", isMultiMode);
+  // 'required' hanya aktif saat select terlihat
+  $("selectSingleSiswa").required = !isMultiMode;
+  $("boxMultiSiswa").classList.toggle("hidden", !isMultiMode);
 };
 
+// Mengembalikan [{nisn, nama}]
+function getSelectedSiswa() {
+  const hasil = [];
+  if (isMultiMode) {
+    document
+      .querySelectorAll('input[name="multiSiswa"]:checked')
+      .forEach((cb) => hasil.push({ nisn: cb.value, nama: cb.dataset.nama }));
+  } else {
+    const sel = $("selectSingleSiswa");
+    if (sel.value) {
+      hasil.push({ nisn: sel.value, nama: sel.selectedOptions[0].text });
+    }
+  }
+  return hasil;
+}
+
 window.konfirmasiSimpan = function () {
-  const selectedRadio = document.querySelector(
-    'input[name="opsiPoin"]:checked',
-  );
+  const selectedRadio = document.querySelector('input[name="opsiPoin"]:checked');
   if (!selectedRadio)
     return window.customAlert("Pilih detail jenis kejadian terlebih dahulu!");
 
-  let daftarSiswaDipilih = [];
-  if (isMultiMode) {
-    document
-      .querySelectorAll('input[name="multiSiswa"]:checked')
-      .forEach((cb) => daftarSiswaDipilih.push(cb.value));
-    if (daftarSiswaDipilih.length === 0)
-      return window.customAlert("Pilih minimal 1 siswa!");
-  } else {
-    const val = document.getElementById("selectSingleSiswa").value;
-    if (!val) return window.customAlert("Pilih nama siswa terlebih dahulu!");
-    daftarSiswaDipilih.push(val);
-  }
+  const daftar = getSelectedSiswa();
+  if (daftar.length === 0)
+    return window.customAlert(
+      isMultiMode ? "Pilih minimal 1 siswa!" : "Pilih nama siswa terlebih dahulu!",
+    );
 
-  const kat = document.getElementById("kategori").value;
-  let efekText =
+  const kat = $("kategori").value;
+  const poin = selectedRadio.getAttribute("data-poin");
+  const efekText =
     kat === "TugasHarian"
-      ? `+${selectedRadio.getAttribute("data-poin")} Poin Harian (Leaderboard)`
+      ? `+${poin} Poin Harian (Leaderboard)`
       : kat === "Prestasi"
-        ? `+${selectedRadio.getAttribute("data-poin")} Prestasi`
-        : `-${selectedRadio.getAttribute("data-poin")} Pelanggaran`;
+        ? `+${poin} Prestasi`
+        : `-${poin} Pelanggaran`;
 
-  document.getElementById("modalDetailContent").innerHTML = `
-  <strong>Target Siswa (${daftarSiswaDipilih.length}):</strong><br>${daftarSiswaDipilih.join(", ")}<br><br>
-  <strong>Aktivitas:</strong> ${selectedRadio.value}<br>
-  <strong>Dampak:</strong> ${efekText}<br>
-  <strong>Guru Pelapor:</strong> ${document.getElementById("txtNamaGuru").innerText}
+  $("modalDetailContent").innerHTML = `
+  <strong>Target Siswa (${daftar.length}):</strong><br>${escapeHtml(daftar.map((s) => s.nama).join(", "))}<br><br>
+  <strong>Aktivitas:</strong> ${escapeHtml(selectedRadio.value)}<br>
+  <strong>Dampak:</strong> ${escapeHtml(efekText)}<br>
+  <strong>Guru Pelapor:</strong> ${escapeHtml($("txtNamaGuru").innerText)}
   `;
-  document.getElementById("modalKonfirmasi").classList.remove("hidden");
+  $("modalKonfirmasi").classList.remove("hidden");
 };
 
 window.tutupModal = function () {
-  document.getElementById("modalKonfirmasi").classList.add("hidden");
+  $("modalKonfirmasi").classList.add("hidden");
 };
+
+// Perhitungan dampak poin (HP, shield, total) - fungsi murni
+function hitungDampak(d, kat, poin) {
+  let hp = d.hp !== undefined ? d.hp : 200;
+  let shield = d.shield || 0;
+  let totalPrestasi = d.totalPrestasi || 0;
+  let totalPelanggaran = d.totalPelanggaran || 0;
+  let dailyScore = d.dailyScore || 0;
+
+  if (kat === "TugasHarian") {
+    dailyScore += poin;
+  } else if (kat === "Prestasi") {
+    totalPrestasi += poin;
+    let sisa = poin;
+    const kurang = 200 - hp;
+    if (kurang > 0) {
+      const isi = Math.min(sisa, kurang);
+      hp += isi;
+      sisa -= isi;
+    }
+    if (sisa > 0) shield += sisa;
+  } else {
+    totalPelanggaran += poin;
+    let sisa = poin;
+    if (shield > 0) {
+      const serap = Math.min(sisa, shield);
+      shield -= serap;
+      sisa -= serap;
+    }
+    if (sisa > 0) hp = Math.max(0, hp - sisa);
+  }
+  return { hp, shield, totalPrestasi, totalPelanggaran, dailyScore };
+}
+
+function tambahRiwayat(listLama, entryBaru) {
+  return [entryBaru, ...(listLama || [])].slice(0, MAX_RIWAYAT);
+}
 
 window.eksekusiSimpanWithLoading = async function () {
   window.tutupModal();
-  const selectedRadio = document.querySelector(
-    'input[name="opsiPoin"]:checked',
-  );
+  const selectedRadio = document.querySelector('input[name="opsiPoin"]:checked');
   if (!selectedRadio) return;
 
   const desc = selectedRadio.value;
-  const poin = parseInt(selectedRadio.getAttribute("data-poin"));
-  const kat = document.getElementById("kategori").value;
-  const tempat = document.getElementById("tempat").value || "Sekolah";
-  const waktuGabung =
-    document.getElementById("tanggal").value +
-    " " +
-    (document.getElementById("jam").value || "00:00");
+  const poin = parseInt(selectedRadio.getAttribute("data-poin"), 10);
+  if (!Number.isFinite(poin) || poin <= 0)
+    return window.customAlert("Nilai poin tidak valid!");
 
-  let daftarSiswaDipilih = [];
-  if (isMultiMode) {
-    document
-      .querySelectorAll('input[name="multiSiswa"]:checked')
-      .forEach((cb) => daftarSiswaDipilih.push(cb.value));
-  } else {
-    const val = document.getElementById("selectSingleSiswa").value;
-    if (val) daftarSiswaDipilih.push(val);
-  }
+  const kat = $("kategori").value;
+  const tempat = $("tempat").value || "Sekolah";
+  const waktuGabung = `${$("tanggal").value} ${$("jam").value || "00:00"}`;
+  const daftar = getSelectedSiswa();
+  if (daftar.length === 0) return;
+
+  const entry = {
+    t: desc,
+    p: kat === "Pelanggaran" ? -poin : poin,
+    loc: tempat,
+    d: waktuGabung,
+  };
 
   showGamePreloader("SAVING TO CLOUD DB...", async (done) => {
-    try {
-      const { doc, getDoc, updateDoc } = window.fbFirestore;
+    const { doc, runTransaction } = window.fbFirestore;
+    let berhasil = 0;
+    const gagal = [];
 
-      for (let namaSiswa of daftarSiswaDipilih) {
-        const siswaObj = masterDataSiswa.find((s) => s.nama === namaSiswa);
-        if (!siswaObj || !siswaObj.nisn) continue;
-
-        const docRef = doc(window.db, "siswa", siswaObj.nisn);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const dataSiswa = docSnap.data();
-          let hpBaru = dataSiswa.hp !== undefined ? dataSiswa.hp : 200;
-          let shieldBaru = dataSiswa.shield || 0;
-          let totalPres = dataSiswa.totalPrestasi || 0;
-          let totalPel = dataSiswa.totalPelanggaran || 0;
-          let dailyScoreBaru = dataSiswa.dailyScore || 0;
-          let riwayatList = dataSiswa.riwayat || [];
-
-          let poinDampak = kat === "Pelanggaran" ? -poin : poin;
-
-          if (kat === "TugasHarian") {
-            dailyScoreBaru += poin;
-          } else if (kat === "Prestasi") {
-            totalPres += poin;
-            let sisaPoin = poin;
-            let kekuranganHp = 200 - hpBaru;
-            if (kekuranganHp > 0) {
-              hpBaru = sisaPoin >= kekuranganHp ? 200 : hpBaru + sisaPoin;
-              sisaPoin -= kekuranganHp;
-            }
-            if (sisaPoin > 0) shieldBaru += sisaPoin;
-          } else {
-            totalPel += poin;
-            let sisaPelanggaran = poin;
-            if (shieldBaru > 0) {
-              if (sisaPelanggaran >= shieldBaru) {
-                sisaPelanggaran -= shieldBaru;
-                shieldBaru = 0;
-              } else {
-                shieldBaru -= sisaPelanggaran;
-                sisaPelanggaran = 0;
-              }
-            }
-            if (sisaPelanggaran > 0) {
-              hpBaru = Math.max(0, hpBaru - sisaPelanggaran);
-            }
-          }
-
-          riwayatList.unshift({
-            t: desc,
-            p: poinDampak,
-            loc: tempat,
-            d: waktuGabung,
+    for (const s of daftar) {
+      try {
+        // Transaksi: aman dari tabrakan jika dua guru menginput bersamaan
+        await runTransaction(window.db, async (tx) => {
+          const ref = doc(window.db, "siswa", s.nisn);
+          const snap = await tx.get(ref);
+          if (!snap.exists()) throw new Error("Siswa tidak ditemukan");
+          const data = snap.data();
+          const baru = hitungDampak(data, kat, poin);
+          tx.update(ref, {
+            ...baru,
+            riwayat: tambahRiwayat(data.riwayat, entry),
           });
-
-          await updateDoc(docRef, {
-            hp: hpBaru,
-            shield: shieldBaru,
-            totalPrestasi: totalPres,
-            totalPelanggaran: totalPel,
-            dailyScore: dailyScoreBaru,
-            riwayat: riwayatList,
-          });
-        }
+        });
+        berhasil++;
+      } catch (err) {
+        console.error("Gagal menyimpan poin untuk", s.nama, err);
+        gagal.push(s.nama);
       }
-
-      done();
-      sessionStorage.removeItem("master_siswa_cache");
-      window.customAlert(
-        "✅ Poin Berhasil Disimpan & Disinkronkan ke Leaderboard!",
-      );
-      document.getElementById("formEntry").reset();
-      initFormEntry();
-      loadMasterSiswaFromCloud();
-    } catch (err) {
-      done();
-      console.error("Gagal menyimpan poin:", err);
-      window.customAlert("Gagal menyimpan data ke Firestore.");
     }
+
+    await refreshMasterSiswa();
+    done();
+
+    if (gagal.length === 0) {
+      window.customAlert("✅ Poin Berhasil Disimpan & Disinkronkan ke Leaderboard!");
+    } else {
+      window.customAlert(
+        `⚠️ ${berhasil} siswa berhasil, ${gagal.length} gagal:\n${gagal.join(", ")}`,
+      );
+    }
+    $("formEntry").reset();
+    initFormEntry();
   });
 };
 
+// ==========================================
+// ADMIN: TAB, REKAP, KONTROL
+// ==========================================
 window.switchAdminTab = function (tabName) {
   ["Rekap", "Kontrol", "Cetak", "Chat"].forEach((n) => {
-    const el = document.getElementById("adminTab" + n);
-    const btn = document.getElementById(
-      "navBtn" + (n === "Chat" ? "ChatAdmin" : n),
-    );
+    const el = $("adminTab" + n);
+    const btn = $("navBtn" + (n === "Chat" ? "ChatAdmin" : n));
     if (el) el.classList.add("hidden");
     if (btn) {
       btn.className = "btn-outline";
@@ -2134,18 +2444,12 @@ window.switchAdminTab = function (tabName) {
     }
   });
 
-  const activeEl = document.getElementById(
-    "adminTab" +
-      (tabName === "chat"
-        ? "Chat"
-        : tabName.charAt(0).toUpperCase() + tabName.slice(1)),
-  );
-  const activeBtn = document.getElementById(
-    "navBtn" +
-      (tabName === "chat"
-        ? "ChatAdmin"
-        : tabName.charAt(0).toUpperCase() + tabName.slice(1)),
-  );
+  const suffix =
+    tabName === "chat"
+      ? "Chat"
+      : tabName.charAt(0).toUpperCase() + tabName.slice(1);
+  const activeEl = $("adminTab" + suffix);
+  const activeBtn = $("navBtn" + (tabName === "chat" ? "ChatAdmin" : suffix));
 
   if (activeEl) activeEl.classList.remove("hidden");
   if (activeBtn) {
@@ -2153,62 +2457,66 @@ window.switchAdminTab = function (tabName) {
     activeBtn.style.background = "#1e3c72";
   }
 
-  if (tabName === "rekap") renderTabelRekap();
-  if (tabName === "kontrol") handleAdminActionTypeChange();
+  // Hentikan pemantauan chat saat keluar dari tab chat
+  if (tabName !== "chat") cleanupAdminListeners();
+
+  if (tabName === "rekap") window.renderTabelRekap();
+  if (tabName === "kontrol") window.handleAdminActionTypeChange();
   if (tabName === "chat") window.loadAdminChatRooms();
 };
 
 let statistikChartInstance = null;
 
-function renderTabelRekap() {
-  const filter = document.getElementById("filterKelasRekap").value;
-  const tbody = document.getElementById("tabelRekapBody");
+window.renderTabelRekap = function () {
+  const filter = $("filterKelasRekap").value;
+  const tbody = $("tabelRekapBody");
   const data =
     filter === "SEMUA"
       ? masterDataSiswa
       : masterDataSiswa.filter((s) => s.kelas === filter);
 
-  let rekapHtml = "";
+  tbody.innerHTML = data
+    .map((s) => {
+      const hp = s.hp !== undefined ? s.hp : 200;
+      let badge = `<span style="color:#2ecc71; font-weight:bold">${hp} HP</span>`;
+      if (s.shield > 0)
+        badge += ` <span style="color:#3498db; font-size:9px">+${s.shield} Shld</span>`;
+      const hukum = getStatusPembinaan(s.totalPelanggaran || 0);
+      return `<tr>
+      <td><strong>${escapeHtml(s.nama)}</strong></td>
+      <td>${escapeHtml(s.kelas)}</td>
+      <td>${badge}</td>
+      <td>
+        <span style="font-size: 9px; padding: 3px 6px; background: ${hukum.color}; color: #fff; border-radius: 4px; font-weight: bold;">${s.totalPelanggaran || 0} Pts</span>
+      </td>
+      </tr>`;
+    })
+    .join("");
 
-  data.forEach((s) => {
-    let badge = `<span style="color:#2ecc71; font-weight:bold">${s.hp} HP</span>`;
-    if (s.shield > 0)
-      badge += ` <span style="color:#3498db; font-size:9px">+${s.shield} Shld</span>`;
-    let hukum = getStatusPembinaan(s.totalPelanggaran || 0);
+  if (typeof Chart === "undefined") {
+    console.warn("Chart.js belum termuat, grafik dilewati.");
+    return;
+  }
 
-    rekapHtml += `<tr>
-    <td><strong>${s.nama}</strong></td>
-    <td>${s.kelas}</td>
-    <td>${badge}</td>
-    <td>
-      <span style="font-size: 9px; padding: 3px 6px; background: ${hukum.color}; color: #fff; border-radius: 4px; font-weight: bold;">${s.totalPelanggaran || 0} Pts</span>
-    </td>
-    </tr>`;
-  });
-
-  tbody.innerHTML = rekapHtml;
-
-  const ctx = document.getElementById("statistikChart").getContext("2d");
-  let labels = ["10 SMK", "11 SMK", "12 SMK"];
-  let pelanggaranPerKelas = [0, 0, 0];
-  let prestasiPerKelas = [0, 0, 0];
+  const ctx = $("statistikChart").getContext("2d");
+  const labels = ["10 SMK", "11 SMK", "12 SMK"];
+  const pelanggaranPerKelas = [0, 0, 0];
+  const prestasiPerKelas = [0, 0, 0];
 
   masterDataSiswa.forEach((s) => {
-    let idx = labels.indexOf(s.kelas);
+    const idx = labels.indexOf(s.kelas);
     if (idx !== -1) {
       pelanggaranPerKelas[idx] += s.totalPelanggaran || 0;
       prestasiPerKelas[idx] += s.totalPrestasi || 0;
     }
   });
 
-  if (statistikChartInstance) {
-    statistikChartInstance.destroy();
-  }
+  if (statistikChartInstance) statistikChartInstance.destroy();
 
   statistikChartInstance = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: labels,
+      labels,
       datasets: [
         {
           label: "Total Pelanggaran",
@@ -2236,12 +2544,12 @@ function renderTabelRekap() {
       },
     },
   });
-}
+};
 
 window.handleAdminActionTypeChange = function () {
-  const act = document.getElementById("adminActionType").value;
-  const boxKelas = document.getElementById("boxAdminKelas");
-  const boxSiswa = document.getElementById("boxAdminSiswa");
+  const act = $("adminActionType").value;
+  const boxKelas = $("boxAdminKelas");
+  const boxSiswa = $("boxAdminSiswa");
 
   if (act.includes("GLOBAL")) {
     boxKelas.classList.add("hidden");
@@ -2256,8 +2564,8 @@ window.handleAdminActionTypeChange = function () {
 };
 
 window.handleAdminKelasChange = function () {
-  const kelas = document.getElementById("adminKelasSelect").value;
-  const sel = document.getElementById("adminSiswaSelect");
+  const kelas = $("adminKelasSelect").value;
+  const sel = $("adminSiswaSelect");
   if (!kelas) {
     sel.innerHTML = '<option value="">-- Pilih Siswa --</option>';
     return;
@@ -2265,17 +2573,35 @@ window.handleAdminKelasChange = function () {
   let siswaHtml = '<option value="">-- Pilih Siswa --</option>';
   masterDataSiswa
     .filter((s) => s.kelas === kelas)
+    .sort((a, b) => String(a.nama).localeCompare(String(b.nama)))
     .forEach((s) => {
-      siswaHtml += `<option value="${s.nisn}">${s.nama} (${s.dailyScore || 0} Pts Tugas)</option>`;
+      siswaHtml += `<option value="${escapeHtml(s.nisn)}">${escapeHtml(s.nama)} (${s.dailyScore || 0} Pts Tugas)</option>`;
     });
   sel.innerHTML = siswaHtml;
 };
 
+// Update banyak siswa sekaligus dengan batch (jauh lebih cepat & atomik per chunk)
+async function batchUpdateSiswa(targetList, buildUpdate) {
+  const { doc, getDoc, writeBatch } = window.fbFirestore;
+  const valid = targetList.filter((s) => s.nisn);
+  for (let i = 0; i < valid.length; i += BATCH_CHUNK) {
+    const chunk = valid.slice(i, i + BATCH_CHUNK);
+    const snaps = await Promise.all(
+      chunk.map((s) => getDoc(doc(window.db, "siswa", s.nisn))),
+    );
+    const batch = writeBatch(window.db);
+    snaps.forEach((snap) => {
+      if (snap.exists()) batch.update(snap.ref, buildUpdate(snap.data()));
+    });
+    await batch.commit();
+  }
+}
+
 window.prosesActionAdminWithLoading = async function () {
-  const act = document.getElementById("adminActionType").value;
-  const kelasTarget = document.getElementById("adminKelasSelect").value;
-  const nisnTarget = document.getElementById("adminSiswaSelect").value;
-  const notes = document.getElementById("adminNotes").value.trim();
+  const act = $("adminActionType").value;
+  const kelasTarget = $("adminKelasSelect").value;
+  const nisnTarget = $("adminSiswaSelect").value;
+  const notes = $("adminNotes").value.trim();
 
   if (!notes) return window.customAlert("Catatan sidang wajib diisi!");
   if (act.includes("CLASS") && !kelasTarget)
@@ -2283,175 +2609,86 @@ window.prosesActionAdminWithLoading = async function () {
   if ((act.includes("INDIVIDUAL") || act === "RESET_PIN_SISWA") && !nisnTarget)
     return window.customAlert("Pilih siswa target terlebih dahulu!");
 
+  // Tindakan luas / merusak data wajib dikonfirmasi ulang
+  if (act.includes("GLOBAL") || act.includes("FULL")) {
+    const ok = await window.customConfirm(
+      "Tindakan ini berdampak luas dan TIDAK DAPAT DIBATALKAN.\nLanjutkan eksekusi?",
+      "⚠️ KONFIRMASI ADMIN",
+    );
+    if (!ok) return;
+  }
+
   showGamePreloader("EXECUTING ADMIN OVERRIDE...", async (done) => {
     try {
-      const { doc, getDoc, updateDoc } = window.fbFirestore;
-      const timestampStr = new Date()
-        .toISOString()
-        .replace("T", " ")
-        .substring(0, 16);
+      const ts = localDateTimeStr();
+      const mkEntry = (t) => ({ t, p: 0, loc: "Ruang BK / Admin", d: ts });
 
-      if (act === "RESET_DAILY_GLOBAL") {
-        for (let s of masterDataSiswa) {
-          if (!s.nisn) continue;
-          const docRef = doc(window.db, "siswa", s.nisn);
-          const docSnap = await getDoc(docRef);
-          let riwayatList = docSnap.exists()
-            ? docSnap.data().riwayat || []
-            : [];
-          riwayatList.unshift({
-            t: `RESET POIN HARIAN (Global): ${notes}`,
-            p: 0,
-            loc: "Ruang BK / Admin",
-            d: timestampStr,
-          });
-          await updateDoc(docRef, {
-            dailyScore: 0,
-            riwayat: riwayatList,
-          });
-        }
-        done();
-        sessionStorage.removeItem("master_siswa_cache");
-        window.customAlert(
-          "⭐ Poin harian SELURUH SISWA berhasil di-reset jadi 0!",
-        );
-      } else if (act === "RESET_DAILY_CLASS") {
-        const targetList = masterDataSiswa.filter(
-          (s) => s.kelas === kelasTarget,
-        );
-        for (let s of targetList) {
-          if (!s.nisn) continue;
-          const docRef = doc(window.db, "siswa", s.nisn);
-          const docSnap = await getDoc(docRef);
-          let riwayatList = docSnap.exists()
-            ? docSnap.data().riwayat || []
-            : [];
-          riwayatList.unshift({
-            t: `RESET POIN HARIAN (Kelas ${kelasTarget}): ${notes}`,
-            p: 0,
-            loc: "Ruang BK / Admin",
-            d: timestampStr,
-          });
-          await updateDoc(docRef, {
-            dailyScore: 0,
-            riwayat: riwayatList,
-          });
-        }
-        done();
-        sessionStorage.removeItem("master_siswa_cache");
-        window.customAlert(
-          `⭐ Poin harian kelas ${kelasTarget} berhasil di-reset jadi 0!`,
-        );
-      } else if (act === "RESET_DAILY_INDIVIDUAL") {
-        const docRef = doc(window.db, "siswa", nisnTarget);
-        const docSnap = await getDoc(docRef);
-        let riwayatList = docSnap.exists() ? docSnap.data().riwayat || [] : [];
-        riwayatList.unshift({
-          t: `RESET POIN HARIAN: ${notes}`,
-          p: 0,
-          loc: "Ruang BK / Admin",
-          d: timestampStr,
-        });
-        await updateDoc(docRef, { dailyScore: 0, riwayat: riwayatList });
-        done();
-        sessionStorage.removeItem("master_siswa_cache");
-        window.customAlert(`⭐ Poin harian siswa berhasil di-reset jadi 0!`);
-      } else if (act === "RESET_FULL_GLOBAL") {
-        for (let s of masterDataSiswa) {
-          if (!s.nisn) continue;
-          const docRef = doc(window.db, "siswa", s.nisn);
-          await updateDoc(docRef, {
-            hp: 200,
-            shield: 0,
-            totalPrestasi: 0,
-            totalPelanggaran: 0,
-            riwayat: [
-              {
-                t: `PEMUTIHAN (Global): ${notes}`,
-                p: 0,
-                loc: "Ruang BK / Admin",
-                d: timestampStr,
-              },
-            ],
-          });
-        }
-        done();
-        sessionStorage.removeItem("master_siswa_cache");
-        window.customAlert(
-          "👑 Pemutihan penuh SELURUH SISWA berhasil dieksekusi!",
-        );
-      } else if (act === "RESET_FULL_CLASS") {
-        const targetList = masterDataSiswa.filter(
-          (s) => s.kelas === kelasTarget,
-        );
-        for (let s of targetList) {
-          if (!s.nisn) continue;
-          const docRef = doc(window.db, "siswa", s.nisn);
-          await updateDoc(docRef, {
-            hp: 200,
-            shield: 0,
-            totalPrestasi: 0,
-            totalPelanggaran: 0,
-            riwayat: [
-              {
-                t: `PEMUTIHAN (Kelas ${kelasTarget}): ${notes}`,
-                p: 0,
-                loc: "Ruang BK / Admin",
-                d: timestampStr,
-              },
-            ],
-          });
-        }
-        done();
-        sessionStorage.removeItem("master_siswa_cache");
-        window.customAlert(
-          `👑 Pemutihan penuh kelas ${kelasTarget} berhasil dieksekusi!`,
-        );
-      } else if (act === "RESET_FULL_INDIVIDUAL") {
-        const docRef = doc(window.db, "siswa", nisnTarget);
-        await updateDoc(docRef, {
+      let targets;
+      let scope;
+      if (act.includes("GLOBAL")) {
+        targets = [...masterDataSiswa];
+        scope = "Global";
+      } else if (act.includes("CLASS")) {
+        targets = masterDataSiswa.filter((s) => s.kelas === kelasTarget);
+        scope = `Kelas ${kelasTarget}`;
+      } else {
+        targets = [{ nisn: nisnTarget }];
+        scope = "Individu";
+      }
+
+      let pesanSukses = "";
+
+      if (act.startsWith("RESET_DAILY")) {
+        const entry = mkEntry(`RESET POIN HARIAN (${scope}): ${notes}`);
+        await batchUpdateSiswa(targets, (d) => ({
+          dailyScore: 0,
+          riwayat: tambahRiwayat(d.riwayat, entry),
+        }));
+        pesanSukses = `⭐ Poin harian (${scope}) berhasil di-reset jadi 0!`;
+      } else if (act.startsWith("RESET_FULL")) {
+        const entry = mkEntry(`PEMUTIHAN (${scope}): ${notes}`);
+        await batchUpdateSiswa(targets, () => ({
           hp: 200,
           shield: 0,
           totalPrestasi: 0,
           totalPelanggaran: 0,
-          riwayat: [
-            {
-              t: `PEMUTIHAN (Individu): ${notes}`,
-              p: 0,
-              loc: "Ruang BK / Admin",
-              d: timestampStr,
-            },
-          ],
-        });
-        done();
-        sessionStorage.removeItem("master_siswa_cache");
-        window.customAlert(`👑 Pemutihan siswa perorangan berhasil!`);
+          riwayat: [entry],
+        }));
+        pesanSukses = `👑 Pemutihan penuh (${scope}) berhasil dieksekusi!`;
       } else if (act === "RESET_PIN_SISWA") {
-        const docRef = doc(window.db, "siswa", nisnTarget);
-        const docSnap = await getDoc(docRef);
-        let riwayatList = docSnap.exists() ? docSnap.data().riwayat || [] : [];
-
-        riwayatList.unshift({
-          t: `RESET PIN AKUN: ${notes}`,
-          p: 0,
-          loc: "Ruang BK / Admin",
-          d: timestampStr,
-        });
-
-        await updateDoc(docRef, {
+        const entry = mkEntry(`RESET PIN AKUN: ${notes}`);
+        await batchUpdateSiswa(targets, (d) => ({
           pin: "123456",
           hasChangedPin: false,
-          riwayat: riwayatList,
-        });
-
-        done();
-        sessionStorage.removeItem("master_siswa_cache");
-        window.customAlert(`🔑 PIN siswa berhasil di-reset menjadi '123456'!`);
+          riwayat: tambahRiwayat(d.riwayat, entry),
+        }));
+        pesanSukses = `🔑 PIN siswa berhasil di-reset menjadi '123456'!`;
+      } else {
+        throw new Error("Aksi admin tidak dikenal: " + act);
       }
 
-      document.getElementById("formAdminAction").reset();
+      // Jejak audit (gagal menulis log tidak membatalkan aksi)
+      try {
+        const { collection, addDoc } = window.fbFirestore;
+        await addDoc(collection(window.db, "admin_logs"), {
+          aksi: act,
+          scope,
+          kelas: kelasTarget || "",
+          nisn: nisnTarget || "",
+          catatan: notes,
+          oleh: currentUser?.nama || "-",
+          waktu: Date.now(),
+          waktuStr: ts,
+        });
+      } catch (e) {
+        console.warn("Audit log tidak tersimpan:", e);
+      }
+
+      await refreshMasterSiswa();
+      done();
+      window.customAlert(pesanSukses);
+      $("formAdminAction").reset();
       window.handleAdminActionTypeChange();
-      loadMasterSiswaFromCloud();
     } catch (err) {
       done();
       console.error("Gagal menjalankan aksi Admin:", err);
@@ -2460,22 +2697,26 @@ window.prosesActionAdminWithLoading = async function () {
   });
 };
 
+// ==========================================
+// PAPAN QUEST
+// ==========================================
 window.renderQuestUI = function (tipe) {
-  const btnPres = document.getElementById("tabQuestPrestasi");
-  const btnPelang = document.getElementById("tabQuestPelanggaran");
-  const container = document.getElementById("questContainerUI");
+  const btnPres = $("tabQuestPrestasi");
+  const btnPelang = $("tabQuestPelanggaran");
+  const container = $("questContainerUI");
 
   if (tipe === "prestasi") {
     btnPres.style.background = "#3498db";
     btnPres.style.color = "white";
     btnPelang.className = "btn-outline";
+    btnPelang.style.background = "transparent";
     btnPelang.style.color = "#e74c3c";
 
     let html = `<div class="accordion">
               <div class="accordion-header" onclick="toggleAccordion(this)"><span>⭐ Daftar Penghargaan (Reward)</span><span>▼</span></div>
               <div class="accordion-body active">`;
     dataPilihan.Prestasi.forEach((item) => {
-      html += `<div class="q-item"><span>${item.t}</span> <span class="badge-shield">+${item.p}</span></div>`;
+      html += `<div class="q-item"><span>${escapeHtml(item.t)}</span> <span class="badge-shield">+${item.p}</span></div>`;
     });
     html += `</div></div>`;
     container.innerHTML = html;
@@ -2483,6 +2724,7 @@ window.renderQuestUI = function (tipe) {
     btnPelang.style.background = "#e74c3c";
     btnPelang.style.color = "white";
     btnPres.className = "btn-outline";
+    btnPres.style.background = "transparent";
     btnPres.style.color = "#3498db";
 
     let html = "";
@@ -2491,7 +2733,7 @@ window.renderQuestUI = function (tipe) {
                <div class="accordion-header" onclick="toggleAccordion(this)"><span>⚠️ Pelanggaran ${k}</span><span>▼</span></div>
                <div class="accordion-body ${idx === 0 ? "active" : ""}">`;
       dataPilihan.Pelanggaran[k].forEach((item) => {
-        html += `<div class="q-item"><span>${item.t}</span> <span class="badge-hp">-${item.p}</span></div>`;
+        html += `<div class="q-item"><span>${escapeHtml(item.t)}</span> <span class="badge-hp">-${item.p}</span></div>`;
       });
       html += `</div></div>`;
     });
@@ -2511,108 +2753,74 @@ window.toggleAccordion = function (header) {
   }
 };
 
-window.addEventListener("DOMContentLoaded", () => {
-  loadMasterSiswaFromCloud(() => {
-    loadTugasAktif();
-
-    const savedUser = localStorage.getItem("loggedInUser");
-    if (savedUser) {
-      try {
-        const userObj = JSON.parse(savedUser);
-        currentRole = userObj.role;
-        if (userObj.role === "Super Admin") {
-          document.getElementById("txtNamaAdmin").innerText = userObj.nama;
-          showScreen("admin");
-          window.switchAdminTab("rekap");
-        } else {
-          document.getElementById("txtNamaGuru").innerText = userObj.nama;
-          document.getElementById("txtRoleGuru").innerText =
-            "Jabatan: " + userObj.role;
-          showScreen("entry");
-          initFormEntry();
-          window.switchTeacherTab("poin");
-          loadTugasAktif();
-        }
-        return;
-      } catch (e) {
-        localStorage.removeItem("loggedInUser");
-      }
-    }
-
-    const savedNisn = localStorage.getItem("activeUser");
-    if (savedNisn) {
-      showScreen("siswa");
-      document.getElementById("nisnSiswaInput").value = savedNisn;
-      autoLoginSiswa(savedNisn);
-    }
-  });
-});
-
-window.addEventListener("popstate", (event) => {
-  if (event.state && event.state.screen) {
-    showScreen(event.state.screen, false);
-  } else {
-    showScreen("menu", false);
-  }
-});
 
 // ==========================================
 // SISTEM CETAK & EKSPOR LAPORAN ADMIN
 // ==========================================
 window.handleCetakKategoriChange = function () {
-  const kategori = document.getElementById("cetakKategori").value;
-  const boxKelas = document.getElementById("boxCetakKelas");
-  const boxSiswa = document.getElementById("boxCetakSiswa");
-
-  boxKelas.classList.add("hidden");
-  boxSiswa.classList.add("hidden");
+  const kategori = $("cetakKategori").value;
+  $("boxCetakKelas").classList.add("hidden");
+  $("boxCetakSiswa").classList.add("hidden");
 
   if (kategori === "kelas") {
-    boxKelas.classList.remove("hidden");
+    $("boxCetakKelas").classList.remove("hidden");
   } else if (kategori === "siswa") {
-    boxSiswa.classList.remove("hidden");
+    $("boxCetakSiswa").classList.remove("hidden");
     renderPilihanSiswaCetak(masterDataSiswa);
   }
 };
 
 function renderPilihanSiswaCetak(dataArray) {
-  const selectEl = document.getElementById("cetakSiswaSelect");
+  const selectEl = $("cetakSiswaSelect");
   if (!selectEl) return;
-
-  let html = "";
-  dataArray.forEach((s) => {
-    html += `<option value="${s.nisn}">${s.nama} (${s.kelas})</option>`;
-  });
-  selectEl.innerHTML =
-    html || '<option value="">Tidak ada siswa ditemukan</option>';
+  const html = dataArray
+    .map(
+      (s) =>
+        `<option value="${escapeHtml(s.nisn)}">${escapeHtml(s.nama)} (${escapeHtml(s.kelas)})</option>`,
+    )
+    .join("");
+  selectEl.innerHTML = html || '<option value="">Tidak ada siswa ditemukan</option>';
 }
 
 window.filterPilihanSiswaCetak = function () {
-  const keyword = document
-    .getElementById("searchSiswaInput")
-    .value.toLowerCase();
+  const keyword = $("searchSiswaInput").value.toLowerCase();
   const filtered = masterDataSiswa.filter(
-    (s) => s.nama.toLowerCase().includes(keyword) || s.nisn.includes(keyword),
+    (s) =>
+      String(s.nama).toLowerCase().includes(keyword) ||
+      String(s.nisn).includes(keyword),
   );
   renderPilihanSiswaCetak(filtered);
 };
 
+async function ambilRiwayatSiswa(nisn) {
+  try {
+    const { doc, getDoc } = window.fbFirestore;
+    const snap = await getDoc(doc(window.db, "siswa", nisn));
+    return snap.exists() ? snap.data().riwayat || [] : [];
+  } catch (e) {
+    console.error("Gagal mengambil riwayat:", e);
+    return [];
+  }
+}
+
 window.prosesCetakLaporanWithLoading = async function () {
-  const kategori = document.getElementById("cetakKategori").value;
+  const kategori = $("cetakKategori").value;
   let targetData = [...masterDataSiswa];
   let judulLaporan = "REKAPITULASI KESELURUHAN SISWA - SMK WIRAGUNA";
+  let detailNisn = null;
 
   if (kategori === "kelas") {
-    const kelasPilih = document.getElementById("cetakKelasSelect").value;
+    const kelasPilih = $("cetakKelasSelect").value;
     targetData = masterDataSiswa.filter((s) => s.kelas === kelasPilih);
     judulLaporan = `REKAPITULASI KEDISIPLINAN KELAS ${kelasPilih} - SMK WIRAGUNA`;
   } else if (kategori === "siswa") {
-    const nisnPilih = document.getElementById("cetakSiswaSelect").value;
+    const nisnPilih = $("cetakSiswaSelect").value;
     if (!nisnPilih) return window.customAlert("Pilih siswa terlebih dahulu!");
     const siswaObj = masterDataSiswa.find((s) => s.nisn === nisnPilih);
     if (!siswaObj) return window.customAlert("Data siswa tidak ditemukan.");
     targetData = [siswaObj];
-    judulLaporan = `LAPORAN DETAIL SISWA: ${siswaObj.nama.toUpperCase()} (${siswaObj.kelas})`;
+    detailNisn = nisnPilih;
+    judulLaporan = `LAPORAN DETAIL SISWA: ${String(siswaObj.nama).toUpperCase()} (${siswaObj.kelas})`;
   }
 
   if (targetData.length === 0) {
@@ -2621,22 +2829,74 @@ window.prosesCetakLaporanWithLoading = async function () {
     );
   }
 
-  showGamePreloader("MENYIAPKAN DOKUMEN LAPORAN...", (done) => {
-    setTimeout(() => {
+  // Jendela HARUS dibuka langsung saat klik (sebelum proses async),
+  // kalau tidak akan diblokir popup-blocker (terutama Safari/iOS).
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    return window.customAlert(
+      "Popup diblokir browser. Izinkan popup untuk situs ini lalu coba lagi.",
+    );
+  }
+  printWindow.document.write(
+    "<p style='font-family:sans-serif'>Menyiapkan dokumen laporan...</p>",
+  );
+
+  showGamePreloader("MENYIAPKAN DOKUMEN LAPORAN...", async (done) => {
+    try {
+      const riwayat = detailNisn ? await ambilRiwayatSiswa(detailNisn) : null;
+      cetakLaporanKeJendelaBaru(printWindow, targetData, judulLaporan, riwayat);
+    } finally {
       done();
-      cetakLaporanKeJendelaBaru(targetData, judulLaporan);
-    }, 600);
+    }
   });
 };
 
-function cetakLaporanKeJendelaBaru(dataSiswa, judul) {
-  let printWindow = window.open("", "_blank");
-  let htmlContent = `
-    <!DOCTYPE html>
+function cetakLaporanKeJendelaBaru(printWindow, dataSiswa, judul, riwayat) {
+  const tanggalCetak = new Date().toLocaleDateString("id-ID");
+  const baris = dataSiswa
+    .map(
+      (s, idx) => `
+      <tr>
+        <td>${idx + 1}</td>
+        <td>${escapeHtml(s.nisn || "-")}</td>
+        <td><b>${escapeHtml(s.nama)}</b></td>
+        <td>${escapeHtml(s.kelas)}</td>
+        <td>HP: ${s.hp ?? 200} | Shld: ${s.shield || 0}</td>
+        <td>${s.totalPrestasi || 0} Pts</td>
+        <td>${s.totalPelanggaran || 0} Pts</td>
+      </tr>`,
+    )
+    .join("");
+
+  let riwayatHtml = "";
+  if (riwayat) {
+    const rows = riwayat.length
+      ? riwayat
+          .map(
+            (r, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${escapeHtml(r.d || "-")}</td>
+          <td>${escapeHtml(r.t)}</td>
+          <td>${escapeHtml(r.loc || "-")}</td>
+          <td>${Number(r.p) > 0 ? "+" + Number(r.p) : Number(r.p) || 0}</td>
+        </tr>`,
+          )
+          .join("")
+      : `<tr><td colspan="5" style="text-align:center">Tidak ada catatan riwayat.</td></tr>`;
+    riwayatHtml = `
+      <h4 style="text-align:left; margin-top:20px">Riwayat Kejadian & Poin</h4>
+      <table>
+        <thead><tr><th>No</th><th>Waktu</th><th>Kejadian</th><th>Tempat</th><th>Poin</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  const htmlContent = `<!DOCTYPE html>
     <html lang="id">
     <head>
       <meta charset="UTF-8">
-      <title>${judul}</title>
+      <title>${escapeHtml(judul)}</title>
       <style>
         body { font-family: 'Poppins', Arial, sans-serif; padding: 20px; color: #111; }
         h2, h4 { text-align: center; margin: 4px 0; }
@@ -2651,52 +2911,30 @@ function cetakLaporanKeJendelaBaru(dataSiswa, judul) {
       <div class="header">
         <h2>PEMERINTAH PROVINSI JAWA BARAT</h2>
         <h2>YAYASAN PENDIDIKAN SMK WIRAGUNA LIMBANGAN</h2>
-        <h4>${judul}</h4>
-        <p style="text-align: center; font-size: 10px; color: #555; margin-top: 5px;">Dicetak otomatis melalui Sistem Tatib SMK Wiraguna pada ${new Date().toLocaleDateString("id-ID")}</p>
+        <h4>${escapeHtml(judul)}</h4>
+        <p style="text-align: center; font-size: 10px; color: #555; margin-top: 5px;">Dicetak otomatis melalui Sistem Tatib SMK Wiraguna pada ${tanggalCetak}</p>
       </div>
       <table>
         <thead>
           <tr>
-            <th>No</th>
-            <th>NISN</th>
-            <th>Nama Siswa</th>
-            <th>Kelas</th>
-            <th>HP / Shield</th>
-            <th>Total Prestasi</th>
-            <th>Total Pelanggaran</th>
+            <th>No</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th>
+            <th>HP / Shield</th><th>Total Prestasi</th><th>Total Pelanggaran</th>
           </tr>
         </thead>
-        <tbody>
-  `;
-
-  dataSiswa.forEach((s, idx) => {
-    htmlContent += `
-      <tr>
-        <td>${idx + 1}</td>
-        <td>${s.nisn || "-"}</td>
-        <td><b>${s.nama}</b></td>
-        <td>${s.kelas}</td>
-        <td>HP: ${s.hp || 200} | Shld: ${s.shield || 0}</td>
-        <td>${s.totalPrestasi || 0} Pts</td>
-        <td>${s.totalPelanggaran || 0} Pts</td>
-      </tr>
-    `;
-  });
-
-  htmlContent += `
-        </tbody>
+        <tbody>${baris}</tbody>
       </table>
+      ${riwayatHtml}
       <div class="footer">
         <div><br><br>Mengetahui,<br><b>Kepala Sekolah / Tim BK</b></div>
-        <div>Garut, ${new Date().toLocaleDateString("id-ID")}<br><br><b>Petugas / Admin</b></div>
+        <div>Garut, ${tanggalCetak}<br><br><b>Petugas / Admin</b></div>
       </div>
       <script>
         window.onload = function() { window.print(); }
-      </script>
+      <\/script>
     </body>
-    </html>
-  `;
+    </html>`;
 
+  printWindow.document.open();
   printWindow.document.write(htmlContent);
   printWindow.document.close();
 }
@@ -2705,22 +2943,38 @@ function cetakLaporanKeJendelaBaru(dataSiswa, judul) {
 // FITUR GANTI FOTO PROFIL SISWA & CROPPER
 // ==========================================
 let cropperInstance = null;
+let sedangSimpanFoto = false;
+const MAX_FOTO_BYTES = 8 * 1024 * 1024;
+
+function buatCropper(imageElement) {
+  if (cropperInstance) cropperInstance.destroy();
+  cropperInstance = new Cropper(imageElement, {
+    aspectRatio: 1,
+    viewMode: 1,
+    dragMode: "move",
+    autoCropArea: 0.8,
+    restore: false,
+    guides: false,
+    center: true,
+    highlight: false,
+    cropBoxMovable: true,
+    cropBoxResizable: true,
+    toggleDragModeOnDblclick: false,
+  });
+}
 
 window.cekBatasGantiAvatar = async function (nisnSiswa) {
-  const { doc, getDoc } = window.fbFirestore;
-  const docRef = doc(window.db, "siswa", nisnSiswa);
-  const docSnap = await getDoc(docRef);
+  try {
+    const { doc, getDoc } = window.fbFirestore;
+    const docSnap = await getDoc(doc(window.db, "siswa", nisnSiswa));
+    if (!docSnap.exists()) return false;
 
-  if (!docSnap.exists()) return false;
+    const lastChange = docSnap.data().lastAvatarChange || 0;
+    const enamBulanMs = 180 * 24 * 60 * 60 * 1000;
+    const sekarang = Date.now();
 
-  const data = docSnap.data();
-  const lastChange = data.lastAvatarChange || 0;
-  const enamBulanMs = 180 * 24 * 60 * 60 * 1000;
-  const sekarang = Date.now();
+    if (lastChange === 0 || sekarang - lastChange >= enamBulanMs) return true;
 
-  if (lastChange === 0 || sekarang - lastChange >= enamBulanMs) {
-    return true;
-  } else {
     const sisaHari = Math.ceil(
       (enamBulanMs - (sekarang - lastChange)) / (1000 * 60 * 60 * 24),
     );
@@ -2728,51 +2982,32 @@ window.cekBatasGantiAvatar = async function (nisnSiswa) {
       `⚠️ Maaf, jatah ganti foto mandiri baru bisa digunakan lagi dalam ${sisaHari} hari ke depan (1x per semester). Silakan hubungi Wali Kelas jika ingin mengubahnya sekarang.`,
     );
     return false;
+  } catch (e) {
+    console.error("Gagal cek batas ganti avatar:", e);
+    window.customAlert("Gagal memeriksa jatah ganti foto. Coba lagi.");
+    return false;
   }
 };
 
 window.bukaModalGantiFoto = async function () {
-  const myNisn =
-    window.currentStudentNisn ||
-    document.getElementById("nisnSiswaInput")?.value;
+  const myNisn = getMyNisn();
   if (!myNisn) {
     window.customAlert("⚠️ Silakan login terlebih dahulu!");
     return;
   }
 
   const bolehGanti = await window.cekBatasGantiAvatar(myNisn);
-  if (bolehGanti) {
-    document.getElementById("modalGantiFoto").classList.remove("hidden");
+  if (!bolehGanti) return;
 
-    const currentAvatar =
-      window.currentStudentDataCache?.fotoUrl ||
-      (window.currentStudentDataCache?.jk?.toUpperCase() === "P"
-        ? "assets/foto_siswa/avatar_p.webp"
-        : "assets/foto_siswa/avatar_l.webp");
-
-    const imageElement = document.getElementById("imageToCrop");
-    imageElement.src = currentAvatar;
-
-    if (cropperInstance) {
-      cropperInstance.destroy();
-    }
-
-    setTimeout(() => {
-      cropperInstance = new Cropper(imageElement, {
-        aspectRatio: 1,
-        viewMode: 1,
-        dragMode: "move",
-        autoCropArea: 0.8,
-        restore: false,
-        guides: false,
-        center: true,
-        highlight: false,
-        cropBoxMovable: true,
-        cropBoxResizable: true,
-        toggleDragModeOnDblclick: false,
-      });
-    }, 100);
+  // Tampilkan foto saat ini saja. Cropper baru aktif SETELAH siswa memilih
+  // berkas, supaya jatah 1x/semester tidak terpakai untuk foto bawaan.
+  if (cropperInstance) {
+    cropperInstance.destroy();
+    cropperInstance = null;
   }
+  $("imageToCrop").src = avatarFor(window.currentStudentDataCache);
+  $("inputFileFotoSiswa").value = "";
+  $("modalGantiFoto").classList.remove("hidden");
 };
 
 window.tutupModalGantiFoto = function () {
@@ -2780,44 +3015,40 @@ window.tutupModalGantiFoto = function () {
     cropperInstance.destroy();
     cropperInstance = null;
   }
-  document.getElementById("modalGantiFoto").classList.add("hidden");
-  document.getElementById("inputFileFotoSiswa").value = "";
+  $("modalGantiFoto").classList.add("hidden");
+  $("inputFileFotoSiswa").value = "";
 };
 
 window.handleFileSelectedForCrop = function (input) {
   const file = input.files[0];
   if (!file) return;
 
-  if (!file.type.match(/image.*/)) {
-    window.customAlert(
-      "⚠️ Format file harus berupa gambar (JPG, PNG, atau WEBP)!",
-    );
+  if (!file.type.startsWith("image/")) {
+    window.customAlert("⚠️ Format file harus berupa gambar (JPG, PNG, atau WEBP)!");
+    input.value = "";
+    return;
+  }
+  if (file.size > MAX_FOTO_BYTES) {
+    window.customAlert("⚠️ Ukuran foto terlalu besar (maksimal 8 MB)!");
+    input.value = "";
     return;
   }
 
   const reader = new FileReader();
   reader.onload = function (event) {
-    const imageElement = document.getElementById("imageToCrop");
-    imageElement.src = event.target.result;
-
+    const imageElement = $("imageToCrop");
     if (cropperInstance) {
       cropperInstance.destroy();
+      cropperInstance = null;
     }
-
-    cropperInstance = new Cropper(imageElement, {
-      aspectRatio: 1,
-      viewMode: 1,
-      dragMode: "move",
-      autoCropArea: 0.8,
-      restore: false,
-      guides: false,
-      center: true,
-      highlight: false,
-      cropBoxMovable: true,
-      cropBoxResizable: true,
-      toggleDragModeOnDblclick: false,
-    });
+    imageElement.onload = () => {
+      imageElement.onload = null;
+      buatCropper(imageElement);
+    };
+    imageElement.src = event.target.result;
   };
+  reader.onerror = () =>
+    window.customAlert("⚠️ Gagal membaca berkas foto. Coba berkas lain.");
   reader.readAsDataURL(file);
 };
 
@@ -2826,52 +3057,52 @@ window.simpanFotoProfilBaru = async function () {
     window.customAlert("⚠️ Silakan pilih berkas foto terlebih dahulu!");
     return;
   }
+  if (sedangSimpanFoto) return;
 
-  const canvas = cropperInstance.getCroppedCanvas({
-    width: 300,
-    height: 300,
-  });
-
-  const croppedDataUrl = canvas.toDataURL("image/webp", 0.8);
-
-  const myNisn =
-    window.currentStudentNisn ||
-    document.getElementById("nisnSiswaInput")?.value;
+  const myNisn = getMyNisn();
   if (!myNisn) return;
 
+  const canvas = cropperInstance.getCroppedCanvas({ width: 256, height: 256 });
+  if (!canvas) {
+    window.customAlert("⚠️ Gagal memproses foto. Coba pilih foto lain.");
+    return;
+  }
+
+  // Safari lama tidak mendukung WEBP -> otomatis jatuh ke JPEG
+  let croppedDataUrl = canvas.toDataURL("image/webp", 0.8);
+  if (!croppedDataUrl.startsWith("data:image/webp")) {
+    croppedDataUrl = canvas.toDataURL("image/jpeg", 0.8);
+  }
+
+  sedangSimpanFoto = true;
   try {
     const { doc, updateDoc } = window.fbFirestore;
-    const docRef = doc(window.db, "siswa", myNisn);
+    const lastAvatarChange = Date.now();
 
-    const dataUpdate = {
+    await updateDoc(doc(window.db, "siswa", myNisn), {
       fotoUrl: croppedDataUrl,
-      lastAvatarChange: Date.now(),
-    };
-
-    await updateDoc(docRef, dataUpdate);
+      lastAvatarChange,
+    });
 
     if (window.currentStudentDataCache) {
       window.currentStudentDataCache.fotoUrl = croppedDataUrl;
-      window.currentStudentDataCache.lastAvatarChange =
-        dataUpdate.lastAvatarChange;
+      window.currentStudentDataCache.lastAvatarChange = lastAvatarChange;
     }
 
     const avatarMain =
-      document.getElementById("avatarSiswaMain") ||
-      document.querySelector(".rpg-avatar-box img");
-    if (avatarMain) {
-      avatarMain.src = croppedDataUrl;
-    }
+      $("avatarSiswaMain") || document.querySelector(".rpg-avatar-box img");
+    if (avatarMain) avatarMain.src = croppedDataUrl;
 
-    window.customAlert(
-      "🎉 Berhasil! Foto profil kamu telah dipaskan dan diperbarui.",
-    );
+    invalidateMasterCache();
     window.tutupModalGantiFoto();
+    window.customAlert("🎉 Berhasil! Foto profil kamu telah dipaskan dan diperbarui.");
   } catch (error) {
     console.error("Gagal menyimpan foto:", error);
     window.customAlert(
       "❌ Terjadi kesalahan saat menyimpan foto ke server. Silakan coba lagi.",
     );
+  } finally {
+    sedangSimpanFoto = false;
   }
 };
 
@@ -2879,8 +3110,8 @@ window.simpanFotoProfilBaru = async function () {
 // FITUR RESET FOTO OLEH WALI KELAS (PANEL GURU)
 // ==========================================
 window.handleWaliKelasPilihKelas = function () {
-  const kelas = document.getElementById("waliKelasSelectKelas").value;
-  const selSiswa = document.getElementById("waliKelasSelectSiswa");
+  const kelas = $("waliKelasSelectKelas").value;
+  const selSiswa = $("waliKelasSelectSiswa");
 
   if (!kelas) {
     selSiswa.innerHTML =
@@ -2891,14 +3122,15 @@ window.handleWaliKelasPilihKelas = function () {
   let siswaHtml = '<option value="">-- Pilih Siswa --</option>';
   masterDataSiswa
     .filter((s) => s.kelas === kelas)
+    .sort((a, b) => String(a.nama).localeCompare(String(b.nama)))
     .forEach((s) => {
-      siswaHtml += `<option value="${s.nisn}">${s.nama} (NISN: ${s.nisn})</option>`;
+      siswaHtml += `<option value="${escapeHtml(s.nisn)}">${escapeHtml(s.nama)} (NISN: ${escapeHtml(s.nisn)})</option>`;
     });
   selSiswa.innerHTML = siswaHtml;
 };
 
 window.eksekusiResetFotoOlehWaliKelas = async function () {
-  const nisnTarget = document.getElementById("waliKelasSelectSiswa").value;
+  const nisnTarget = $("waliKelasSelectSiswa").value;
 
   if (!nisnTarget) {
     return window.customAlert(
@@ -2906,36 +3138,29 @@ window.eksekusiResetFotoOlehWaliKelas = async function () {
     );
   }
 
-  const siswaObj = masterDataSiswa.find((s) => s.nisn === nisnTarget);
-  const namaSiswa = siswaObj ? siswaObj.nama : nisnTarget;
-
+  const namaSiswa = namaDariNisn(nisnTarget);
   const konfirmasi = await window.customConfirm(
-    `Apakah Anda yakin ingin mereset foto profil untuk siswa **${namaSiswa}**? Siswa akan dapat mengganti fotonya kembali secara mandiri.`,
+    `Apakah Anda yakin ingin mereset foto profil untuk siswa ${namaSiswa}? Siswa akan dapat mengganti fotonya kembali secara mandiri.`,
   );
   if (!konfirmasi) return;
 
   showGamePreloader("MENGEKSEKUSI RESET FOTO...", async (done) => {
     try {
       const { doc, updateDoc } = window.fbFirestore;
-      const docRef = doc(window.db, "siswa", nisnTarget);
-
-      await updateDoc(docRef, {
+      await updateDoc(doc(window.db, "siswa", nisnTarget), {
         fotoUrl: "",
         lastAvatarChange: 0,
       });
 
+      await refreshMasterSiswa();
       done();
-      sessionStorage.removeItem("master_siswa_cache");
-
       window.customAlert(
         `✅ Berhasil! Foto profil untuk ${namaSiswa} telah di-reset oleh Wali Kelas.`,
       );
 
-      document.getElementById("waliKelasSelectKelas").value = "";
-      document.getElementById("waliKelasSelectSiswa").innerHTML =
+      $("waliKelasSelectKelas").value = "";
+      $("waliKelasSelectSiswa").innerHTML =
         '<option value="">-- Pilih siswa setelah pilih kelas --</option>';
-
-      loadMasterSiswaFromCloud();
     } catch (error) {
       done();
       console.error("Gagal mereset foto siswa:", error);
@@ -2952,42 +3177,118 @@ window.eksekusiResetFotoOlehWaliKelas = async function () {
 window.bukaPreviewFoto = function () {
   const currentAvatar =
     window.currentStudentDataCache?.fotoUrl ||
-    document.getElementById("avatarSiswaMain")?.src ||
-    (window.currentStudentDataCache?.jk?.toUpperCase() === "P"
-      ? "assets/foto_siswa/avatar_p.webp"
-      : "assets/foto_siswa/avatar_l.webp");
+    $("avatarSiswaMain")?.src ||
+    avatarFor(window.currentStudentDataCache);
 
-  document.getElementById("imgPreviewBesar").src = currentAvatar;
-  document.getElementById("modalPreviewFoto").classList.remove("hidden");
+  $("imgPreviewBesar").src = currentAvatar;
+  $("modalPreviewFoto").classList.remove("hidden");
 };
 
-window.tutupPreviewFoto = function (event) {
-  document.getElementById("modalPreviewFoto").classList.add("hidden");
+window.tutupPreviewFoto = function () {
+  $("modalPreviewFoto").classList.add("hidden");
 };
 
 // ==========================================
-// SISTEM GLOBAL CHAT SEKOLAH (RPG CHATBOX)
+// SISTEM GLOBAL CHAT SEKOLAH (RPG CHATBOX) - TAB GLOBAL
 // ==========================================
 let globalChatActiveListener = null;
+let lastGlobalSendAt = 0;
+let globalOnlineUnsub = null;
+let globalOnlineTimer = null;
+let globalOnlineDocs = {};
 
-window.toggleGlobalChat = function () {
-  const bodyEl = document.getElementById("globalChatBody");
-  const iconEl = document.getElementById("chatToggleIcon");
-  if (!bodyEl || !iconEl) return;
-
-  if (bodyEl.style.display === "none") {
-    bodyEl.style.display = "block";
-    iconEl.innerText = "▲ Sembunyikan";
-  } else {
-    bodyEl.style.display = "none";
-    iconEl.innerText = "▼ Tampilkan";
+function markGlobalSeen() {
+  globalSeenTs = Date.now();
+  globalUnread = 0;
+  try {
+    localStorage.setItem(`globalSeen_${getMyNisn()}`, String(globalSeenTs));
+  } catch (e) {
+    /* abaikan */
   }
-};
+  updateTabBadges();
+}
+
+function stopGlobalOnlineListener() {
+  if (globalOnlineUnsub) {
+    globalOnlineUnsub();
+    globalOnlineUnsub = null;
+  }
+  if (globalOnlineTimer) {
+    clearInterval(globalOnlineTimer);
+    globalOnlineTimer = null;
+  }
+  globalOnlineDocs = {};
+}
+
+function renderGlobalOnline() {
+  const countEl = $("globalOnlineCount");
+  const listEl = $("globalOnlineList");
+  if (!countEl || !listEl) return;
+
+  const now = Date.now();
+  const me = getMyNisn();
+  const online = Object.entries(globalOnlineDocs)
+    .filter(
+      ([, d]) =>
+        d.state === "online" && now - (d.lastActive || 0) < ONLINE_THRESHOLD_MS,
+    )
+    .map(([nisn]) => nisn);
+  if (me && !online.includes(me)) online.push(me); // diri sendiri jelas online
+
+  online.sort((a, b) => {
+    if (a === me) return -1;
+    if (b === me) return 1;
+    return namaDariNisn(a).localeCompare(namaDariNisn(b));
+  });
+
+  countEl.textContent = `${online.length} siswa online`;
+
+  const MAX = 30;
+  let html = online
+    .slice(0, MAX)
+    .map((nisn) => {
+      const s = masterDataSiswa.find((x) => x.nisn === nisn);
+      const nama = nisn === me ? "Kamu" : namaDariNisn(nisn);
+      return `<span class="online-chip ${nisn === me ? "me" : ""}"><img src="${escapeHtml(avatarFor(s))}" alt="" onerror="${AVATAR_ONERROR}"><span class="nm">${escapeHtml(nama)}</span></span>`;
+    })
+    .join("");
+  if (online.length > MAX) {
+    html += `<span class="online-chip"><span class="nm">+${online.length - MAX} lainnya</span></span>`;
+  }
+  listEl.innerHTML = html;
+}
+
+function startGlobalOnlineListener() {
+  stopGlobalOnlineListener();
+  try {
+    const { collection, query, where, onSnapshot } = window.fbFirestore;
+    const q = query(
+      collection(window.db, "status"),
+      where("lastActive", ">", Date.now() - ONLINE_THRESHOLD_MS),
+    );
+    globalOnlineUnsub = onSnapshot(
+      q,
+      (snap) => {
+        globalOnlineDocs = {};
+        snap.forEach((d) => {
+          globalOnlineDocs[d.id] = d.data();
+        });
+        renderGlobalOnline();
+      },
+      (err) => console.error("Gagal memuat siswa online:", err),
+    );
+    // Evaluasi ulang berkala: siswa yang berhenti heartbeat otomatis hilang
+    globalOnlineTimer = setInterval(renderGlobalOnline, 30000);
+  } catch (e) {
+    console.error("Gagal memulai pemantauan siswa online:", e);
+  }
+  renderGlobalOnline();
+}
 
 window.initGlobalChat = function (siswaAktif) {
-  const container = document.getElementById("globalChatContainer");
-  const inputEl = document.getElementById("inputGlobalChat");
-  const btnKirim = document.getElementById("btnKirimGlobalChat");
+  const container = $("globalChatContainer");
+  const inputEl = $("inputGlobalChat");
+  const btnKirim = $("btnKirimGlobalChat");
 
   if (!container || !inputEl || !btnKirim) return;
 
@@ -2996,54 +3297,62 @@ window.initGlobalChat = function (siswaAktif) {
     globalChatActiveListener = null;
   }
 
-  try {
-    const { collection, query, limit, onSnapshot, addDoc } = window.fbFirestore;
-    const globalChatRef = collection(window.db, "global_chat");
-    const q = query(globalChatRef, limit(50));
+  // Penanda "terakhir dilihat" untuk badge pesan baru
+  const seenKey = `globalSeen_${siswaAktif.nisn}`;
+  const saved = Number(localStorage.getItem(seenKey) || 0);
+  globalSeenTs = saved || Date.now();
+  if (!saved) localStorage.setItem(seenKey, String(globalSeenTs));
+  globalUnread = 0;
 
-    container.innerHTML = `<div style="font-size: 10px; color: #888; text-align: center; margin-top: 50px;">Memuat obrolan global...</div>`;
+  try {
+    const { collection, query, limit, orderBy, onSnapshot, addDoc } =
+      window.fbFirestore;
+    // 50 pesan TERBARU
+    const q = query(
+      collection(window.db, "global_chat"),
+      orderBy("timestamp", "desc"),
+      limit(50),
+    );
+
+    container.innerHTML = `<div class="empty-note">Memuat obrolan global...</div>`;
 
     globalChatActiveListener = onSnapshot(
       q,
       (snapshot) => {
         if (snapshot.empty) {
-          container.innerHTML = `<div style="font-size: 10px; color: #888; text-align: center; margin-top: 50px;">Belum ada percakapan global hari ini. Yuk mulai sapa teman-temanmu! 👋</div>`;
+          container.innerHTML = `<div class="empty-note">Belum ada percakapan global hari ini. Yuk mulai sapa teman-temanmu! 👋</div>`;
           return;
         }
 
-        let messages = [];
-        snapshot.forEach((docSnap) => {
-          messages.push(docSnap.data());
-        });
+        const messages = [];
+        snapshot.forEach((docSnap) => messages.push(docSnap.data()));
+        messages.reverse(); // urut lama -> baru
 
-        messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        container.innerHTML = messages
+          .map((msg) => {
+            const isMe = msg.nisn === siswaAktif.nisn;
+            return `
+          <div class="bubble ${isMe ? "me" : "them"}">
+            <div class="bubble-name">${isMe ? "Kamu" : escapeHtml(msg.nama || "Siswa")}<span class="bubble-class">${escapeHtml(msg.kelas || "-")}</span></div>
+            <div class="bubble-text">${escapeHtml(msg.text)}</div>
+            <div class="bubble-meta"><span>${escapeHtml(msg.time || "")}</span></div>
+          </div>`;
+          })
+          .join("");
 
-        let chatHtml = "";
-        messages.forEach((msg) => {
-          const isMe = msg.nisn === siswaAktif.nisn;
-          const bubbleBg = isMe
-            ? "background: #1e3c72; color: #fff; margin-left: auto;"
-            : "background: #1a2536; color: #cbd5e1; border: 1px solid #34495e;";
-          const namaPengirim = isMe ? "Kamu" : msg.nama || "Siswa";
-          const waktuStr = msg.time || "";
-
-          chatHtml += `
-        <div style="${bubbleBg} padding: 6px 10px; border-radius: 8px; margin-bottom: 6px; max-width: 85%; font-size: 10.5px; word-break: break-word;">
-          <div style="font-size: 9px; font-weight: bold; color: ${isMe ? "#f1c40f" : "#38bdf8"}; margin-bottom: 2px; display: flex; justify-content: space-between;">
-            <span>${namaPengirim} (${msg.kelas || "-"})</span>
-            <span style="font-size: 7.5px; opacity: 0.7; color: #fff;">${waktuStr}</span>
-          </div>
-          <div>${escapeHtml(msg.text)}</div>
-        </div>
-        `;
-        });
-
-        container.innerHTML = chatHtml;
-        container.scrollTop = container.scrollHeight;
+        if (siswaActiveTab === "global") {
+          markGlobalSeen();
+          container.scrollTop = container.scrollHeight;
+        } else {
+          globalUnread = messages.filter(
+            (m) => m.nisn !== siswaAktif.nisn && (m.timestamp || 0) > globalSeenTs,
+          ).length;
+          updateTabBadges();
+        }
       },
       (error) => {
         console.error("Error listener global chat:", error);
-        container.innerHTML = `<div style="font-size: 10px; color: #e74c3c; text-align: center; margin-top: 50px;">Gagal memuat Global Chat. Periksa console (F12).</div>`;
+        container.innerHTML = `<div class="empty-note" style="color:#e74c3c">Gagal memuat Global Chat. Periksa koneksi internet.</div>`;
       },
     );
 
@@ -3051,23 +3360,21 @@ window.initGlobalChat = function (siswaAktif) {
       const text = inputEl.value.trim();
       if (!text) return;
 
-      // BATASAN ANTI-SPAM: Maksimal 250 karakter untuk Global Chat Sekolah
-      if (text.length > 250) {
+      if (text.length > CHAT_MAX_LEN) {
         return window.customAlert(
-          `⚠️ Pesan terlalu panjang (${text.length}/250 karakter). Maksimal 250 karakter per pesan agar terhindar dari spam!`,
+          `⚠️ Pesan terlalu panjang (${text.length}/${CHAT_MAX_LEN} karakter). Maksimal ${CHAT_MAX_LEN} karakter per pesan agar terhindar dari spam!`,
         );
       }
-
-      const now = new Date();
-      const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      if (Date.now() - lastGlobalSendAt < CHAT_COOLDOWN_MS) return;
+      lastGlobalSendAt = Date.now();
 
       try {
         await addDoc(collection(window.db, "global_chat"), {
           nisn: siswaAktif.nisn,
           nama: siswaAktif.nama,
           kelas: siswaAktif.kelas || "-",
-          text: text,
-          time: timeStr,
+          text,
+          time: localTimeStr(),
           timestamp: Date.now(),
         });
         inputEl.value = "";
@@ -3078,13 +3385,11 @@ window.initGlobalChat = function (siswaAktif) {
     };
 
     inputEl.onkeydown = function (e) {
-      if (e.key === "Enter") {
-        btnKirim.click();
-      }
+      if (e.key === "Enter") btnKirim.click();
     };
   } catch (err) {
     console.error("Gagal menginisialisasi global chat:", err);
-    container.innerHTML = `<div style="font-size: 10px; color: #e74c3c; text-align: center; margin-top: 50px;">Gagal memuat Global Chat.</div>`;
+    container.innerHTML = `<div class="empty-note" style="color:#e74c3c">Gagal memuat Global Chat.</div>`;
   }
 };
 
@@ -3094,47 +3399,51 @@ window.initGlobalChat = function (siswaAktif) {
 let adminGlobalChatListener = null;
 
 window.loadAdminGlobalChat = function () {
-  const container = document.getElementById("adminGlobalChatContainer");
+  const container = $("adminGlobalChatContainer");
   if (!container) return;
   container.innerHTML = `<div style="text-align: center; color: #888;">Memuat Global Chat...</div>`;
 
   try {
-    const { collection, query, limit, onSnapshot } = window.fbFirestore;
-    const globalChatRef = collection(window.db, "global_chat");
-    const q = query(globalChatRef, limit(100));
+    const { collection, query, limit, orderBy, onSnapshot } = window.fbFirestore;
+    const q = query(
+      collection(window.db, "global_chat"),
+      orderBy("timestamp", "desc"),
+      limit(100),
+    );
 
     if (adminGlobalChatListener) adminGlobalChatListener();
 
-    adminGlobalChatListener = onSnapshot(q, (snapshot) => {
-      if (snapshot.empty) {
-        container.innerHTML = `<div style="text-align: center; color: #888;">Belum ada pesan di Global Chat.</div>`;
-        return;
-      }
+    adminGlobalChatListener = onSnapshot(
+      q,
+      (snapshot) => {
+        if (snapshot.empty) {
+          container.innerHTML = `<div style="text-align: center; color: #888;">Belum ada pesan di Global Chat.</div>`;
+          return;
+        }
 
-      let messages = [];
-      snapshot.forEach((docSnap) => {
-        messages.push({ id: docSnap.id, ...docSnap.data() });
-      });
+        const messages = [];
+        snapshot.forEach((docSnap) => messages.push(docSnap.data()));
+        messages.reverse();
 
-      // Urutkan berdasarkan waktu
-      messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-
-      let html = "";
-      messages.forEach((msg) => {
-        html += `
+        container.innerHTML = messages
+          .map(
+            (msg) => `
         <div style="background: #1a2536; border: 1px solid #34495e; padding: 6px 8px; border-radius: 6px; margin-bottom: 4px;">
           <div style="display: flex; justify-content: space-between; font-weight: bold; color: #f1c40f; font-size: 9.5px; margin-bottom: 2px;">
-            <span>👤 ${msg.nama || "Siswa"} (${msg.kelas || "-"} - ${msg.nisn})</span>
-            <span style="color: #94a3b8; font-size: 8px;">${msg.time || ""}</span>
+            <span>👤 ${escapeHtml(msg.nama || "Siswa")} (${escapeHtml(msg.kelas || "-")} - ${escapeHtml(msg.nisn)})</span>
+            <span style="color: #94a3b8; font-size: 8px;">${escapeHtml(msg.time || "")}</span>
           </div>
           <div style="color: #fff; font-size: 10.5px;">${escapeHtml(msg.text)}</div>
-        </div>
-        `;
-      });
-
-      container.innerHTML = html;
-      container.scrollTop = container.scrollHeight;
-    });
+        </div>`,
+          )
+          .join("");
+        container.scrollTop = container.scrollHeight;
+      },
+      (err) => {
+        console.error("Gagal memuat admin global chat:", err);
+        container.innerHTML = `<div style="text-align: center; color: #e74c3c;">Gagal memuat data Global Chat.</div>`;
+      },
+    );
   } catch (err) {
     console.error("Gagal memuat admin global chat:", err);
     container.innerHTML = `<div style="text-align: center; color: #e74c3c;">Gagal memuat data Global Chat.</div>`;
@@ -3149,23 +3458,11 @@ window.adminHapusSemuaGlobalChat = async function () {
 
   showGamePreloader("MENDELETING GLOBAL CHAT...", async (done) => {
     try {
-      const { collection, getDocs, doc, deleteDoc } = window.fbFirestore;
-      const globalChatRef = collection(window.db, "global_chat");
-      const snapshot = await getDocs(globalChatRef);
-
-      const deletePromises = [];
-      snapshot.forEach((docSnap) => {
-        deletePromises.push(
-          deleteDoc(doc(window.db, "global_chat", docSnap.id)),
-        );
-      });
-
-      await Promise.all(deletePromises);
+      const { collection, getDocs } = window.fbFirestore;
+      const snapshot = await getDocs(collection(window.db, "global_chat"));
+      await deleteDocsInChunks(snapshot.docs.map((d) => d.ref));
       done();
-      window.customAlert(
-        "✅ Seluruh isi Global Chat berhasil dibersihkan oleh Admin!",
-      );
-      loadAdminGlobalChat();
+      window.customAlert("✅ Seluruh isi Global Chat berhasil dibersihkan oleh Admin!");
     } catch (err) {
       done();
       console.error("Gagal menghapus global chat:", err);
@@ -3173,3 +3470,87 @@ window.adminHapusSemuaGlobalChat = async function () {
     }
   });
 };
+
+// ==========================================
+// INISIALISASI APLIKASI
+// ==========================================
+const LAYAR_BUTUH_LOGIN = ["entry", "admin"];
+
+async function initApp() {
+  window.history.replaceState({ screen: "menu" }, "", "#menu");
+
+  // Pasang Enter pada form login siswa
+  ["nisnSiswaInput", "pinSiswaInput", "inputNisnTeman"].forEach((id) => {
+    const el = $(id);
+    if (el) {
+      el.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter") return;
+        if (id === "inputNisnTeman") window.tambahTeman();
+        else window.loginSiswaWithPin();
+      });
+    }
+  });
+
+  const [authUser] = await Promise.all([
+    authReady,
+    new Promise((res) => loadMasterSiswaFromCloud(res)),
+  ]);
+
+  loadTugasAktif();
+
+  // Pulihkan sesi guru/admin HANYA jika sesi Firebase Auth masih valid
+  const savedUser = localStorage.getItem("loggedInUser");
+  if (savedUser) {
+    if (authUser) {
+      try {
+        const userObj = JSON.parse(savedUser);
+        currentUser = userObj;
+        currentRole = userObj.role;
+        if (userObj.role === "Super Admin") {
+          $("txtNamaAdmin").innerText = userObj.nama;
+          showScreen("admin");
+          window.switchAdminTab("rekap");
+        } else {
+          $("txtNamaGuru").innerText = userObj.nama;
+          $("txtRoleGuru").innerText = "Jabatan: " + userObj.role;
+          showScreen("entry");
+          initFormEntry();
+          window.switchTeacherTab("poin");
+          loadTugasAktif();
+        }
+        return;
+      } catch (e) {
+        localStorage.removeItem("loggedInUser");
+      }
+    } else {
+      localStorage.removeItem("loggedInUser");
+    }
+  }
+
+  // Pulihkan sesi siswa (berlaku 12 jam)
+  const savedNisn = localStorage.getItem("activeUser");
+  if (savedNisn) {
+    const expiry = Number(localStorage.getItem("activeUserExpiry") || 0);
+    if (expiry && Date.now() < expiry && validNisnFormat(savedNisn)) {
+      showScreen("siswa");
+      $("nisnSiswaInput").value = savedNisn;
+      autoLoginSiswa(savedNisn);
+    } else {
+      localStorage.removeItem("activeUser");
+      localStorage.removeItem("activeUserExpiry");
+    }
+  }
+}
+
+if (document.readyState === "loading") {
+  window.addEventListener("DOMContentLoaded", initApp);
+} else {
+  initApp();
+}
+
+window.addEventListener("popstate", (event) => {
+  let screen = event.state && event.state.screen ? event.state.screen : "menu";
+  // Cegah masuk ke halaman guru/admin lewat tombol back/forward tanpa login
+  if (LAYAR_BUTUH_LOGIN.includes(screen) && !currentUser) screen = "menu";
+  showScreen(screen, false);
+});
