@@ -519,7 +519,7 @@ button:active {
   height: 100%;
   background: rgba(8, 12, 24, 0.94);
   backdrop-filter: blur(8px);
-  z-index: 9999;
+  z-index: 10000;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -567,32 +567,7 @@ button:active {
   letter-spacing: 1px;
 }
 
-/* MODAL */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-  padding: 20px;
-}
-.modal-box {
-  background: #fff;
-  padding: 20px;
-  border-radius: 20px;
-  width: 100%;
-  max-width: 350px;
-  text-align: left;
-}
-.modal-box h4 {
-  margin-bottom: 10px;
-  color: #1e3c72;
-}
+/* MODAL (gaya .modal-overlay / .modal-box ada di bagian "MODAL GANTI FOTO PROFIL" di bawah) */
 .modal-detail {
   font-size: 12px;
   color: #555;
@@ -1198,4 +1173,741 @@ button:active {
   z-index: 999;
   letter-spacing: 0.5px;
   pointer-events: none; /* Agar tidak sengaja terklik oleh pengguna */
+}
+
+/* Tombol nonaktif (mis. saat proses simpan) */
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== v3.3.0: LAYOUT APLIKASI SISWA ===== */
+
+/* ==========================================================
+   PORTAL SISWA - MODE APLIKASI
+   Header mini + bar navigasi atas (Profil / Teman / Chat / Global)
+   Prioritas tampilan: HP. Font dibuat lebih besar & mudah dibaca.
+   ========================================================== */
+#siswaCard.siswa-app-mode {
+  max-width: 520px;
+  height: calc(100vh - 30px);
+  height: calc(100dvh - 30px);
+  max-height: 940px;
+  padding: 12px;
+  overflow: hidden;
+}
+#siswaCard.siswa-app-mode > .header-app {
+  display: none;
+}
+
+.siswa-app {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---------- Header mini ---------- */
+.siswa-mini-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  background: #1a2536;
+  border: 2px solid #f1c40f;
+  border-radius: 14px;
+  padding: 8px 10px;
+  color: #fff;
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.5);
+}
+.mini-avatar {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border: 2px solid #f1c40f;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #2c3e50;
+  cursor: pointer;
+}
+.mini-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.mini-info {
+  flex: 1;
+  min-width: 0;
+}
+.mini-nama {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f1c40f;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mini-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  overflow: hidden;
+}
+.mini-kelas {
+  font-size: 11.5px;
+  color: #bdc3c7;
+  white-space: nowrap;
+}
+.mini-chip {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 20px;
+  background: #111823;
+  border: 1px solid #34495e;
+  white-space: nowrap;
+}
+.mini-hp {
+  color: #2ecc71;
+}
+.mini-star {
+  color: #f1c40f;
+}
+.mini-logout {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+/* ---------- Bar navigasi atas ---------- */
+.siswa-tabbar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  flex-shrink: 0;
+  background: #111823;
+  border: 2px solid #34495e;
+  border-radius: 14px;
+  padding: 4px;
+}
+.siswa-tab-btn {
+  position: relative;
+  width: 100%;
+  margin-top: 0;
+  padding: 8px 2px 6px;
+  background: transparent;
+  color: #94a3b8;
+  border: none;
+  border-radius: 10px;
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  touch-action: manipulation;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.siswa-tab-btn .tab-ico {
+  font-size: 20px;
+  line-height: 1;
+}
+.siswa-tab-btn:active {
+  background: rgba(241, 196, 15, 0.15);
+  transform: scale(0.96);
+}
+.siswa-tab-btn.active {
+  background: linear-gradient(135deg, #f1c40f, #d4ac0d);
+  color: #111823;
+  box-shadow: 0 2px 8px rgba(241, 196, 15, 0.35);
+}
+.tab-badge {
+  position: absolute;
+  top: 1px;
+  right: 4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 0 0 2px #111823;
+}
+
+/* ---------- Panel isi tab ---------- */
+.siswa-panels {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.siswa-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+.siswa-panel > * + * {
+  margin-top: 12px;
+}
+.siswa-panel.panel-chat {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.siswa-panel.panel-chat > * + * {
+  margin-top: 0;
+}
+#siswaCard.siswa-app-mode .rpg-card-container {
+  margin-top: 0;
+}
+
+/* ---------- Tab Profil: font lebih besar ---------- */
+#siswaCard.siswa-app-mode .rpg-avatar-box {
+  width: 78px;
+  height: 78px;
+}
+#siswaCard.siswa-app-mode .rpg-daily-score-badge {
+  width: 78px;
+  font-size: 12.5px;
+}
+#siswaCard.siswa-app-mode .rpg-name {
+  font-size: 17px;
+}
+#siswaCard.siswa-app-mode .rpg-class-lvl {
+  font-size: 13px;
+}
+#siswaCard.siswa-app-mode .rpg-bar-meta {
+  font-size: 12px;
+}
+#siswaCard.siswa-app-mode .rpg-bar-outer {
+  height: 13px;
+  border-radius: 7px;
+}
+#siswaCard.siswa-app-mode .rpg-status-banner {
+  font-size: 13px;
+}
+#siswaCard.siswa-app-mode .rpg-status-banner strong {
+  font-size: 12px;
+}
+#siswaCard.siswa-app-mode .rpg-stat-item {
+  padding: 10px;
+}
+#siswaCard.siswa-app-mode .rpg-stat-number-green,
+#siswaCard.siswa-app-mode .rpg-stat-number-red {
+  font-size: 18px;
+}
+#siswaCard.siswa-app-mode .rpg-stat-label {
+  font-size: 11px;
+}
+#siswaCard.siswa-app-mode .history-title-main {
+  font-size: 13px;
+}
+#siswaCard.siswa-app-mode .history-list-box {
+  max-height: 380px;
+}
+
+.pin-card-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #f1c40f;
+  margin-bottom: 10px;
+}
+.pin-label {
+  display: block;
+  font-size: 11.5px;
+  color: #cbd5e1;
+  margin-bottom: 4px;
+}
+.pin-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #34495e;
+  background: #1a2536;
+  color: #fff;
+  font-size: 14px;
+}
+.pin-save-btn {
+  width: 100%;
+  margin-top: 0;
+  padding: 11px;
+  font-size: 13.5px;
+  font-weight: 700;
+  border-radius: 8px;
+  background: #27ae60;
+  color: #fff;
+  box-shadow: none;
+}
+
+/* ---------- Avatar + titik online ---------- */
+.avatar-wrap {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+}
+.avatar-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 12px;
+  border: 2px solid #f1c40f;
+  background: #2c3e50;
+}
+.presence-dot {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid #111823;
+  background: #7f8c8d;
+}
+.presence-dot.on {
+  background: #2ecc71;
+  box-shadow: 0 0 6px #2ecc71;
+}
+.presence-dot.inline {
+  position: static;
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border: none;
+}
+
+/* ---------- Baris teman / percakapan ---------- */
+.friend-row,
+.chat-row,
+.request-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #111823;
+  border: 1px solid #34495e;
+  border-radius: 12px;
+  padding: 10px;
+}
+.friend-list,
+.chat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.chat-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.chat-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.chat-row:active {
+  background: #1a2536;
+}
+.chat-row.has-unread {
+  border-color: #f1c40f;
+}
+.request-row {
+  background: rgba(241, 196, 15, 0.1);
+  border-color: #f1c40f;
+  margin-bottom: 8px;
+}
+.request-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #f1c40f;
+  margin: 10px 0 6px;
+}
+.row-main {
+  flex: 1;
+  min-width: 0;
+}
+.row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.row-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f1c40f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.row-time {
+  font-size: 11px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+.row-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.row-preview {
+  font-size: 12.5px;
+  color: #9fb0c3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-row.has-unread .row-preview {
+  color: #fff;
+  font-weight: 600;
+}
+.row-sub {
+  font-size: 12px;
+  color: #bdc3c7;
+}
+.row-status {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-top: 1px;
+}
+.row-status.on {
+  color: #2ecc71;
+}
+.row-unread {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.row-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.mini-btn {
+  width: auto;
+  margin-top: 0;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px;
+  box-shadow: none;
+  color: #fff;
+  border: none;
+}
+.mini-btn.chat {
+  background: #3498db;
+}
+.mini-btn.del {
+  background: #e74c3c;
+}
+.mini-btn.ok {
+  background: #2ecc71;
+}
+.request-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.request-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.empty-note {
+  font-size: 12.5px;
+  color: #95a5a6;
+  text-align: center;
+  padding: 18px 10px;
+  line-height: 1.5;
+}
+
+/* ---------- Tambah teman ---------- */
+.friend-add-row {
+  display: flex;
+  gap: 8px;
+}
+.friend-add-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1.5px solid #34495e;
+  background: #111823;
+  color: #fff;
+  border-radius: 10px;
+}
+.friend-add-row button {
+  width: auto;
+  margin-top: 0;
+  padding: 10px 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+  background: #f1c40f;
+  color: #1a2536;
+  border-radius: 10px;
+  box-shadow: none;
+}
+.friend-count {
+  font-size: 12.5px;
+  color: #bdc3c7;
+  margin: 10px 2px 6px;
+}
+
+/* ---------- Chat ---------- */
+.chat-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.chat-list-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #f1c40f;
+  padding: 2px 4px;
+  flex-shrink: 0;
+}
+.chat-room-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  background: #111823;
+  border: 1px solid #34495e;
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+.chat-back-btn {
+  width: 38px;
+  height: 38px;
+  margin-top: 0;
+  padding: 0;
+  font-size: 20px;
+  background: #2c3e50;
+  border-radius: 10px;
+  box-shadow: none;
+  flex-shrink: 0;
+}
+.chat-room-avatar {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: 2px solid #f1c40f;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #2c3e50;
+}
+.chat-room-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.chat-room-info {
+  flex: 1;
+  min-width: 0;
+}
+#chatTitleNama {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f1c40f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#chatSubStatus {
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+.chat-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: #0b0f17;
+  border: 1px solid #34495e;
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bubble {
+  max-width: 82%;
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.bubble.me {
+  align-self: flex-end;
+  background: #1e3c72;
+  color: #fff;
+  border: 1px solid #2a5298;
+  border-bottom-right-radius: 4px;
+}
+.bubble.them {
+  align-self: flex-start;
+  background: #1a2536;
+  color: #e2e8f0;
+  border: 1px solid #34495e;
+  border-bottom-left-radius: 4px;
+}
+.bubble-text {
+  white-space: pre-wrap;
+}
+.bubble-name {
+  font-size: 11.5px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: #38bdf8;
+}
+.bubble.me .bubble-name {
+  color: #f1c40f;
+}
+.bubble-class {
+  font-weight: 500;
+  opacity: 0.7;
+  margin-left: 4px;
+}
+.bubble-meta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  opacity: 0.75;
+  margin-top: 3px;
+}
+.tick.read {
+  color: #38bdf8;
+  font-weight: 700;
+}
+.chat-form-bar {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  margin: 0;
+}
+.chat-form-bar input {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 14px;
+  font-size: 14px;
+  background: #111823;
+  color: #fff;
+  border: 1.5px solid #34495e;
+  border-radius: 22px;
+}
+.chat-form-bar button {
+  width: auto;
+  margin-top: 0;
+  padding: 0 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #f1c40f, #d4ac0d);
+  color: #1a2536;
+  border-radius: 22px;
+  box-shadow: none;
+}
+
+/* ---------- Global chat: indikator online ---------- */
+.global-online-bar {
+  flex-shrink: 0;
+  background: #111823;
+  border: 1px solid #34495e;
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+.global-online-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #2ecc71;
+}
+.online-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2ecc71;
+  animation: pulseDot 1.8s infinite;
+}
+@keyframes pulseDot {
+  0% {
+    box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(46, 204, 113, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+  }
+}
+.global-online-list {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px 0 2px;
+}
+.global-online-list:empty {
+  display: none;
+}
+.online-chip {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 160px;
+  background: #1a2536;
+  border: 1px solid #34495e;
+  border-radius: 20px;
+  padding: 3px 10px 3px 4px;
+  font-size: 12px;
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+.online-chip img {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.online-chip span.nm {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.online-chip.me {
+  border-color: #f1c40f;
 }
