@@ -256,7 +256,29 @@ function getMyNisn() {
 let preloaderInterval = null;
 let preloaderHideTimeout = null;
 
+// Cegah spam klik / double-submit: selama preloader berjalan, panggilan baru diabaikan
+let preloaderBusy = false;
+let preloaderWatchdog = null;
+
 function showGamePreloader(customTitle, callback) {
+  if (preloaderBusy) {
+    console.warn("Preloader sedang berjalan, permintaan diabaikan (cegah entri ganda).");
+    return;
+  }
+  preloaderBusy = true;
+
+  // Jaga-jaga: kalau karena bug suatu proses lupa memanggil done(), jangan sampai
+  // seluruh aplikasi terkunci permanen. Lepas paksa setelah 20 detik.
+  if (preloaderWatchdog) clearTimeout(preloaderWatchdog);
+  preloaderWatchdog = setTimeout(() => {
+    if (preloaderBusy) {
+      console.warn("Preloader macet lebih dari 20 detik, dilepas paksa.");
+      preloaderBusy = false;
+      const stuck = $("gamePreloader");
+      if (stuck) stuck.classList.add("hidden");
+    }
+  }, 20000);
+
   const preloader = $("gamePreloader");
   $("loadingTitleText").innerText = customTitle;
   const fillEl = $("progressBarFill");
@@ -288,6 +310,11 @@ function showGamePreloader(customTitle, callback) {
     percentEl.innerText = "100%";
     preloaderHideTimeout = setTimeout(() => {
       preloader.classList.add("hidden");
+      preloaderBusy = false;
+      if (preloaderWatchdog) {
+        clearTimeout(preloaderWatchdog);
+        preloaderWatchdog = null;
+      }
     }, 300);
   };
 
@@ -851,7 +878,20 @@ window.gantiPinSiswa = async function () {
 // ==========================================
 // SISTEM PERTEMANAN & SQUAD (CLOUD FIRESTORE)
 // ==========================================
+// Guard sederhana: cegah spam klik pada aksi pertemanan (tidak memakai preloader)
+let friendActionBusy = false;
+
 window.tambahTeman = async function () {
+  if (friendActionBusy) return;
+  friendActionBusy = true;
+  try {
+    await tambahTemanImpl();
+  } finally {
+    friendActionBusy = false;
+  }
+};
+
+async function tambahTemanImpl() {
   const targetNisn = $("inputNisnTeman").value.trim();
   const myNisn = getMyNisn();
   if (!targetNisn)
@@ -905,6 +945,8 @@ window.tambahTeman = async function () {
 };
 
 window.terimaUndangan = async function (senderNisn) {
+  if (friendActionBusy) return;
+  friendActionBusy = true;
   const myNisn = getMyNisn();
   try {
     const { doc, updateDoc, arrayUnion, arrayRemove } = window.fbFirestore;
@@ -921,10 +963,14 @@ window.terimaUndangan = async function (senderNisn) {
   } catch (err) {
     console.error("Gagal menerima undangan:", err);
     window.customAlert("Gagal memproses penerimaan undangan.");
+  } finally {
+    friendActionBusy = false;
   }
 };
 
 window.tolakUndangan = async function (senderNisn) {
+  if (friendActionBusy) return;
+  friendActionBusy = true;
   const myNisn = getMyNisn();
   try {
     const { doc, updateDoc, arrayRemove } = window.fbFirestore;
@@ -933,6 +979,8 @@ window.tolakUndangan = async function (senderNisn) {
     });
   } catch (err) {
     console.error("Gagal menolak undangan:", err);
+  } finally {
+    friendActionBusy = false;
   }
 };
 
@@ -941,6 +989,8 @@ window.hapusTeman = async function (targetNisn) {
     "Yakin ingin menghapus teman ini dari Squad?",
   );
   if (!yakin) return;
+  if (friendActionBusy) return;
+  friendActionBusy = true;
   const myNisn = getMyNisn();
   try {
     const { doc, updateDoc, arrayRemove } = window.fbFirestore;
@@ -954,6 +1004,8 @@ window.hapusTeman = async function (targetNisn) {
   } catch (err) {
     console.error("Gagal menghapus teman:", err);
     window.customAlert("Gagal menghapus teman.");
+  } finally {
+    friendActionBusy = false;
   }
 };
 
@@ -2628,6 +2680,122 @@ async function batchUpdateSiswa(targetList, buildUpdate) {
 }
 
 // ==========================================
+// TAMBAH SISWA BARU (intake kelas 10 / siswa pindahan)
+// ==========================================
+function parseBarisSiswaBaru(text) {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const parts = line.split(/[,\t;]+/).map((p) => p.trim());
+      return {
+        nisn: parts[0] || "",
+        nama: parts[1] || "",
+        kelasOverride: parts[2] || "",
+      };
+    });
+}
+
+window.jalankanTambahSiswaBaruUI = async function () {
+  const kelasDefault = $("kelasSiswaBaruSelect").value;
+  const teksInput = $("teksSiswaBaru").value;
+
+  if (!kelasDefault) return window.customAlert("Pilih kelas tujuan untuk siswa baru.");
+
+  const baris = parseBarisSiswaBaru(teksInput);
+  if (baris.length === 0)
+    return window.customAlert(
+      "Tempel daftar siswa dulu, satu siswa per baris. Format: NISN,Nama",
+    );
+
+  const existingNisn = new Set(masterDataSiswa.map((s) => s.nisn));
+  const valid = [];
+  const errors = [];
+
+  baris.forEach((b, i) => {
+    if (!validNisnFormat(b.nisn)) {
+      errors.push(`Baris ${i + 1}: NISN "${b.nisn}" tidak valid.`);
+    } else if (!b.nama) {
+      errors.push(`Baris ${i + 1}: Nama kosong (NISN ${b.nisn}).`);
+    } else if (existingNisn.has(b.nisn)) {
+      errors.push(`Baris ${i + 1}: NISN ${b.nisn} sudah terdaftar, dilewati.`);
+    } else {
+      existingNisn.add(b.nisn); // cegah duplikat di dalam daftar yang sama
+      valid.push({
+        nisn: b.nisn,
+        nama: b.nama,
+        kelas: b.kelasOverride || kelasDefault,
+      });
+    }
+  });
+
+  if (valid.length === 0) {
+    return window.customAlert(
+      "Tidak ada siswa valid untuk ditambahkan.\n\n" + errors.join("\n"),
+    );
+  }
+
+  const ok = await window.customConfirm(
+    `Menambahkan ${valid.length} siswa baru (PIN awal: 123456).` +
+      (errors.length
+        ? ` ${errors.length} baris dilewati karena error/duplikat.`
+        : "") +
+      " Lanjutkan?",
+    "➕ TAMBAH SISWA BARU",
+  );
+  if (!ok) return;
+
+  showGamePreloader("MENAMBAHKAN SISWA BARU...", async (done) => {
+    try {
+      const { doc, writeBatch } = window.fbFirestore;
+      for (let i = 0; i < valid.length; i += BATCH_CHUNK) {
+        const chunk = valid.slice(i, i + BATCH_CHUNK);
+        const batch = writeBatch(window.db);
+        chunk.forEach((s) => {
+          batch.set(doc(window.db, "siswa", s.nisn), {
+            nama: s.nama,
+            nisn: s.nisn,
+            kelas: s.kelas,
+            kelasAktif: s.kelas,
+            statusAkun: "aktif",
+            pin: "123456",
+            hasChangedPin: false,
+            hp: 200,
+            shield: 0,
+            totalPrestasi: 0,
+            totalPelanggaran: 0,
+            dailyScore: 0,
+            riwayat: [],
+            friends: [],
+            requests: [],
+          });
+        });
+        await batch.commit();
+      }
+
+      await catatLogAkademik("TAMBAH_SISWA_BARU", {
+        kelas: kelasDefault,
+        jumlah: valid.length,
+      });
+      await refreshMasterSiswa();
+      done();
+      window.customAlert(
+        `✅ ${valid.length} siswa baru berhasil ditambahkan.` +
+          (errors.length
+            ? `\n\n⚠️ ${errors.length} baris dilewati:\n` + errors.join("\n")
+            : ""),
+      );
+      $("teksSiswaBaru").value = "";
+    } catch (err) {
+      done();
+      console.error("Gagal menambahkan siswa baru:", err);
+      window.customAlert("Gagal menambahkan siswa baru. Periksa koneksi internet.");
+    }
+  });
+};
+
+// ==========================================
 // MANAJEMEN ARSIP SEMESTER, KENAIKAN KELAS & ALUMNI
 // ==========================================
 const NEXT_KELAS_MAP = { "10 SMK": "11 SMK", "11 SMK": "12 SMK" };
@@ -3865,12 +4033,29 @@ function startGlobalOnlineListener() {
   renderGlobalOnline();
 }
 
+// Hapus pesan Global Chat yang sudah lebih dari 7 hari, samakan dengan chat pribadi.
+// Dipanggil sekali tiap siswa login (bukan tiap buka tab), jadi tidak boros kuota.
+async function bersihkanGlobalChatKedaluwarsa() {
+  const { collection, query, where, getDocs } = window.fbFirestore;
+  const tujuhHariLalu = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const expiredSnap = await getDocs(
+    query(collection(window.db, "global_chat"), where("timestamp", "<", tujuhHariLalu)),
+  );
+  if (!expiredSnap.empty) {
+    await deleteDocsInChunks(expiredSnap.docs.map((d) => d.ref));
+  }
+}
+
 window.initGlobalChat = function (siswaAktif) {
   const container = $("globalChatContainer");
   const inputEl = $("inputGlobalChat");
   const btnKirim = $("btnKirimGlobalChat");
 
   if (!container || !inputEl || !btnKirim) return;
+
+  bersihkanGlobalChatKedaluwarsa().catch((e) =>
+    console.log("Lewati pembersihan global chat lama:", e),
+  );
 
   if (globalChatActiveListener) {
     globalChatActiveListener();
