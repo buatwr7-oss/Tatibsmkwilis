@@ -24,6 +24,7 @@ import {
   limit,
   runTransaction,
   writeBatch,
+  getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -61,6 +62,7 @@ window.fbFirestore = {
   limit,
   runTransaction,
   writeBatch,
+  getCountFromServer,
 };
 console.log("🔥 Firebase Firestore & Auth Terhubung ke Tatib SMK Wiraguna!");
 
@@ -83,6 +85,8 @@ const CACHE_TTL_MS = 2 * 60 * 1000; // cache data siswa 2 menit
 const MAX_RIWAYAT = 200; // batasi riwayat per siswa (limit dokumen Firestore 1MB)
 const CHAT_MAX_LEN = 250;
 const CHAT_COOLDOWN_MS = 1500;
+const MAX_LAPORAN_BUG_AKTIF = 20; // total laporan bug/masukan yang boleh menumpuk sebelum ditutup sementara
+const MAX_LAPORAN_BUG_PER_HARI = 10; // batas kirim per pengirim per hari
 const HEARTBEAT_MS = 60000;
 const ONLINE_THRESHOLD_MS = 150000;
 const BATCH_CHUNK = 400;
@@ -2046,12 +2050,14 @@ function showScreen(screenId, pushHistory = true) {
   }
 }
 
-// Tombol melayang "Laporan Bug & Masukan" hanya muncul kalau sudah login
-// (siswa/alumni, guru, atau admin) — tidak muncul di menu utama atau form login.
+// Tombol melayang "Laporan Bug & Masukan" hanya muncul untuk pengirim laporan
+// (siswa/alumni & guru) — Admin tidak perlu tombol ini karena Admin yang
+// MENERIMA laporan (lewat tab Laporan), bukan mengirim.
 function updateFabLaporanBug() {
   const fab = $("btnFabLaporanBug");
   if (!fab) return;
-  const sudahLogin = !!currentUser || !!currentNisnSiswa;
+  const sudahLogin =
+    (!!currentUser && currentUser.role !== "Super Admin") || !!currentNisnSiswa;
   fab.classList.toggle("hidden", !sudahLogin);
 }
 
@@ -2248,8 +2254,57 @@ window.kirimLaporanBugUI = async function () {
   if (btn) btn.disabled = true;
 
   try {
-    const { collection, addDoc } = window.fbFirestore;
-    await addDoc(collection(window.db, "laporan_bug"), {
+    const { collection, getDocs, query, where, addDoc, getCountFromServer } =
+      window.fbFirestore;
+    const laporanRef = collection(window.db, "laporan_bug");
+
+    // Kuota 1: total laporan yang boleh menumpuk (belum diproses/dihapus Admin)
+    // di SELURUH sistem — begitu Admin menghapus laporan lama, slot ini otomatis
+    // lega lagi karena yang dihitung adalah dokumen yang masih ada di database.
+    try {
+      const totalSnap = await getCountFromServer(laporanRef);
+      const totalAktif = totalSnap.data().count;
+      if (totalAktif >= MAX_LAPORAN_BUG_AKTIF) {
+        window.customAlert(
+          `⚠️ Kotak laporan sedang penuh (${totalAktif}/${MAX_LAPORAN_BUG_AKTIF}). Admin perlu memproses laporan yang menumpuk dulu sebelum bisa menerima laporan baru. Coba lagi nanti ya.`,
+        );
+        laporanBugBusy = false;
+        if (btn) btn.disabled = false;
+        return;
+      }
+    } catch (e) {
+      // Kalau pengecekan kuota total gagal (mis. sedang offline), tetap lanjut kirim
+      console.warn("Gagal mengecek kuota total laporan:", e);
+    }
+
+    // Kuota 2: maksimal per pengirim per hari (biar satu orang tidak memenuhi
+    // sendiri kuota total di atas dengan spam berulang-ulang).
+    const mulaiHariIni = new Date();
+    mulaiHariIni.setHours(0, 0, 0, 0);
+    const mulaiHariIniMs = mulaiHariIni.getTime();
+
+    try {
+      const cekSnap = await getDocs(
+        query(laporanRef, where("pelaporId", "==", pelaporId)),
+      );
+      const jumlahHariIni = cekSnap.docs.filter(
+        (d) => (d.data().waktu || 0) >= mulaiHariIniMs,
+      ).length;
+
+      if (jumlahHariIni >= MAX_LAPORAN_BUG_PER_HARI) {
+        window.customAlert(
+          `⚠️ Kamu sudah mengirim ${MAX_LAPORAN_BUG_PER_HARI} laporan hari ini. Coba lagi besok ya, atau tunggu Admin memproses laporan sebelumnya.`,
+        );
+        laporanBugBusy = false;
+        if (btn) btn.disabled = false;
+        return;
+      }
+    } catch (e) {
+      // Kalau pengecekan kuota harian gagal (mis. sedang offline), tetap lanjut kirim
+      console.warn("Gagal mengecek kuota laporan harian:", e);
+    }
+
+    await addDoc(laporanRef, {
       kategori,
       isi,
       pelaporNama,
