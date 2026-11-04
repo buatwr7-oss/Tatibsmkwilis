@@ -743,6 +743,7 @@ function startStudentSession(nisn, siswa) {
   loadPeriodeAktifLabel();
   setSiswaAppMode(true);
   window.switchSiswaTab("profil");
+  updateFabLaporanBug();
 }
 
 function validNisnFormat(v) {
@@ -3873,6 +3874,7 @@ function startAlumniView(nisn, siswa) {
   window.currentStudentNisn = nisn;
   window.currentStudentDataCache = siswa;
   tampilkanTranskripAlumni(siswa, nisn);
+  updateFabLaporanBug();
 }
 
 
