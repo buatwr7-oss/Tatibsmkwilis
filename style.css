@@ -23,8 +23,14 @@
   background: rgba(241, 196, 15, 0.8);
 }
 
+html {
+  overflow-x: hidden;
+  width: 100%;
+}
 body {
   min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -136,6 +142,8 @@ body {
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
   width: 100%;
   max-width: 480px;
+  box-sizing: border-box;
+  overflow-x: hidden;
   backdrop-filter: blur(15px);
   position: relative;
   z-index: 2;
@@ -996,11 +1004,28 @@ button:active {
 .global-leaderboard-list-box {
   flex-grow: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   max-height: 380px;
+  width: 100%;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding-right: 2px;
+}
+.global-leaderboard-list-box .lb-row {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.global-leaderboard-list-box .lb-left {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.global-leaderboard-list-box .lb-name-wrap {
+  min-width: 0;
+  flex: 1 1 auto;
+  width: 100%;
 }
 .chat-modal-inner-card {
   width: 100%;
@@ -1910,4 +1935,178 @@ button:disabled {
 }
 .online-chip.me {
   border-color: #f1c40f;
+}
+
+/* ===== v3.3.1: PANEL AKADEMIK ADMIN (tema terang, rapi & accordion) ===== */
+#adminTabAkademik .accordion {
+  margin-bottom: 10px;
+}
+#adminTabAkademik .accordion-header {
+  font-size: 12.5px;
+  padding: 12px 14px;
+}
+#adminTabAkademik .accordion-body {
+  max-height: none;
+  padding: 0;
+}
+#adminTabAkademik .akademik-body-inner {
+  padding: 14px;
+}
+#adminTabAkademik .akademik-desc {
+  font-size: 10.5px;
+  color: #64748b;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+#adminTabAkademik .akademik-info {
+  font-size: 10.5px;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+#adminTabAkademik .akademik-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+#adminTabAkademik .akademik-check-row label {
+  font-size: 11px;
+  color: #334155;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Daftar centang siswa di panel Admin: pakai tema terang, bukan tema gelap siswa */
+.admin-check-list .friend-row {
+  background: #fff;
+  border-color: #e2e8f0;
+  transition: background 0.15s;
+}
+.admin-check-list .friend-row:hover {
+  background: #f8f9fa;
+}
+.admin-check-list .row-name {
+  color: #1e3c72;
+}
+.admin-check-list .row-sub {
+  color: #64748b;
+}
+
+/* ===== v3.4.0: LAPORAN BUG & MASUKAN ===== */
+.admin-nav-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 8.5px;
+  font-weight: bold;
+  min-width: 15px;
+  height: 15px;
+  line-height: 15px;
+  border-radius: 8px;
+  padding: 0 3px;
+  box-shadow: 0 0 0 1.5px #fff;
+}
+.fab-laporan-bug {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: 48px;
+  height: 48px;
+  min-width: unset;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: #fff;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  z-index: 500;
+  padding: 0;
+  transition: transform 0.15s ease;
+}
+.fab-laporan-bug:hover {
+  transform: scale(1.07);
+}
+.fab-laporan-bug.hidden {
+  display: none;
+}
+.laporan-bug-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+.laporan-bug-list-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+.laporan-bug-row {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #e74c3c;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.laporan-bug-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  gap: 6px;
+}
+.laporan-bug-kategori {
+  font-size: 10px;
+  font-weight: bold;
+}
+.laporan-bug-waktu {
+  font-size: 8.5px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+.laporan-bug-isi {
+  font-size: 10.5px;
+  color: #1e293b;
+  line-height: 1.4;
+  word-break: break-word;
+  margin-bottom: 4px;
+  white-space: pre-wrap;
+}
+.laporan-bug-meta {
+  font-size: 9px;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+.laporan-bug-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+.laporan-bug-status-select {
+  margin: 0;
+  width: auto;
+  flex: 1;
+  padding: 4px 6px;
+  font-size: 9.5px;
+}
+.laporan-bug-delete-btn {
+  margin: 0;
+  width: auto;
+  padding: 4px 9px;
+  font-size: 11px;
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
