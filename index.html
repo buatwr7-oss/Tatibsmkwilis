@@ -946,6 +946,15 @@
         >
           🛡️ Chat
         </button>
+        <button
+          id="navBtnLaporan"
+          onclick="switchAdminTab('laporan')"
+          class="btn-outline"
+          style="position: relative"
+        >
+          🐞 Laporan
+          <span id="navBtnLaporanBadge" class="admin-nav-badge hidden">0</span>
+        </button>
       </div>
 
       <!-- TAB 1: REKAPITULASI -->
@@ -1066,219 +1075,306 @@
 
       <!-- TAB BARU: MANAJEMEN AKADEMIK (ARSIP SEMESTER / KENAIKAN KELAS / KELULUSAN) -->
       <div id="adminTabAkademik" class="admin-tab-content hidden">
-        <div class="admin-cetak-card-box" style="margin-bottom: 14px">
-          <h4 style="font-size: 13px; color: #f1c40f; margin-bottom: 6px">
-            ➕ Tambah Siswa Baru
-          </h4>
-          <p style="font-size: 10.5px; color: #94a3b8; margin-bottom: 10px; line-height: 1.5">
-            Dipakai saat intake siswa kelas 10 baru (atau siswa pindahan).
-            Tempel daftar siswa, satu per baris, format <code>NISN,Nama</code> —
-            bisa langsung salin dari Excel/spreadsheet. PIN awal otomatis
-            <strong>123456</strong>, dan NISN yang sudah terdaftar otomatis
-            dilewati (tidak menimpa data lama).
-          </p>
-          <div class="input-box">
-            <label>KELAS TUJUAN *</label>
-            <select id="kelasSiswaBaruSelect">
-              <option value="">-- Pilih Kelas --</option>
-              <option value="10 SMK">10 SMK</option>
-              <option value="11 SMK">11 SMK</option>
-              <option value="12 SMK">12 SMK</option>
-            </select>
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>➕ Tambah Siswa Baru</span><span>▼</span>
           </div>
-          <div class="input-box">
-            <label>DAFTAR SISWA (satu per baris) *</label>
-            <textarea
-              id="teksSiswaBaru"
-              rows="6"
-              placeholder="3012345678,Ahmad Fauzi&#10;3012345679,Siti Nurhaliza"
-            ></textarea>
-          </div>
-          <button
-            type="button"
-            class="btn-danger"
-            style="margin-top: 5px"
-            onclick="jalankanTambahSiswaBaruUI()"
-          >
-            Tambahkan Siswa
-          </button>
-        </div>
-
-        <div class="admin-cetak-card-box" style="margin-bottom: 14px">
-          <h4 style="font-size: 13px; color: #f1c40f; margin-bottom: 6px">
-            🗓️ Tahun Ajaran & Semester Aktif Sekarang
-          </h4>
-          <p style="font-size: 10.5px; color: #94a3b8; margin-bottom: 10px; line-height: 1.5">
-            Keterangan ini tampil di halaman Profil semua siswa aktif.
-            Mengubahnya hanya label informasi, TIDAK memengaruhi poin atau arsip.
-          </p>
-          <div class="input-box">
-            <label>TAHUN AJARAN</label>
-            <input type="text" id="inputTahunAjaran" placeholder="Contoh: 2025/2026" />
-          </div>
-          <div class="input-box">
-            <label>SEMESTER</label>
-            <select id="inputSemesterAktif">
-              <option value="Ganjil">Ganjil</option>
-              <option value="Genap">Genap</option>
-            </select>
-          </div>
-          <button
-            type="button"
-            class="btn-danger"
-            style="margin-top: 5px"
-            onclick="simpanPeriodeAktifUI()"
-          >
-            Simpan Keterangan
-          </button>
-        </div>
-
-        <div class="admin-cetak-card-box" style="margin-bottom: 14px">
-          <h4 style="font-size: 13px; color: #f1c40f; margin-bottom: 6px">
-            📦 Ganti Semester Baru
-          </h4>
-          <p style="font-size: 10.5px; color: #94a3b8; margin-bottom: 10px; line-height: 1.5">
-            Mengarsipkan riwayat berjalan SEMUA siswa aktif, lalu mereset HP, Shield,
-            dan Poin Harian. Tingkat kelas tidak berubah.
-          </p>
-          <div class="input-box">
-            <label>NAMA SEMESTER (label arsip) *</label>
-            <input
-              type="text"
-              id="labelGantiSemester"
-              placeholder="Contoh: Semester Ganjil 2025/2026"
-            />
-          </div>
-          <div class="input-box">
-            <label>CATATAN / ALASAN *</label>
-            <input
-              type="text"
-              id="catatanGantiSemester"
-              placeholder="Contoh: Tutup semester ganjil"
-            />
-          </div>
-          <button
-            type="button"
-            class="btn-danger"
-            style="margin-top: 5px"
-            onclick="jalankanGantiSemesterUI()"
-          >
-            Jalankan Ganti Semester
-          </button>
-        </div>
-
-        <div class="admin-cetak-card-box" style="margin-bottom: 14px">
-          <h4 style="font-size: 13px; color: #f1c40f; margin-bottom: 6px">
-            🏫 Kenaikan Kelas Massal
-          </h4>
-          <p style="font-size: 10.5px; color: #94a3b8; margin-bottom: 10px; line-height: 1.5">
-            Mengarsipkan riwayat, menaikkan tingkat kelas semua siswa aktif
-            (10→11, 11→12), dan mereset poin aktif. Siswa kelas 12 dilewati
-            (pakai Proses Kelulusan di bawah).
-          </p>
-          <div class="input-box">
-            <label>NAMA TAHUN AJARAN (label arsip) *</label>
-            <input
-              type="text"
-              id="labelKenaikanKelas"
-              placeholder="Contoh: Tahun Ajaran 2025/2026"
-            />
-          </div>
-          <div class="input-box">
-            <label>CATATAN / ALASAN *</label>
-            <input
-              type="text"
-              id="catatanKenaikanKelas"
-              placeholder="Contoh: Kenaikan kelas akhir tahun ajaran"
-            />
-          </div>
-          <button
-            type="button"
-            class="btn-danger"
-            style="margin-top: 5px"
-            onclick="jalankanKenaikanKelasUI()"
-          >
-            Jalankan Kenaikan Kelas
-          </button>
-        </div>
-
-        <div class="admin-cetak-card-box">
-          <h4 style="font-size: 13px; color: #f1c40f; margin-bottom: 6px">
-            🎓 Proses Kelulusan Kelas 12
-          </h4>
-          <p style="font-size: 10.5px; color: #94a3b8; margin-bottom: 10px; line-height: 1.5">
-            Menandai semua siswa kelas 12 SMK yang masih aktif menjadi Alumni.
-            Data tidak dihapus; portal siswa mereka akan menampilkan transkrip
-            akhir rekam jejak, dan fitur chat/pertemanan/ubah profil ditutup.
-          </p>
-          <div class="input-box">
-            <label>CATATAN / ALASAN *</label>
-            <input
-              type="text"
-              id="catatanKelulusan"
-              placeholder="Contoh: Kelulusan Tahun Ajaran 2025/2026"
-            />
-          </div>
-          <button
-            type="button"
-            class="btn-danger"
-            style="margin-top: 5px"
-            onclick="jalankanKelulusanUI()"
-          >
-            Jalankan Proses Kelulusan
-          </button>
-        </div>
-
-        <div class="admin-cetak-card-box">
-          <h4 style="font-size: 13px; color: #f1c40f; margin-bottom: 6px">
-            ↩️ Batalkan Status Lulus (Uji Coba / Koreksi)
-          </h4>
-          <p style="font-size: 10.5px; color: #94a3b8; margin-bottom: 10px; line-height: 1.5">
-            Mengembalikan satu, beberapa, atau semua alumni menjadi siswa aktif
-            kembali. Berguna untuk uji coba fitur atau membetulkan siswa yang
-            salah diluluskan.
-          </p>
-          <div class="input-box">
-            <label>PILIH SISWA (status: Lulus) *</label>
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-              <input
-                type="checkbox"
-                id="chkPilihSemuaAlumni"
-                onchange="toggleSemuaBatalKelulusan(this.checked)"
-                style="width: auto;"
-              />
-              <label
-                for="chkPilihSemuaAlumni"
-                style="font-size: 11px; color: #cbd5e1; margin: 0;"
-                >Pilih Semua</label
+          <div class="accordion-body">
+            <div class="akademik-body-inner">
+              <p class="akademik-desc">
+                Dipakai saat intake siswa kelas 10 baru (atau siswa pindahan).
+                Tempel daftar siswa, satu per baris, format <code>NISN,Nama</code>
+                — bisa langsung salin dari Excel/spreadsheet. PIN awal otomatis
+                <strong>123456</strong>, dan NISN yang sudah terdaftar otomatis
+                dilewati (tidak menimpa data lama).
+              </p>
+              <div class="input-box">
+                <label>KELAS TUJUAN *</label>
+                <select id="kelasSiswaBaruSelect">
+                  <option value="">-- Pilih Kelas --</option>
+                  <option value="10 SMK">10 SMK</option>
+                  <option value="11 SMK">11 SMK</option>
+                  <option value="12 SMK">12 SMK</option>
+                </select>
+              </div>
+              <div class="input-box">
+                <label>DAFTAR SISWA (satu per baris) *</label>
+                <textarea
+                  id="teksSiswaBaru"
+                  rows="6"
+                  placeholder="3012345678,Ahmad Fauzi&#10;3012345679,Siti Nurhaliza"
+                ></textarea>
+              </div>
+              <button
+                type="button"
+                class="btn-danger"
+                style="margin-top: 5px"
+                onclick="jalankanTambahSiswaBaruUI()"
               >
+                Tambahkan Siswa
+              </button>
             </div>
-            <div
-              id="batalKelulusanList"
-              class="friend-list"
-              style="max-height: 260px; overflow-y: auto;"
-            ></div>
           </div>
-          <div class="input-box">
-            <label>CATATAN / ALASAN *</label>
-            <input
-              type="text"
-              id="catatanBatalKelulusan"
-              placeholder="Contoh: Uji coba fitur alumni"
-            />
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>🗓️ Tahun Ajaran & Semester Aktif</span><span>▼</span>
           </div>
-          <button
-            type="button"
-            class="btn-danger"
-            style="margin-top: 5px"
-            onclick="jalankanBatalKelulusanUI()"
-          >
-            Kembalikan ke Status Aktif
-          </button>
+          <div class="accordion-body">
+            <div class="akademik-body-inner">
+              <p class="akademik-desc">
+                Keterangan ini tampil di halaman Profil semua siswa aktif.
+                Mengubahnya hanya label informasi, TIDAK memengaruhi poin atau
+                arsip.
+              </p>
+              <div class="input-box">
+                <label>TAHUN AJARAN</label>
+                <input
+                  type="text"
+                  id="inputTahunAjaran"
+                  placeholder="Contoh: 2025/2026"
+                />
+              </div>
+              <div class="input-box">
+                <label>SEMESTER</label>
+                <select id="inputSemesterAktif">
+                  <option value="Ganjil">Ganjil</option>
+                  <option value="Genap">Genap</option>
+                </select>
+              </div>
+              <button
+                type="button"
+                class="btn-danger"
+                style="margin-top: 5px"
+                onclick="simpanPeriodeAktifUI()"
+              >
+                Simpan Keterangan
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>📦 Ganti Semester Baru</span><span>▼</span>
+          </div>
+          <div class="accordion-body">
+            <div class="akademik-body-inner">
+              <p class="akademik-desc">
+                Mengarsipkan riwayat berjalan SEMUA siswa aktif, lalu mereset
+                HP, Shield, dan Poin Harian. Tingkat kelas tidak berubah.
+              </p>
+              <div class="input-box">
+                <label>NAMA SEMESTER (label arsip) *</label>
+                <input
+                  type="text"
+                  id="labelGantiSemester"
+                  placeholder="Contoh: Semester Ganjil 2025/2026"
+                />
+              </div>
+              <div class="input-box">
+                <label>CATATAN / ALASAN *</label>
+                <input
+                  type="text"
+                  id="catatanGantiSemester"
+                  placeholder="Contoh: Tutup semester ganjil"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn-danger"
+                style="margin-top: 5px"
+                onclick="jalankanGantiSemesterUI()"
+              >
+                Jalankan Ganti Semester
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>🏫 Kenaikan Kelas Massal</span><span>▼</span>
+          </div>
+          <div class="accordion-body">
+            <div class="akademik-body-inner">
+              <p class="akademik-desc">
+                Mengarsipkan riwayat, menaikkan tingkat kelas semua siswa
+                aktif (10→11, 11→12), dan mereset poin aktif. Siswa kelas 12
+                dilewati (pakai Proses Kelulusan di bawah).
+              </p>
+              <div class="input-box">
+                <label>NAMA TAHUN AJARAN (label arsip) *</label>
+                <input
+                  type="text"
+                  id="labelKenaikanKelas"
+                  placeholder="Contoh: Tahun Ajaran 2025/2026"
+                />
+              </div>
+              <div class="input-box">
+                <label>CATATAN / ALASAN *</label>
+                <input
+                  type="text"
+                  id="catatanKenaikanKelas"
+                  placeholder="Contoh: Kenaikan kelas akhir tahun ajaran"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn-danger"
+                style="margin-top: 5px"
+                onclick="jalankanKenaikanKelasUI()"
+              >
+                Jalankan Kenaikan Kelas
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>↩️ Batalkan Ganti Semester / Kenaikan Kelas</span><span>▼</span>
+          </div>
+          <div class="accordion-body">
+            <div class="akademik-body-inner">
+              <p class="akademik-desc">
+                Mengembalikan siswa ke kondisi sebelum proses Ganti Semester
+                atau Kenaikan Kelas <strong>TERAKHIR</strong> dijalankan — HP,
+                Shield, Poin Harian, Prestasi, Pelanggaran, Riwayat, dan
+                tingkat kelas (khusus Kenaikan Kelas) dikembalikan. Siswa yang
+                sudah mengalami perubahan lebih baru ditandai abu-abu dan
+                tidak bisa dipilih.
+              </p>
+              <div class="input-box">
+                <label>PILIH PROSES *</label>
+                <select
+                  id="transisiBatalSelect"
+                  onchange="pilihTransisiUntukBatal()"
+                >
+                  <option value="">Memuat...</option>
+                </select>
+              </div>
+              <div id="transisiBatalInfo" class="akademik-info"></div>
+              <div class="input-box">
+                <label>PILIH SISWA *</label>
+                <div class="akademik-check-row">
+                  <input
+                    type="checkbox"
+                    id="chkPilihSemuaTransisi"
+                    onchange="toggleSemuaBatalTransisi(this.checked)"
+                    style="width: auto;"
+                  />
+                  <label for="chkPilihSemuaTransisi"
+                    >Pilih Semua (yang bisa dibatalkan)</label
+                  >
+                </div>
+                <div
+                  id="transisiBatalList"
+                  class="friend-list admin-check-list"
+                  style="max-height: 260px; overflow-y: auto;"
+                ></div>
+              </div>
+              <div class="input-box">
+                <label>CATATAN / ALASAN *</label>
+                <input
+                  type="text"
+                  id="catatanBatalTransisi"
+                  placeholder="Contoh: Uji coba fitur, data salah"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn-danger"
+                style="margin-top: 5px"
+                onclick="jalankanBatalTransisiUI()"
+              >
+                Batalkan Proses Ini
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>🎓 Proses Kelulusan Kelas 12</span><span>▼</span>
+          </div>
+          <div class="accordion-body">
+            <div class="akademik-body-inner">
+              <p class="akademik-desc">
+                Menandai semua siswa kelas 12 SMK yang masih aktif menjadi
+                Alumni. Data tidak dihapus; portal siswa mereka akan
+                menampilkan transkrip akhir rekam jejak, dan fitur
+                chat/pertemanan/ubah profil ditutup.
+              </p>
+              <div class="input-box">
+                <label>CATATAN / ALASAN *</label>
+                <input
+                  type="text"
+                  id="catatanKelulusan"
+                  placeholder="Contoh: Kelulusan Tahun Ajaran 2025/2026"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn-danger"
+                style="margin-top: 5px"
+                onclick="jalankanKelulusanUI()"
+              >
+                Jalankan Proses Kelulusan
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>↩️ Batalkan Status Lulus (Uji Coba / Koreksi)</span><span>▼</span>
+          </div>
+          <div class="accordion-body">
+            <div class="akademik-body-inner">
+              <p class="akademik-desc">
+                Mengembalikan satu, beberapa, atau semua alumni menjadi siswa
+                aktif kembali. Berguna untuk uji coba fitur atau membetulkan
+                siswa yang salah diluluskan.
+              </p>
+              <div class="input-box">
+                <label>PILIH SISWA (status: Lulus) *</label>
+                <div class="akademik-check-row">
+                  <input
+                    type="checkbox"
+                    id="chkPilihSemuaAlumni"
+                    onchange="toggleSemuaBatalKelulusan(this.checked)"
+                    style="width: auto;"
+                  />
+                  <label for="chkPilihSemuaAlumni">Pilih Semua</label>
+                </div>
+                <div
+                  id="batalKelulusanList"
+                  class="friend-list admin-check-list"
+                  style="max-height: 260px; overflow-y: auto;"
+                ></div>
+              </div>
+              <div class="input-box">
+                <label>CATATAN / ALASAN *</label>
+                <input
+                  type="text"
+                  id="catatanBatalKelulusan"
+                  placeholder="Contoh: Uji coba fitur alumni"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn-danger"
+                style="margin-top: 5px"
+                onclick="jalankanBatalKelulusanUI()"
+              >
+                Kembalikan ke Status Aktif
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-
-
 
       <!-- TAB 3: CETAK LAPORAN -->
       <div id="adminTabCetak" class="admin-tab-content hidden">
@@ -1467,6 +1563,28 @@
             </div>
           </div>
           <!-- ======================================================================== -->
+        </div>
+      </div>
+
+      <!-- TAB BARU: LAPORAN BUG & MASUKAN -->
+      <div id="adminTabLaporan" class="admin-tab-content hidden">
+        <div class="laporan-bug-top-bar">
+          <div>
+            <h4 style="margin: 0; font-size: 11.5px; color: #1e3c72; font-weight: bold">
+              🐞 Laporan Bug & Masukan
+            </h4>
+            <p style="font-size: 9px; color: #666; margin: 1px 0 0 0">
+              Masukan dan laporan bug dari siswa, guru, dan admin.
+            </p>
+          </div>
+          <button type="button" onclick="loadLaporanBugAdmin()" class="admin-chat-btn-refresh">
+            Muat Ulang 🔄
+          </button>
+        </div>
+        <div id="adminLaporanBugList" class="laporan-bug-list-box">
+          <div style="font-size: 10px; color: #888; text-align: center; padding: 15px;">
+            Klik "Muat Ulang" untuk melihat laporan.
+          </div>
         </div>
       </div>
     </div>
@@ -1782,7 +1900,83 @@
       </div>
     </div>
 
-    <div class="app-version-badge">Tatib v3.3.0 • Beta</div>
+    <!-- TOMBOL MELAYANG: LAPORAN BUG & MASUKAN (muncul setelah login) -->
+    <button
+      id="btnFabLaporanBug"
+      class="fab-laporan-bug hidden"
+      onclick="bukaModalLaporanBug()"
+      title="Laporan Bug & Masukan"
+    >
+      🐞
+    </button>
+
+    <!-- MODAL: FORM LAPORAN BUG & MASUKAN -->
+    <div id="modalLaporanBug" class="modal-overlay hidden">
+      <div class="modal-box" style="max-width: 400px">
+        <h4 style="color: #1e3a8a; margin-bottom: 10px">
+          🐞 Laporan Bug & Masukan
+        </h4>
+        <p style="font-size: 9.5px; color: #64748b; margin-bottom: 10px">
+          Temukan masalah di aplikasi atau punya ide perbaikan? Tulis di sini,
+          laporanmu akan langsung sampai ke Admin.
+        </p>
+        <label
+          style="
+            display: block;
+            font-size: 9.5px;
+            color: #1e3c72;
+            font-weight: bold;
+            margin-bottom: 4px;
+            text-align: left;
+          "
+          >JENIS LAPORAN</label
+        >
+        <select id="laporanBugKategori" style="margin-bottom: 10px">
+          <option value="bug">🐞 Laporan Bug / Error</option>
+          <option value="masukan">💡 Saran & Masukan</option>
+        </select>
+        <label
+          style="
+            display: block;
+            font-size: 9.5px;
+            color: #1e3c72;
+            font-weight: bold;
+            margin-bottom: 4px;
+            text-align: left;
+          "
+          >DETAIL</label
+        >
+        <textarea
+          id="laporanBugIsi"
+          rows="4"
+          maxlength="1000"
+          placeholder="Ceritakan apa yang terjadi atau masukanmu di sini..."
+          style="
+            width: 100%;
+            resize: vertical;
+            padding: 8px 10px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 11px;
+            font-family: inherit;
+            margin-bottom: 10px;
+          "
+        ></textarea>
+        <button id="btnKirimLaporanBug" onclick="kirimLaporanBugUI()">
+          Kirim Laporan ✉️
+        </button>
+        <button
+          type="button"
+          class="btn-outline"
+          onclick="tutupModalLaporanBug()"
+          style="margin-top: 8px"
+        >
+          Batal
+        </button>
+      </div>
+    </div>
+
+    <div class="app-version-badge">Tatib v3.4.0 • Beta</div>
 
     <!-- JAVASCRIPT UTAMA & FIREBASE MODULE -->
     <script src="app.js" type="module"></script>
