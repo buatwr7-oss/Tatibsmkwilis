@@ -1391,11 +1391,24 @@ async function loadPesanChatRealtime(targetNisn) {
       const expiredSnap = await getDocs(
         query(messagesRef, where("timestamp", "<", tujuhHariLalu)),
       );
-      expiredSnap.forEach((docSnap) => {
-        deleteDoc(doc(window.db, "chats", roomId, "messages", docSnap.id)).catch(
-          (err) => console.log("Gagal hapus pesan lama:", err),
-        );
-      });
+      await Promise.all(
+        expiredSnap.docs.map((docSnap) =>
+          deleteDoc(doc(window.db, "chats", roomId, "messages", docSnap.id)).catch(
+            (err) => console.log("Gagal hapus pesan lama:", err),
+          ),
+        ),
+      );
+
+      // Kalau ruang chat ini sudah lebih dari 7 hari tidak ada pesan baru,
+      // berarti semua pesannya pasti sudah kedaluwarsa juga — coba hapus
+      // sekalian dokumen room-nya supaya tidak ada ruang kosong tersisa.
+      // Room otomatis dibuat ulang kalau kedua siswa chat lagi nanti.
+      // Gagal (misalnya rules belum mengizinkan) tidak masalah, dilewati saja.
+      try {
+        await deleteDoc(doc(window.db, "chats", roomId));
+      } catch (e) {
+        // Wajar gagal kalau room masih aktif atau rules belum diperbarui
+      }
     } catch (e) {
       console.log("Lewati pembersihan pesan lama:", e);
     }
@@ -1620,25 +1633,38 @@ window.adminHapusSemuaChatRoom = async function () {
   }
   const roomId = currentAdminSelectedRoomId;
   const yakin = await window.customConfirm(
-    `Yakin ingin menghapus SEMUA pesan di ruang chat ini?`,
+    `Yakin ingin menghapus ruang chat ini beserta SEMUA pesannya? Ruang chat akan otomatis dibuat ulang kalau kedua siswa chat lagi nanti.`,
   );
   if (!yakin) return;
 
-  showGamePreloader("MENDELETING ALL MESSAGES...", async (done) => {
+  showGamePreloader("MENGHAPUS RUANG CHAT...", async (done) => {
     try {
-      const { collection, getDocs } = window.fbFirestore;
+      const { collection, doc, getDocs, deleteDoc } = window.fbFirestore;
       const snapshot = await getDocs(
         collection(window.db, "chats", roomId, "messages"),
       );
       await deleteDocsInChunks(snapshot.docs.map((d) => d.ref));
+      // Hapus juga dokumen room-nya supaya tidak ada ruang kosong tersisa
+      await deleteDoc(doc(window.db, "chats", roomId));
+
+      currentAdminSelectedRoomId = "";
+      const headerEl = $("adminChatHeader");
+      const container = $("adminMessageContainer");
+      if (headerEl) headerEl.innerText = "Pilih ruang chat untuk dipantau";
+      if (container)
+        container.innerHTML = `<div style="font-size: 11px; color: #888; text-align: center; margin: auto;">Belum ada ruang chat dipilih.</div>`;
+      if (adminActiveChatListener) {
+        adminActiveChatListener();
+        adminActiveChatListener = null;
+      }
+      window.loadAdminChatRooms();
+
       done();
-      window.customAlert(
-        "✅ Semua pesan di ruang chat ini berhasil dihapus oleh Admin!",
-      );
+      window.customAlert("✅ Ruang chat beserta semua pesannya berhasil dihapus!");
     } catch (err) {
       done();
-      console.error("Gagal menghapus semua chat:", err);
-      window.customAlert("Gagal menghapus pesan chat.");
+      console.error("Gagal menghapus ruang chat:", err);
+      window.customAlert("Gagal menghapus ruang chat.");
     }
   });
 };
@@ -2013,9 +2039,20 @@ function showScreen(screenId, pushHistory = true) {
     window.handleAdminActionTypeChange();
   }
 
+  updateFabLaporanBug();
+
   if (pushHistory) {
     window.history.pushState({ screen: screenId }, "", `#${screenId}`);
   }
+}
+
+// Tombol melayang "Laporan Bug & Masukan" hanya muncul kalau sudah login
+// (siswa/alumni, guru, atau admin) — tidak muncul di menu utama atau form login.
+function updateFabLaporanBug() {
+  const fab = $("btnFabLaporanBug");
+  if (!fab) return;
+  const sudahLogin = !!currentUser || !!currentNisnSiswa;
+  fab.classList.toggle("hidden", !sudahLogin);
 }
 
 window.togglePassword = function () {
@@ -2137,26 +2174,218 @@ window.renderGlobalLeaderboard = function () {
     }
 
     leaderboardHtml += `
-    <div style="${rowStyle} border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px;">
-      <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
+    <div class="lb-row" style="${rowStyle} border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px;">
+      <div class="lb-left" style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
         <div style="font-size: 13px; font-weight: bold; color: ${nameColor}; width: 32px; text-align: center; flex-shrink: 0;">${rankBadge}</div>
         <div style="width: 36px; height: 36px; border-radius: 8px; overflow: hidden; background: #2c3e50; flex-shrink: 0; border: 1.5px solid ${nameColor};">
           <img src="${escapeHtml(avatarFor(s))}" style="width: 100%; height: 100%; object-fit: cover;" onerror="${AVATAR_ONERROR}">
         </div>
-        <div style="overflow: hidden;">
+        <div class="lb-name-wrap" style="overflow: hidden;">
           <div style="font-size: 12px; font-weight: bold; color: ${nameColor}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(s.nama)}</div>
-          <div style="font-size: 9.5px; color: #cbd5e1;">Kelas: ${escapeHtml(s.kelas)}</div>
+          <div style="font-size: 9.5px; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Kelas: ${escapeHtml(s.kelas)}</div>
         </div>
       </div>
       <div style="text-align: right; flex-shrink: 0;">
-        <div style="font-size: 13px; font-weight: bold; color: ${scoreColor};">${score} Pts</div>
-        <div style="font-size: 8px; color: #94a3b8;">Poin Tugas</div>
+        <div style="font-size: 13px; font-weight: bold; color: ${scoreColor}; white-space: nowrap;">${score} Pts</div>
+        <div style="font-size: 8px; color: #94a3b8; white-space: nowrap;">Poin Tugas</div>
       </div>
     </div>`;
   });
 
   container.innerHTML = leaderboardHtml;
 };
+
+// ==========================================
+// LAPORAN BUG & MASUKAN
+// ==========================================
+let laporanBugBusy = false;
+
+window.bukaModalLaporanBug = function () {
+  const overlay = $("modalLaporanBug");
+  if (!overlay) return;
+  if ($("laporanBugKategori")) $("laporanBugKategori").value = "bug";
+  if ($("laporanBugIsi")) $("laporanBugIsi").value = "";
+  overlay.classList.remove("hidden");
+};
+
+window.tutupModalLaporanBug = function () {
+  const overlay = $("modalLaporanBug");
+  if (overlay) overlay.classList.add("hidden");
+};
+
+window.kirimLaporanBugUI = async function () {
+  if (laporanBugBusy) return;
+
+  const isiEl = $("laporanBugIsi");
+  const isi = (isiEl ? isiEl.value : "").trim();
+  if (!isi) {
+    window.customAlert("Mohon isi dulu laporan bug atau masukannya ya.");
+    return;
+  }
+  if (isi.length > 1000) {
+    window.customAlert("Teksnya kepanjangan, maksimal 1000 karakter.");
+    return;
+  }
+  const kategori = $("laporanBugKategori") ? $("laporanBugKategori").value : "bug";
+
+  let pelaporNama = "Anonim";
+  let pelaporPeran = "Tidak diketahui";
+  let pelaporId = "-";
+
+  if (currentUser) {
+    pelaporNama = currentUser.nama || "Guru/Admin";
+    pelaporPeran = currentUser.role || "Guru/Admin";
+    pelaporId = currentUser.email || pelaporNama;
+  } else if (currentNisnSiswa) {
+    const s = masterDataSiswa.find((x) => x.nisn === currentNisnSiswa);
+    pelaporNama = s ? s.nama : currentNisnSiswa;
+    pelaporPeran = isAlumniSession ? "Alumni" : "Siswa";
+    pelaporId = currentNisnSiswa;
+  }
+
+  laporanBugBusy = true;
+  const btn = $("btnKirimLaporanBug");
+  if (btn) btn.disabled = true;
+
+  try {
+    const { collection, addDoc } = window.fbFirestore;
+    await addDoc(collection(window.db, "laporan_bug"), {
+      kategori,
+      isi,
+      pelaporNama,
+      pelaporPeran,
+      pelaporId,
+      status: "baru",
+      waktu: Date.now(),
+    });
+    window.tutupModalLaporanBug();
+    window.customAlert(
+      "✅ Terima kasih! Laporan/masukan kamu sudah terkirim ke Admin.",
+    );
+  } catch (err) {
+    console.error("Gagal mengirim laporan bug:", err);
+    window.customAlert(
+      "Gagal mengirim laporan. Periksa koneksi internet lalu coba lagi.",
+    );
+  } finally {
+    laporanBugBusy = false;
+    if (btn) btn.disabled = false;
+  }
+};
+
+// --- Panel Admin: melihat & mengelola laporan ---
+function updateLaporanBugBadge(count) {
+  const badge = $("navBtnLaporanBadge");
+  if (!badge) return;
+  if (count > 0) {
+    badge.innerText = count > 99 ? "99+" : String(count);
+    badge.classList.remove("hidden");
+  } else {
+    badge.classList.add("hidden");
+  }
+}
+
+window.loadLaporanBugAdmin = async function () {
+  const container = $("adminLaporanBugList");
+  if (!container) return;
+  container.innerHTML = `<div style="font-size: 10px; color: #888; text-align: center; padding: 15px;">Memuat laporan...</div>`;
+
+  try {
+    const { collection, getDocs, query, orderBy } = window.fbFirestore;
+    const snap = await getDocs(
+      query(collection(window.db, "laporan_bug"), orderBy("waktu", "desc")),
+    );
+
+    if (snap.empty) {
+      container.innerHTML = `<div style="font-size: 10px; color: #888; text-align: center; padding: 15px;">Belum ada laporan bug atau masukan dari pengguna.</div>`;
+      updateLaporanBugBadge(0);
+      return;
+    }
+
+    let html = "";
+    let belumCount = 0;
+
+    snap.forEach((docSnap) => {
+      const d = docSnap.data();
+      const id = docSnap.id;
+      const status = d.status || "baru";
+      if (status === "baru") belumCount++;
+
+      const kategoriLabel = d.kategori === "masukan" ? "💡 Masukan" : "🐞 Bug";
+      const kategoriColor = d.kategori === "masukan" ? "#3498db" : "#e74c3c";
+      const waktuStr = d.waktu
+        ? new Date(d.waktu).toLocaleString("id-ID", {
+            dateStyle: "medium",
+            timeStyle: "short",
+          })
+        : "-";
+
+      html += `
+      <div class="laporan-bug-row" style="border-left-color: ${kategoriColor};">
+        <div class="laporan-bug-row-top">
+          <span class="laporan-bug-kategori" style="color: ${kategoriColor};">${kategoriLabel}</span>
+          <span class="laporan-bug-waktu">${waktuStr}</span>
+        </div>
+        <div class="laporan-bug-isi">${escapeHtml(d.isi || "")}</div>
+        <div class="laporan-bug-meta">👤 ${escapeHtml(d.pelaporNama || "-")} (${escapeHtml(d.pelaporPeran || "-")})</div>
+        <div class="laporan-bug-actions">
+          <select onchange="window.ubahStatusLaporanBug('${id}', this.value)" class="laporan-bug-status-select">
+            <option value="baru" ${status === "baru" ? "selected" : ""}>🆕 Baru</option>
+            <option value="diproses" ${status === "diproses" ? "selected" : ""}>🔧 Diproses</option>
+            <option value="selesai" ${status === "selesai" ? "selected" : ""}>✅ Selesai</option>
+          </select>
+          <button type="button" onclick="window.hapusLaporanBugUI('${id}')" class="laporan-bug-delete-btn">🗑️</button>
+        </div>
+      </div>`;
+    });
+
+    container.innerHTML = html;
+    updateLaporanBugBadge(belumCount);
+  } catch (err) {
+    console.error("Gagal memuat laporan bug:", err);
+    container.innerHTML = `<div style="font-size: 10px; color: #e74c3c; text-align: center; padding: 15px;">Gagal memuat laporan. Coba muat ulang.</div>`;
+  }
+};
+
+window.ubahStatusLaporanBug = async function (id, status) {
+  try {
+    const { doc, updateDoc } = window.fbFirestore;
+    await updateDoc(doc(window.db, "laporan_bug", id), { status });
+    window.loadLaporanBugAdmin();
+  } catch (err) {
+    console.error("Gagal mengubah status laporan:", err);
+    window.customAlert("Gagal mengubah status laporan.");
+  }
+};
+
+window.hapusLaporanBugUI = async function (id) {
+  const yakin = await window.customConfirm(
+    "Yakin ingin menghapus laporan ini secara permanen?",
+  );
+  if (!yakin) return;
+  try {
+    const { doc, deleteDoc } = window.fbFirestore;
+    await deleteDoc(doc(window.db, "laporan_bug", id));
+    window.loadLaporanBugAdmin();
+  } catch (err) {
+    console.error("Gagal menghapus laporan:", err);
+    window.customAlert("Gagal menghapus laporan.");
+  }
+};
+
+// Admin tetap dapat melihat ada laporan baru walau belum membuka tab Laporan,
+// dengan mengecek jumlah status "baru" sesaat setelah login sebagai Super Admin.
+async function cekBadgeLaporanBugAwal() {
+  try {
+    const { collection, getDocs, query, where } = window.fbFirestore;
+    const snap = await getDocs(
+      query(collection(window.db, "laporan_bug"), where("status", "==", "baru")),
+    );
+    updateLaporanBugBadge(snap.size);
+  } catch (err) {
+    // Diam saja kalau gagal (mis. rules belum diperbarui) — tidak mengganggu login
+  }
+}
 
 // ==========================================
 // LOGIN GURU / ADMIN (FIREBASE AUTH)
@@ -2209,6 +2438,7 @@ function prosesMasukUser(user, doneCallback) {
         $("txtNamaAdmin").innerText = user.nama;
         showScreen("admin");
         window.switchAdminTab("rekap");
+        cekBadgeLaporanBugAwal();
       }, 400);
     });
   } else {
@@ -2512,7 +2742,7 @@ window.eksekusiSimpanWithLoading = async function () {
 // ADMIN: TAB, REKAP, KONTROL
 // ==========================================
 window.switchAdminTab = function (tabName) {
-  ["Rekap", "Kontrol", "Akademik", "Cetak", "Chat"].forEach((n) => {
+  ["Rekap", "Kontrol", "Akademik", "Cetak", "Chat", "Laporan"].forEach((n) => {
     const el = $("adminTab" + n);
     const btn = $("navBtn" + (n === "Chat" ? "ChatAdmin" : n));
     if (el) el.classList.add("hidden");
@@ -2544,7 +2774,9 @@ window.switchAdminTab = function (tabName) {
   if (tabName === "akademik") {
     window.muatDaftarAlumni();
     window.muatPeriodeAktifAdmin();
+    window.muatRiwayatTransisiUntukBatal();
   }
+  if (tabName === "laporan") window.loadLaporanBugAdmin();
 };
 
 let statistikChartInstance = null;
@@ -2673,7 +2905,11 @@ async function batchUpdateSiswa(targetList, buildUpdate) {
     );
     const batch = writeBatch(window.db);
     snaps.forEach((snap) => {
-      if (snap.exists()) batch.update(snap.ref, buildUpdate(snap.data()));
+      if (!snap.exists()) return;
+      const upd = buildUpdate(snap.data());
+      // buildUpdate boleh mengembalikan null/undefined/{} untuk melewati
+      // siswa ini (misalnya karena sudah tidak memenuhi syarat lagi)
+      if (upd && Object.keys(upd).length > 0) batch.update(snap.ref, upd);
     });
     await batch.commit();
   }
@@ -2806,9 +3042,28 @@ function buildArsipEntry(d, label) {
     kelas: d.kelas || d.kelasAktif || "-",
     totalPrestasi: d.totalPrestasi || 0,
     totalPelanggaran: d.totalPelanggaran || 0,
+    dailyScore: d.dailyScore || 0,
+    hp: d.hp !== undefined ? d.hp : 200,
+    shield: d.shield || 0,
     riwayat: d.riwayat || [],
     diarsipkanPada: Date.now(),
   };
+}
+
+// Entri arsip TERBARU milik seorang siswa (dipakai untuk memastikan undo
+// hanya menimpa periode yang paling akhir, bukan periode lama yang sudah
+// "ketiban" perubahan lebih baru).
+function periodeIdTerbaru(d) {
+  const arsip = d.arsipRiwayat || {};
+  let terbaru = null;
+  let waktuTerbaru = -1;
+  Object.entries(arsip).forEach(([id, entry]) => {
+    if ((entry.diarsipkanPada || 0) > waktuTerbaru) {
+      waktuTerbaru = entry.diarsipkanPada || 0;
+      terbaru = id;
+    }
+  });
+  return terbaru;
 }
 
 async function catatLogAkademik(aksi, detail) {
@@ -2857,9 +3112,10 @@ async function jalankanGantiSemester(label, catatan) {
   await catatLogAkademik("GANTI_SEMESTER", {
     label,
     catatan,
+    periodeId,
     jumlahSiswa: targets.length,
   });
-  return targets.length;
+  return { periodeId, jumlah: targets.length };
 }
 
 // 2) Kenaikan Kelas Massal: arsipkan riwayat, naikkan tingkat kelas,
@@ -2899,10 +3155,11 @@ async function jalankanKenaikanKelas(label, catatan) {
   await catatLogAkademik("KENAIKAN_KELAS", {
     label,
     catatan,
+    periodeId,
     jumlahNaik: eligible.length,
     jumlahDilewati: skip,
   });
-  return { naik: eligible.length, skip };
+  return { periodeId, naik: eligible.length, skip };
 }
 
 // 3) Proses Kelulusan Kelas 12: tandai alumni. Data & riwayat kelas 12
@@ -3097,10 +3354,13 @@ window.jalankanGantiSemesterUI = async function () {
 
   showGamePreloader("MENGARSIPKAN SEMESTER...", async (done) => {
     try {
-      const jumlah = await jalankanGantiSemester(label, catatan);
+      const hasil = await jalankanGantiSemester(label, catatan);
       await refreshMasterSiswa();
+      window.muatRiwayatTransisiUntukBatal();
       done();
-      window.customAlert(`✅ Semester "${label}" diarsipkan untuk ${jumlah} siswa aktif.`);
+      window.customAlert(
+        `✅ Semester "${label}" diarsipkan untuk ${hasil.jumlah} siswa aktif.`,
+      );
       $("labelGantiSemester").value = "";
       $("catatanGantiSemester").value = "";
     } catch (err) {
@@ -3128,6 +3388,7 @@ window.jalankanKenaikanKelasUI = async function () {
     try {
       const hasil = await jalankanKenaikanKelas(label, catatan);
       await refreshMasterSiswa();
+      window.muatRiwayatTransisiUntukBatal();
       done();
       window.customAlert(
         `✅ ${hasil.naik} siswa naik kelas.${hasil.skip ? ` ${hasil.skip} siswa kelas 12 dilewati (proses lewat Kelulusan).` : ""}`,
@@ -3138,6 +3399,221 @@ window.jalankanKenaikanKelasUI = async function () {
       done();
       console.error("Gagal kenaikan kelas:", err);
       window.customAlert("Gagal menjalankan Kenaikan Kelas. Periksa koneksi internet.");
+    }
+  });
+};
+
+// ---- Batalkan Ganti Semester / Kenaikan Kelas (uji coba / koreksi) ----
+// Hanya mengizinkan undo pada proses TERAKHIR yang tercatat, dan hanya untuk
+// siswa yang periode itu masih jadi arsip paling baru milik mereka (supaya
+// tidak menimpa perubahan lebih baru yang mungkin terjadi sesudahnya).
+window._transisiTerpilih = null; // { periodeId, aksi, label, waktuStr }
+
+window.muatRiwayatTransisiUntukBatal = async function () {
+  const selectEl = $("transisiBatalSelect");
+  const infoEl = $("transisiBatalInfo");
+  const listEl = $("transisiBatalList");
+  if (!selectEl) return;
+
+  selectEl.innerHTML = '<option value="">Memuat...</option>';
+  if (listEl) listEl.innerHTML = "";
+  if (infoEl) infoEl.textContent = "";
+
+  try {
+    const { collection, query, where, orderBy, limit, getDocs } = window.fbFirestore;
+    const snap = await getDocs(
+      query(
+        collection(window.db, "admin_logs"),
+        where("aksi", "in", ["GANTI_SEMESTER", "KENAIKAN_KELAS"]),
+        orderBy("waktu", "desc"),
+        limit(10),
+      ),
+    );
+
+    if (snap.empty) {
+      selectEl.innerHTML = '<option value="">-- Belum ada riwayat --</option>';
+      return;
+    }
+
+    const runs = [];
+    snap.forEach((d) => {
+      const data = d.data();
+      if (data.periodeId) runs.push(data);
+    });
+
+    if (runs.length === 0) {
+      selectEl.innerHTML =
+        '<option value="">-- Tidak ada proses yang bisa dibatalkan --</option>';
+      return;
+    }
+
+    window._transisiRuns = runs;
+    selectEl.innerHTML = runs
+      .map((r, idx) => {
+        const nama = r.aksi === "GANTI_SEMESTER" ? "Ganti Semester" : "Kenaikan Kelas";
+        return `<option value="${idx}">${escapeHtml(nama)}: "${escapeHtml(r.label || "-")}" — ${escapeHtml(r.waktuStr || "")}</option>`;
+      })
+      .join("");
+    window.pilihTransisiUntukBatal();
+  } catch (err) {
+    console.error("Gagal memuat riwayat transisi:", err);
+    selectEl.innerHTML = '<option value="">-- Gagal memuat --</option>';
+  }
+};
+
+window.pilihTransisiUntukBatal = function () {
+  const selectEl = $("transisiBatalSelect");
+  const infoEl = $("transisiBatalInfo");
+  const listEl = $("transisiBatalList");
+  const chkSemua = $("chkPilihSemuaTransisi");
+  if (!selectEl || !listEl) return;
+
+  const idx = Number(selectEl.value);
+  const run = (window._transisiRuns || [])[idx];
+  window._transisiTerpilih = run || null;
+  if (chkSemua) chkSemua.checked = false;
+
+  if (!run) {
+    listEl.innerHTML = "";
+    if (infoEl) infoEl.textContent = "";
+    return;
+  }
+
+  const eligible = masterDataSiswa.filter(
+    (s) => s.arsipRiwayat && s.arsipRiwayat[run.periodeId],
+  );
+  const terkunci = eligible.filter(
+    (s) => periodeIdTerbaru(s) !== run.periodeId,
+  ).length;
+  const bisaDibatalkan = eligible.length - terkunci;
+
+  if (infoEl) {
+    infoEl.textContent =
+      `${eligible.length} siswa tercatat dalam proses ini` +
+      (terkunci > 0
+        ? `, ${terkunci} di antaranya sudah ada perubahan lebih baru sehingga tidak bisa dibatalkan (ditandai abu-abu).`
+        : ".");
+  }
+
+  if (eligible.length === 0) {
+    listEl.innerHTML = '<div class="empty-note">Tidak ada siswa untuk proses ini.</div>';
+    return;
+  }
+
+  listEl.innerHTML = eligible
+    .map((s) => {
+      const bisa = periodeIdTerbaru(s) === run.periodeId;
+      return `
+    <label class="friend-row" style="cursor: ${bisa ? "pointer" : "not-allowed"}; opacity: ${bisa ? "1" : "0.5"};">
+      <input
+        type="checkbox"
+        class="batal-transisi-chk"
+        value="${escapeHtml(s.nisn)}"
+        ${bisa ? "" : "disabled"}
+        style="width: auto; margin-right: 10px;"
+      />
+      <div class="row-main">
+        <div class="row-name">${escapeHtml(s.nama)}</div>
+        <div class="row-sub">Kelas: ${escapeHtml(s.kelas)} • NISN ${escapeHtml(s.nisn)}${bisa ? "" : " — ada perubahan lebih baru"}</div>
+      </div>
+    </label>`;
+    })
+    .join("");
+};
+
+window.toggleSemuaBatalTransisi = function (checked) {
+  document
+    .querySelectorAll(".batal-transisi-chk:not(:disabled)")
+    .forEach((el) => (el.checked = checked));
+};
+
+function buildUndoTransisiUpdate(d, periodeId) {
+  const arsip = { ...(d.arsipRiwayat || {}) };
+  const entry = arsip[periodeId];
+  if (!entry) return null;
+  delete arsip[periodeId];
+  return {
+    arsipRiwayat: arsip,
+    totalPrestasi: entry.totalPrestasi || 0,
+    totalPelanggaran: entry.totalPelanggaran || 0,
+    dailyScore: entry.dailyScore || 0,
+    hp: entry.hp !== undefined ? entry.hp : 200,
+    shield: entry.shield || 0,
+    riwayat: entry.riwayat || [],
+    kelas: entry.kelas || d.kelas,
+    kelasAktif: entry.kelas || d.kelasAktif || d.kelas,
+  };
+}
+
+window.jalankanBatalTransisiUI = async function () {
+  const run = window._transisiTerpilih;
+  const catatan = $("catatanBatalTransisi").value.trim();
+  if (!run) return window.customAlert("Pilih proses yang mau dibatalkan dulu.");
+  if (!catatan) return window.customAlert("Catatan/alasan wajib diisi.");
+
+  const checked = Array.from(
+    document.querySelectorAll(".batal-transisi-chk:checked"),
+  ).map((el) => el.value);
+  if (checked.length === 0)
+    return window.customAlert(
+      "Centang minimal satu siswa yang mau dikembalikan (atau centang Pilih Semua).",
+    );
+
+  const nama = run.aksi === "GANTI_SEMESTER" ? "Ganti Semester" : "Kenaikan Kelas";
+  const ok = await window.customConfirm(
+    `Mengembalikan ${checked.length} siswa ke kondisi sebelum "${nama}: ${run.label}" dijalankan — HP, Shield, Poin Harian, Prestasi, Pelanggaran, Riwayat${run.aksi === "KENAIKAN_KELAS" ? ", dan tingkat kelas" : ""} akan dikembalikan seperti semula. TIDAK DAPAT DIBATALKAN LAGI. Lanjutkan?`,
+    "↩️ BATALKAN " + nama.toUpperCase(),
+  );
+  if (!ok) return;
+
+  showGamePreloader("MENGEMBALIKAN DATA...", async (done) => {
+    try {
+      const ts = localDateTimeStr();
+      const targets = checked.map((nisn) => ({ nisn }));
+      let dilewati = 0;
+
+      await batchUpdateSiswa(targets, (d) => {
+        // Cek ulang dari data server TERBARU (bukan dari tampilan/cache
+        // browser): hanya batalkan kalau periode ini memang masih arsip
+        // paling akhir milik siswa ini, supaya tidak menimpa perubahan
+        // lebih baru yang mungkin terjadi sejak daftar ini ditampilkan.
+        if (periodeIdTerbaru(d) !== run.periodeId) {
+          dilewati++;
+          return {};
+        }
+        const upd = buildUndoTransisiUpdate(d, run.periodeId);
+        if (!upd) {
+          dilewati++;
+          return {}; // tidak ada perubahan field apa pun
+        }
+        upd.riwayat = tambahRiwayat(upd.riwayat, {
+          t: `DIBATALKAN: ${nama} "${run.label}" — ${catatan}`,
+          p: 0,
+          loc: "Sistem",
+          d: ts,
+        });
+        return upd;
+      });
+
+      await catatLogAkademik("BATAL_TRANSISI", {
+        aksiDibatalkan: run.aksi,
+        periodeId: run.periodeId,
+        label: run.label,
+        catatan,
+        jumlah: checked.length - dilewati,
+      });
+      await refreshMasterSiswa();
+      window.muatRiwayatTransisiUntukBatal();
+      done();
+      window.customAlert(
+        `✅ ${checked.length - dilewati} siswa dikembalikan ke kondisi sebelum "${run.label}".` +
+          (dilewati ? ` ${dilewati} siswa dilewati karena sudah ada perubahan lebih baru.` : ""),
+      );
+      $("catatanBatalTransisi").value = "";
+    } catch (err) {
+      done();
+      console.error("Gagal membatalkan transisi:", err);
+      window.customAlert("Gagal mengembalikan data. Periksa koneksi internet.");
     }
   });
 };
@@ -4275,6 +4751,7 @@ async function initApp() {
           $("txtNamaAdmin").innerText = userObj.nama;
           showScreen("admin");
           window.switchAdminTab("rekap");
+          cekBadgeLaporanBugAwal();
         } else {
           $("txtNamaGuru").innerText = userObj.nama;
           $("txtRoleGuru").innerText = "Jabatan: " + userObj.role;
