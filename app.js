@@ -2639,11 +2639,17 @@ function kelasBinaanList(u) {
   return hasil;
 }
 
-// Contoh hasil: "Guru Mapel • Wali Kelas 10"
+// Contoh hasil: "Guru Mapel • Wali Kelas 10" atau "Wali Kelas 10"
+// Kalau field `role` sudah berisi kata "Wali Kelas", kata itu tidak diulang.
 function labelJabatan(u) {
   const base = (u && u.role) || "-";
   const kelas = kelasBinaanList(u).map((k) => k.replace(" SMK", ""));
-  return kelas.length ? `${base} • Wali Kelas ${kelas.join(" & ")}` : base;
+  if (!kelas.length) return base;
+  const daftar = kelas.join(" & ");
+  if (/wali\s*kelas/i.test(base)) {
+    return /\b(10|11|12)\b/.test(base) ? base : `${base} ${daftar}`;
+  }
+  return `${base} • Wali Kelas ${daftar}`;
 }
 
 // Kotak "Reset Foto Profil Siswa" hanya tampil untuk wali kelas, dan pilihan
