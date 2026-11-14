@@ -1990,6 +1990,8 @@ const dataPilihan = {
 // ==========================================
 // PENGATURAN NAVIGASI LAYAR & HTML5 HISTORY API
 // ==========================================
+let layarSaatIni = "menu"; // dipakai saklar maintenance
+
 const SCREEN_IDS = [
   "menuWrapper",
   "mainMenuCard",
@@ -2002,6 +2004,7 @@ const SCREEN_IDS = [
 ];
 
 function showScreen(screenId, pushHistory = true) {
+  layarSaatIni = screenId;
   SCREEN_IDS.forEach((id) => $(id).classList.add("hidden"));
 
   if (screenId === "menu") {
@@ -2045,9 +2048,93 @@ function showScreen(screenId, pushHistory = true) {
   }
 
   updateFabLaporanBug();
+  terapkanMaintenance();
 
   if (pushHistory) {
     window.history.pushState({ screen: screenId }, "", `#${screenId}`);
+  }
+}
+
+// ==========================================
+// MODE MAINTENANCE (saklar di Firestore: app_meta/maintenance)
+// ==========================================
+// Cara pakai (Firebase Console > Firestore > app_meta > dokumen "maintenance"):
+//   aktif: true                (boolean)  -> aplikasi dikunci untuk siswa & guru
+//   pesan: "..."               (string, opsional) -> teks di layar maintenance
+//   perkiraanSelesai: "..."    (string, opsional) -> mis. "15.00 WIB"
+// Matikan dengan aktif: false (atau hapus dokumennya). Berlaku seketika di semua
+// perangkat yang sedang membuka aplikasi. Super Admin tetap bisa masuk.
+// Jika dokumen tidak ada atau gagal dibaca, aplikasi berjalan NORMAL.
+let maintenanceState = { aktif: false, pesan: "", perkiraanSelesai: "" };
+let adminLoginModeMaintenance = false;
+
+// Bukan batas keamanan, hanya kenyamanan tampilan (tidak ada kedipan layar
+// maintenance saat sesi admin dipulihkan).
+function sesiSuperAdminAktif() {
+  if (currentUser && currentUser.role === "Super Admin") return true;
+  try {
+    const saved = JSON.parse(localStorage.getItem("loggedInUser") || "null");
+    return !!saved && saved.role === "Super Admin";
+  } catch (e) {
+    return false;
+  }
+}
+
+function terapkanMaintenance() {
+  const overlay = $("maintenanceOverlay");
+  const banner = $("maintenanceAdminBanner");
+  if (!overlay || !banner) return;
+
+  const admin = sesiSuperAdminAktif();
+  // Mode "Login Admin" hanya berlaku selama layar login terbuka
+  if (layarSaatIni !== "login") adminLoginModeMaintenance = false;
+
+  const blokir =
+    maintenanceState.aktif &&
+    !admin &&
+    !(adminLoginModeMaintenance && layarSaatIni === "login");
+
+  overlay.classList.toggle("hidden", !blokir);
+  banner.classList.toggle("hidden", !(maintenanceState.aktif && admin));
+
+  if (blokir) {
+    $("maintenancePesan").textContent =
+      maintenanceState.pesan ||
+      "Aplikasi sedang dalam perbaikan. Silakan coba lagi beberapa saat lagi.";
+    const est = maintenanceState.perkiraanSelesai;
+    const elEst = $("maintenanceEstimasi");
+    elEst.textContent = est ? `Perkiraan selesai: ${est}` : "";
+    elEst.classList.toggle("hidden", !est);
+  }
+}
+
+window.bukaLoginAdminSaatMaintenance = function () {
+  adminLoginModeMaintenance = true;
+  showScreen("login");
+};
+
+function mulaiPantauMaintenance() {
+  try {
+    const { doc, onSnapshot } = window.fbFirestore;
+    onSnapshot(
+      doc(window.db, "app_meta", "maintenance"),
+      (snap) => {
+        const d = snap.exists() ? snap.data() : {};
+        maintenanceState = {
+          aktif: d.aktif === true || d.aktif === "true",
+          pesan: typeof d.pesan === "string" ? d.pesan : "",
+          perkiraanSelesai:
+            typeof d.perkiraanSelesai === "string" ? d.perkiraanSelesai : "",
+        };
+        terapkanMaintenance();
+      },
+      (err) => {
+        // Gagal baca (offline/izin): jangan kunci aplikasi
+        console.warn("Pantau maintenance gagal (aplikasi tetap berjalan):", err);
+      },
+    );
+  } catch (e) {
+    console.warn("Pantau maintenance tidak bisa dimulai:", e);
   }
 }
 
@@ -2471,6 +2558,10 @@ window.login = async function () {
       } catch (e) {
         console.warn("Profil guru tidak terbaca, pakai peran default:", e);
       }
+      // Pastikan email selalu konsisten dengan id dokumen aslinya (dipakai utk
+      // identitas laporan bug & simpan foto profil guru), terlepas apakah
+      // dokumen teachers/{email} menyimpan field email-nya sendiri atau tidak.
+      userData.email = emailLogin;
 
       localStorage.setItem("loggedInUser", JSON.stringify(userData));
       prosesMasukUser(userData, done);
@@ -2499,32 +2590,99 @@ function prosesMasukUser(user, doneCallback) {
     });
   } else {
     $("txtNamaGuru").innerText = user.nama;
-    $("txtRoleGuru").innerText = "Jabatan: " + user.role;
+    $("txtRoleGuru").innerText = "Jabatan: " + labelJabatan(user);
     loadMasterSiswaFromCloud(() => {
       if (doneCallback) doneCallback();
       showScreen("entry");
       initFormEntry();
-      window.switchTeacherTab("poin");
+      window.switchTeacherTab("profil");
       loadTugasAktif();
     });
   }
 }
 
+// ==========================================
+// WALI KELAS (dari field `kelasBinaan` di dokumen teachers/{email})
+// ==========================================
+// Isi yang diterima (huruf besar/kecil bebas): "10", "10 SMK", "Kelas 10",
+// atau beberapa kelas dipisah koma/&: "10, 11" / "10 SMK & 11 SMK".
+// Kosong atau "-" = bukan wali kelas.
+function kelasBinaanList(u) {
+  const raw = String((u && u.kelasBinaan) || "").trim();
+  if (!raw || raw === "-") return [];
+  const hasil = [];
+  raw.split(/[,;&]+/).forEach((bagian) => {
+    const m = bagian.match(/\b(10|11|12)\b/);
+    if (m) {
+      const k = `${m[1]} SMK`;
+      if (!hasil.includes(k)) hasil.push(k);
+    }
+  });
+  return hasil;
+}
+
+// Contoh hasil: "Guru Mapel • Wali Kelas 10"
+function labelJabatan(u) {
+  const base = (u && u.role) || "-";
+  const kelas = kelasBinaanList(u).map((k) => k.replace(" SMK", ""));
+  return kelas.length ? `${base} • Wali Kelas ${kelas.join(" & ")}` : base;
+}
+
+// Kotak "Reset Foto Profil Siswa" hanya tampil untuk wali kelas, dan pilihan
+// kelasnya dibatasi ke kelas binaan guru itu sendiri.
+function terapkanFiturWaliKelas() {
+  // Tombol "Monitoring Siswa" hanya tampil untuk wali kelas
+  const navMon = $("navBtnMonitoring");
+  if (navMon) {
+    navMon.style.display = kelasBinaanList(currentUser).length ? "" : "none";
+  }
+  const box = $("boxResetFotoWaliKelas");
+  const sel = $("waliKelasSelectKelas");
+  if (!box || !sel) return;
+  const kelas = kelasBinaanList(currentUser);
+  box.classList.toggle("hidden", kelas.length === 0);
+  if (kelas.length === 0) return;
+  sel.innerHTML =
+    (kelas.length > 1 ? '<option value="">-- Pilih Kelas --</option>' : "") +
+    kelas.map((k) => `<option value="${k}">${k}</option>`).join("");
+  window.handleWaliKelasPilihKelas();
+}
+
 window.switchTeacherTab = function (tab) {
+  terapkanFiturWaliKelas();
+  const tabProfil = $("teacherTabProfil");
   const tabPoin = $("teacherTabPoin");
   const tabPosting = $("teacherTabPosting");
+  const btnProfil = $("navBtnProfilGuru");
   const btnPoin = $("navBtnInputPoin");
   const btnPosting = $("navBtnPostTugas");
+  const tabMonitoring = $("teacherTabMonitoring");
+  const btnMonitoring = $("navBtnMonitoring");
 
+  tabProfil.classList.add("hidden");
   tabPoin.classList.add("hidden");
   tabPosting.classList.add("hidden");
+  tabMonitoring.classList.add("hidden");
 
+  btnProfil.style.background = "transparent";
+  btnProfil.className = "btn-outline";
   btnPoin.style.background = "transparent";
   btnPoin.className = "btn-outline";
   btnPosting.style.background = "transparent";
   btnPosting.className = "btn-outline";
+  btnMonitoring.style.background = "transparent";
+  btnMonitoring.className = "btn-outline";
 
-  if (tab === "poin") {
+  if (tab === "monitoring" && kelasBinaanList(currentUser).length === 0) {
+    tab = "profil"; // bukan wali kelas -> tidak boleh membuka tab ini
+  }
+
+  if (tab === "profil") {
+    tabProfil.classList.remove("hidden");
+    btnProfil.style.background = "#1e3c72";
+    btnProfil.className = "";
+    window.loadProfilGuru();
+  } else if (tab === "poin") {
     tabPoin.classList.remove("hidden");
     btnPoin.style.background = "#1e3c72";
     btnPoin.className = "";
@@ -2533,6 +2691,482 @@ window.switchTeacherTab = function (tab) {
     btnPosting.style.background = "#1e3c72";
     btnPosting.className = "";
     loadTugasAktif();
+  } else if (tab === "monitoring") {
+    tabMonitoring.classList.remove("hidden");
+    btnMonitoring.style.background = "#1e3c72";
+    btnMonitoring.className = "";
+    window.renderMonitoringSiswa();
+  }
+};
+
+// ---- Monitoring Siswa (wali kelas: hanya siswa di kelas binaannya) ----
+window.renderMonitoringSiswa = function () {
+  const sel = $("monitorKelasSelect");
+  const tabel = $("monitorTabel");
+  if (!sel || !tabel) return;
+
+  const kelasList = kelasBinaanList(currentUser);
+  if (kelasList.length === 0) {
+    tabel.innerHTML = `<div class="guru-riwayat-kosong">Fitur ini hanya untuk wali kelas.</div>`;
+    return;
+  }
+
+  const dipilih = kelasList.includes(sel.value) ? sel.value : kelasList[0];
+  sel.innerHTML = kelasList
+    .map((k) => `<option value="${k}"${k === dipilih ? " selected" : ""}>${k}</option>`)
+    .join("");
+  sel.classList.toggle("hidden", kelasList.length === 1);
+  $("lblMonitorKelas").textContent = dipilih;
+
+  const daftar = (masterDataSiswa || [])
+    .filter((s) => s.kelas === dipilih && s.statusAkun !== "lulus")
+    .sort((a, b) => String(a.nama).localeCompare(String(b.nama)));
+
+  $("monitorInfo").textContent = `${daftar.length} siswa aktif`;
+
+  if (daftar.length === 0) {
+    tabel.innerHTML = `<div class="guru-riwayat-kosong">Belum ada siswa aktif di kelas ini.</div>`;
+    return;
+  }
+
+  const baris = daftar
+    .map((s, i) => {
+      const hp = Math.max(0, s.hp !== undefined ? s.hp : 200);
+      const pel = s.totalPelanggaran || 0;
+      const pres = s.totalPrestasi || 0;
+      return `
+      <tr>
+        <td class="monitor-nama">${i + 1}. ${escapeHtml(s.nama)}</td>
+        <td${hp < 60 ? ' class="monitor-merah"' : ""}>${hp}</td>
+        <td>${s.shield || 0}</td>
+        <td>${s.dailyScore || 0}</td>
+        <td${pres > 0 ? ' class="monitor-hijau"' : ""}>${pres}</td>
+        <td${pel > 0 ? ' class="monitor-merah"' : ""}>${pel}</td>
+      </tr>`;
+    })
+    .join("");
+
+  tabel.innerHTML = `
+    <table class="monitor-table">
+      <thead>
+        <tr><th class="monitor-nama">Nama</th><th>❤️</th><th>🛡️</th><th>⭐</th><th>🏆</th><th>⚠️</th></tr>
+      </thead>
+      <tbody>${baris}</tbody>
+    </table>`;
+};
+
+window.muatUlangMonitoring = async function () {
+  const btn = $("btnMuatUlangMonitor");
+  if (btn) btn.disabled = true;
+  try {
+    await refreshMasterSiswa();
+  } finally {
+    if (btn) btn.disabled = false;
+    window.renderMonitoringSiswa();
+  }
+};
+
+// ==========================================
+// TAB PROFIL GURU
+// ==========================================
+// Foto default guru yang belum pernah mengganti foto: mengikuti field `jk`
+// di dokumen teachers/{email} ("L" = laki-laki, "P" = perempuan). Kalau `jk`
+// kosong atau file gambarnya belum ada, otomatis jatuh ke avatar umum
+// (lihat onerror pada <img> di index.html).
+const AVATAR_GURU_DEFAULT = {
+  L: "assets/foto_guru/avatar_laki.webp",
+  P: "assets/foto_guru/avatar_perempuan.webp",
+};
+function avatarForGuru(u) {
+  if (u && u.fotoUrl) return u.fotoUrl;
+  const jk = String((u && u.jk) || "").trim().toUpperCase().charAt(0);
+  return AVATAR_GURU_DEFAULT[jk] || "assets/foto_siswa/avatar.webp";
+}
+
+window.loadProfilGuru = async function () {
+  if (!currentUser) return;
+
+  const namaGuru = currentUser.nama || "-";
+  $("txtNamaGuruProfil").textContent = namaGuru;
+  $("badgeJabatanGuruProfil").textContent = labelJabatan(currentUser);
+
+  // NIP bersifat opsional (diisi manual oleh Admin lewat Firebase Console) —
+  // baris ini disembunyikan sepenuhnya kalau guru belum punya NIP.
+  const rowNip = $("rowNipGuruProfil");
+  if (currentUser.nip) {
+    $("txtNipGuruProfil").textContent = currentUser.nip;
+    if (rowNip) rowNip.classList.remove("hidden");
+  } else if (rowNip) {
+    rowNip.classList.add("hidden");
+  }
+
+  const avatarImg = $("avatarGuruMain");
+  if (avatarImg) avatarImg.src = avatarForGuru(currentUser);
+
+  // Banner profil bersifat opsional — kalau guru belum pernah mengatur
+  // banner-nya, biarkan gradien bawaan (di CSS) yang tampil.
+  const bannerImg = $("bannerGuruMain");
+  if (bannerImg) {
+    if (currentUser.bannerUrl) {
+      bannerImg.src = currentUser.bannerUrl;
+      bannerImg.style.display = "block";
+    } else {
+      bannerImg.removeAttribute("src");
+      bannerImg.style.display = "none";
+    }
+  }
+
+  renderRiwayatInputGuru(namaGuru);
+};
+
+// ==========================================
+// RIWAYAT POIN YANG DIBERIKAN GURU (3 TAB)
+// ==========================================
+// CATATAN PENTING: loadMasterSiswaFromCloud() sengaja membuang field `riwayat`
+// dari masterDataSiswa (supaya cache ringan), jadi riwayat TIDAK bisa dibaca
+// dari memori. Karena itu riwayat guru diambil langsung dari dokumen siswa di
+// Firestore, lalu disimpan sebentar di memori (riwayatGuruCache).
+let riwayatGuruCache = null; // { t: waktuAmbil, nama: namaGuru, entries: [...] }
+let riwayatGuruTabAktif = "TugasHarian";
+const RIWAYAT_GURU_TTL_MS = 2 * 60 * 1000;
+
+const RIWAYAT_GURU_META = {
+  TugasHarian: { label: "Poin Harian", warna: "#f1c40f", kosong: "Belum ada poin harian yang kamu berikan semester ini." },
+  Prestasi: { label: "Prestasi", warna: "#2ecc71", kosong: "Belum ada prestasi yang kamu catat semester ini." },
+  Pelanggaran: { label: "Pelanggaran", warna: "#e74c3c", kosong: "Belum ada pelanggaran yang kamu catat semester ini." },
+};
+
+// Catatan lama (sebelum ada field `k`) ditebak dari nilai poin & judulnya.
+function kategoriRiwayat(r) {
+  if (r.k && RIWAYAT_GURU_META[r.k]) return r.k;
+  const p = Number(r.p) || 0;
+  if (p < 0) return "Pelanggaran";
+  if (dataPilihan.TugasHarian.some((i) => i.t === r.t)) return "TugasHarian";
+  return "Prestasi";
+}
+
+async function ambilRiwayatGuru(namaGuru, emailGuru, paksa = false) {
+  if (
+    !paksa &&
+    riwayatGuruCache &&
+    riwayatGuruCache.nama === namaGuru &&
+    Date.now() - riwayatGuruCache.t < RIWAYAT_GURU_TTL_MS
+  ) {
+    return riwayatGuruCache.entries;
+  }
+
+  const { collection, getDocs } = window.fbFirestore;
+  const snap = await getDocs(collection(window.db, "siswa"));
+  const entries = [];
+  snap.forEach((d) => {
+    const s = d.data();
+    (s.riwayat || []).forEach((r) => {
+      const milikGuruIni =
+        (emailGuru && r.ge === emailGuru) || (r.g && r.g === namaGuru);
+      if (!milikGuruIni) return;
+      entries.push({
+        ...r,
+        _kat: kategoriRiwayat(r),
+        _siswaNama: s.nama,
+        _siswaKelas: s.kelasAktif || s.kelas,
+      });
+    });
+  });
+
+  // Format tanggal "YYYY-MM-DD HH:MM" zero-padded -> aman diurutkan sebagai teks
+  entries.sort((a, b) => String(b.d || "").localeCompare(String(a.d || "")));
+  riwayatGuruCache = { t: Date.now(), nama: namaGuru, entries };
+  return entries;
+}
+
+async function renderRiwayatInputGuru(namaGuru) {
+  const container = $("riwayatInputGuruList");
+  if (!container) return;
+  container.innerHTML = `<div class="guru-riwayat-kosong">Memuat riwayat...</div>`;
+
+  try {
+    await ambilRiwayatGuru(namaGuru, currentUser?.email || "");
+  } catch (e) {
+    console.warn("Gagal memuat riwayat guru:", e);
+    container.innerHTML = `<div class="guru-riwayat-kosong">Gagal memuat riwayat. Periksa koneksi internet.</div>`;
+    return;
+  }
+  tampilkanRiwayatGuruTab();
+}
+
+window.switchRiwayatGuruTab = function (kat) {
+  if (!RIWAYAT_GURU_META[kat]) return;
+  riwayatGuruTabAktif = kat;
+  tampilkanRiwayatGuruTab();
+};
+
+function tampilkanRiwayatGuruTab() {
+  const container = $("riwayatInputGuruList");
+  if (!container || !riwayatGuruCache) return;
+  const semua = riwayatGuruCache.entries;
+
+  // Hitungan di kartu statistik + tombol tab
+  const hitung = { TugasHarian: 0, Prestasi: 0, Pelanggaran: 0 };
+  semua.forEach((r) => hitung[r._kat]++);
+  const elH = $("cntGuruHarian");
+  const elP = $("cntGuruPrestasi");
+  const elV = $("cntGuruPelanggaran");
+  if (elH) elH.textContent = hitung.TugasHarian;
+  if (elP) elP.textContent = hitung.Prestasi;
+  if (elV) elV.textContent = hitung.Pelanggaran;
+
+  Object.keys(RIWAYAT_GURU_META).forEach((k) => {
+    const btn = $("tabRiwayat" + k);
+    if (btn) btn.classList.toggle("active", k === riwayatGuruTabAktif);
+  });
+
+  const meta = RIWAYAT_GURU_META[riwayatGuruTabAktif];
+  const daftar = semua.filter((r) => r._kat === riwayatGuruTabAktif);
+  if (daftar.length === 0) {
+    container.innerHTML = `<div class="guru-riwayat-kosong">${meta.kosong}</div>`;
+    return;
+  }
+
+  const tampil = daftar.slice(0, 50);
+  let html = tampil
+    .map((r) => {
+      const p = Number(r.p) || 0;
+      const teksPoin = p > 0 ? "+" + p : String(p);
+      return `
+      <div class="guru-riwayat-item" style="border-left-color: ${meta.warna};">
+        <div class="guru-riwayat-item-top">
+          <span style="color: ${meta.warna};">${escapeHtml(r.t)}</span>
+          <span style="color: ${meta.warna}; flex-shrink: 0;">${teksPoin} Pts</span>
+        </div>
+        <div class="guru-riwayat-item-bottom">
+          <span class="guru-riwayat-siswa">👤 ${escapeHtml(r._siswaNama || "-")} (${escapeHtml(r._siswaKelas || "-")})</span>
+          <span style="flex-shrink: 0;">📅 ${escapeHtml(r.d || "-")}</span>
+        </div>
+      </div>`;
+    })
+    .join("");
+
+  if (daftar.length > tampil.length) {
+    html += `<div class="guru-riwayat-kosong">Menampilkan ${tampil.length} dari ${daftar.length} riwayat terbaru.</div>`;
+  }
+  container.innerHTML = html;
+}
+
+// --- Ganti foto profil guru (pakai cropper yang sama dengan siswa) ---
+let sedangSimpanFotoGuru = false;
+
+window.bukaModalGantiFotoGuru = function () {
+  if (!currentUser) return;
+  if (cropperInstance) {
+    cropperInstance.destroy();
+    cropperInstance = null;
+  }
+  $("imageToCropGuru").src = avatarForGuru(currentUser);
+  $("inputFileFotoGuru").value = "";
+  $("modalGantiFotoGuru").classList.remove("hidden");
+};
+
+window.tutupModalGantiFotoGuru = function () {
+  if (cropperInstance) {
+    cropperInstance.destroy();
+    cropperInstance = null;
+  }
+  $("modalGantiFotoGuru").classList.add("hidden");
+  $("inputFileFotoGuru").value = "";
+};
+
+window.handleFileSelectedForCropGuru = function (input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    window.customAlert("⚠️ Format file harus berupa gambar (JPG, PNG, atau WEBP)!");
+    input.value = "";
+    return;
+  }
+  if (file.size > MAX_FOTO_BYTES) {
+    window.customAlert("⚠️ Ukuran foto terlalu besar (maksimal 8 MB)!");
+    input.value = "";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function (event) {
+    const imageElement = $("imageToCropGuru");
+    if (cropperInstance) {
+      cropperInstance.destroy();
+      cropperInstance = null;
+    }
+    imageElement.onload = () => {
+      imageElement.onload = null;
+      buatCropper(imageElement);
+    };
+    imageElement.src = event.target.result;
+  };
+  reader.onerror = () =>
+    window.customAlert("⚠️ Gagal membaca berkas foto. Coba berkas lain.");
+  reader.readAsDataURL(file);
+};
+
+window.simpanFotoProfilGuruBaru = async function () {
+  if (!cropperInstance) {
+    window.customAlert("⚠️ Silakan pilih berkas foto terlebih dahulu!");
+    return;
+  }
+  if (sedangSimpanFotoGuru) return;
+  if (!currentUser || !currentUser.email) {
+    window.customAlert("⚠️ Sesi tidak valid, silakan login ulang.");
+    return;
+  }
+
+  const canvas = cropperInstance.getCroppedCanvas({ width: 256, height: 256 });
+  if (!canvas) {
+    window.customAlert("⚠️ Gagal memproses foto. Coba pilih foto lain.");
+    return;
+  }
+
+  let croppedDataUrl = canvas.toDataURL("image/webp", 0.8);
+  if (!croppedDataUrl.startsWith("data:image/webp")) {
+    croppedDataUrl = canvas.toDataURL("image/jpeg", 0.8);
+  }
+
+  sedangSimpanFotoGuru = true;
+  try {
+    const { doc, updateDoc } = window.fbFirestore;
+    await updateDoc(doc(window.db, "teachers", currentUser.email), {
+      fotoUrl: croppedDataUrl,
+    });
+
+    currentUser.fotoUrl = croppedDataUrl;
+    localStorage.setItem("loggedInUser", JSON.stringify(currentUser));
+
+    const avatarMain = $("avatarGuruMain");
+    if (avatarMain) avatarMain.src = croppedDataUrl;
+
+    window.tutupModalGantiFotoGuru();
+    window.customAlert("🎉 Berhasil! Foto profil kamu telah diperbarui.");
+  } catch (error) {
+    console.error("Gagal menyimpan foto guru:", error);
+    window.customAlert(
+      "❌ Terjadi kesalahan saat menyimpan foto ke server. Silakan coba lagi.",
+    );
+  } finally {
+    sedangSimpanFotoGuru = false;
+  }
+};
+
+// --- Ganti banner profil guru (pakai cropper yang sama, rasio lebar) ---
+const BANNER_ASPECT_RATIO = 2.8;
+let sedangSimpanBannerGuru = false;
+
+window.bukaModalGantiBannerGuru = function () {
+  if (!currentUser) return;
+  if (cropperInstance) {
+    cropperInstance.destroy();
+    cropperInstance = null;
+  }
+  const img = $("imageToCropBanner");
+  // Mulai dari banner yang sedang dipakai (kalau ada) supaya guru bisa
+  // menyesuaikan ulang crop-nya; kalau belum ada, mulai dari kosong.
+  img.src = currentUser.bannerUrl || "";
+  $("inputFileFotoBanner").value = "";
+  $("modalGantiBannerGuru").classList.remove("hidden");
+};
+
+window.tutupModalGantiBannerGuru = function () {
+  if (cropperInstance) {
+    cropperInstance.destroy();
+    cropperInstance = null;
+  }
+  $("modalGantiBannerGuru").classList.add("hidden");
+  $("inputFileFotoBanner").value = "";
+};
+
+window.handleFileSelectedForCropBanner = function (input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    window.customAlert("⚠️ Format file harus berupa gambar (JPG, PNG, atau WEBP)!");
+    input.value = "";
+    return;
+  }
+  if (file.size > MAX_FOTO_BYTES) {
+    window.customAlert("⚠️ Ukuran foto terlalu besar (maksimal 8 MB)!");
+    input.value = "";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function (event) {
+    const imageElement = $("imageToCropBanner");
+    if (cropperInstance) {
+      cropperInstance.destroy();
+      cropperInstance = null;
+    }
+    imageElement.onload = () => {
+      imageElement.onload = null;
+      // Rasio lebar (±2.8:1) supaya pas memenuhi seluruh kartu profil tanpa
+      // menutupi nama/jabatan — bagian yang dipilih guru lewat kotak crop
+      // inilah yang akan ditampilkan penuh di belakang nama, jadi guru bisa
+      // menggeser & zoom supaya bagian penting fotonya tidak pas di tengah
+      // (karena nama & jabatan ditampilkan di atas, agak ke kiri).
+      buatCropper(imageElement, BANNER_ASPECT_RATIO);
+    };
+    imageElement.src = event.target.result;
+  };
+  reader.onerror = () =>
+    window.customAlert("⚠️ Gagal membaca berkas foto. Coba berkas lain.");
+  reader.readAsDataURL(file);
+};
+
+window.simpanBannerProfilGuruBaru = async function () {
+  if (!cropperInstance) {
+    window.customAlert("⚠️ Silakan pilih berkas foto terlebih dahulu!");
+    return;
+  }
+  if (sedangSimpanBannerGuru) return;
+  if (!currentUser || !currentUser.email) {
+    window.customAlert("⚠️ Sesi tidak valid, silakan login ulang.");
+    return;
+  }
+
+  const canvas = cropperInstance.getCroppedCanvas({ width: 700, height: 250 });
+  if (!canvas) {
+    window.customAlert("⚠️ Gagal memproses foto. Coba pilih foto lain.");
+    return;
+  }
+
+  let croppedDataUrl = canvas.toDataURL("image/webp", 0.8);
+  if (!croppedDataUrl.startsWith("data:image/webp")) {
+    croppedDataUrl = canvas.toDataURL("image/jpeg", 0.8);
+  }
+
+  sedangSimpanBannerGuru = true;
+  try {
+    const { doc, updateDoc } = window.fbFirestore;
+    await updateDoc(doc(window.db, "teachers", currentUser.email), {
+      bannerUrl: croppedDataUrl,
+    });
+
+    currentUser.bannerUrl = croppedDataUrl;
+    localStorage.setItem("loggedInUser", JSON.stringify(currentUser));
+
+    const bannerMain = $("bannerGuruMain");
+    if (bannerMain) {
+      bannerMain.src = croppedDataUrl;
+      bannerMain.style.display = "block";
+    }
+
+    window.tutupModalGantiBannerGuru();
+    window.customAlert("🎉 Berhasil! Banner profil kamu telah diperbarui.");
+  } catch (error) {
+    console.error("Gagal menyimpan banner guru:", error);
+    window.customAlert(
+      "❌ Terjadi kesalahan saat menyimpan banner ke server. Silakan coba lagi.",
+    );
+  } finally {
+    sedangSimpanBannerGuru = false;
   }
 };
 
@@ -2751,6 +3385,9 @@ window.eksekusiSimpanWithLoading = async function () {
     p: kat === "Pelanggaran" ? -poin : poin,
     loc: tempat,
     d: waktuGabung,
+    g: currentUser?.nama || "Guru", // nama guru yang menginput (untuk riwayat di profil guru)
+    ge: currentUser?.email || "", // email guru (pencocokan lebih akurat daripada nama)
+    k: kat, // kategori: TugasHarian | Prestasi | Pelanggaran (untuk tab riwayat guru)
   };
 
   showGamePreloader("SAVING TO CLOUD DB...", async (done) => {
@@ -2779,6 +3416,7 @@ window.eksekusiSimpanWithLoading = async function () {
       }
     }
 
+    riwayatGuruCache = null; // paksa muat ulang riwayat di profil guru
     await refreshMasterSiswa();
     done();
 
@@ -2950,25 +3588,48 @@ window.handleAdminKelasChange = function () {
   sel.innerHTML = siswaHtml;
 };
 
-// Update banyak siswa sekaligus dengan batch (jauh lebih cepat & atomik per chunk)
+// Update banyak siswa sekaligus dengan batch (jauh lebih cepat & atomik per chunk).
+// buildUpdate(dataSiswa, refSiswa) boleh async dan boleh mengembalikan field khusus:
+//   _arsipSet:   { id, data }  -> tulis siswa/{nisn}/arsip/{id}
+//   _arsipHapus: id            -> hapus siswa/{nisn}/arsip/{id}
+// Keduanya ikut batch yang sama dengan update dokumen siswa (atomik).
 async function batchUpdateSiswa(targetList, buildUpdate) {
   const { doc, getDoc, writeBatch } = window.fbFirestore;
   const valid = targetList.filter((s) => s.nisn);
-  for (let i = 0; i < valid.length; i += BATCH_CHUNK) {
-    const chunk = valid.slice(i, i + BATCH_CHUNK);
+  // Satu siswa bisa = 2 operasi tulis (update + arsip), batas batch 500 operasi
+  const CHUNK = Math.floor(BATCH_CHUNK / 2);
+  for (let i = 0; i < valid.length; i += CHUNK) {
+    const chunk = valid.slice(i, i + CHUNK);
     const snaps = await Promise.all(
       chunk.map((s) => getDoc(doc(window.db, "siswa", s.nisn))),
     );
     const batch = writeBatch(window.db);
-    snaps.forEach((snap) => {
-      if (!snap.exists()) return;
-      const upd = buildUpdate(snap.data());
+    for (const snap of snaps) {
+      if (!snap.exists()) continue;
+      const hasil = await buildUpdate(snap.data(), snap.ref);
       // buildUpdate boleh mengembalikan null/undefined/{} untuk melewati
       // siswa ini (misalnya karena sudah tidak memenuhi syarat lagi)
-      if (upd && Object.keys(upd).length > 0) batch.update(snap.ref, upd);
-    });
+      if (!hasil || Object.keys(hasil).length === 0) continue;
+      const { _arsipSet, _arsipHapus, ...upd } = hasil;
+      if (Object.keys(upd).length > 0) batch.update(snap.ref, upd);
+      if (_arsipSet) {
+        batch.set(doc(snap.ref, "arsip", _arsipSet.id), _arsipSet.data);
+      }
+      if (_arsipHapus) {
+        batch.delete(doc(snap.ref, "arsip", _arsipHapus));
+      }
+    }
     await batch.commit();
   }
+}
+
+// Ambil semua arsip semester/kelas milik satu siswa (subkoleksi siswa/{nisn}/arsip)
+async function ambilArsipSiswa(nisn) {
+  const { collection, getDocs } = window.fbFirestore;
+  const snap = await getDocs(collection(window.db, "siswa", nisn, "arsip"));
+  const hasil = [];
+  snap.forEach((d) => hasil.push({ id: d.id, ...d.data() }));
+  return hasil;
 }
 
 // ==========================================
@@ -3106,20 +3767,13 @@ function buildArsipEntry(d, label) {
   };
 }
 
-// Entri arsip TERBARU milik seorang siswa (dipakai untuk memastikan undo
-// hanya menimpa periode yang paling akhir, bukan periode lama yang sudah
-// "ketiban" perubahan lebih baru).
+// ID arsip TERBARU milik seorang siswa (dipakai untuk memastikan undo hanya
+// menimpa periode yang paling akhir). Isi arsip ada di subkoleksi
+// siswa/{nisn}/arsip; di dokumen siswa hanya disimpan daftar id-nya
+// (arsipPeriodeIds, urut dari lama ke baru) supaya dokumen tetap kecil.
 function periodeIdTerbaru(d) {
-  const arsip = d.arsipRiwayat || {};
-  let terbaru = null;
-  let waktuTerbaru = -1;
-  Object.entries(arsip).forEach(([id, entry]) => {
-    if ((entry.diarsipkanPada || 0) > waktuTerbaru) {
-      waktuTerbaru = entry.diarsipkanPada || 0;
-      terbaru = id;
-    }
-  });
-  return terbaru;
+  const ids = d.arsipPeriodeIds || [];
+  return ids.length ? ids[ids.length - 1] : null;
 }
 
 async function catatLogAkademik(aksi, detail) {
@@ -3137,6 +3791,24 @@ async function catatLogAkademik(aksi, detail) {
   }
 }
 
+// Dicatat setiap kali Ganti Semester / Kenaikan Kelas dijalankan, dipakai
+// sebagai titik awal hitungan "Jumlah Tugas Diposting" di profil guru supaya
+// statistik itu ikut ter-reset setiap periode baru (sama seperti poin siswa).
+async function catatMulaiPeriodeBaru(label) {
+  try {
+    const { doc, setDoc } = window.fbFirestore;
+    await setDoc(doc(window.db, "app_meta", "riwayatSemester"), {
+      mulaiTs: Date.now(),
+      label,
+    });
+  } catch (e) {
+    console.warn(
+      "Gagal mencatat waktu mulai periode baru (statistik tugas guru mungkin tidak ikut reset):",
+      e,
+    );
+  }
+}
+
 // 1) Ganti Semester Baru: arsipkan riwayat berjalan, reset HP/Shield/Poin harian,
 //    kelas TIDAK berubah.
 async function jalankanGantiSemester(label, catatan) {
@@ -3145,10 +3817,8 @@ async function jalankanGantiSemester(label, catatan) {
   const targets = masterDataSiswa.filter((s) => s.statusAkun !== "lulus");
 
   await batchUpdateSiswa(targets, (d) => ({
-    arsipRiwayat: {
-      ...(d.arsipRiwayat || {}),
-      [periodeId]: buildArsipEntry(d, label),
-    },
+    _arsipSet: { id: periodeId, data: buildArsipEntry(d, label) },
+    arsipPeriodeIds: [...(d.arsipPeriodeIds || []), periodeId],
     riwayat: [
       {
         t: `AWAL SEMESTER: ${label}${catatan ? " — " + catatan : ""}`,
@@ -3171,6 +3841,7 @@ async function jalankanGantiSemester(label, catatan) {
     periodeId,
     jumlahSiswa: targets.length,
   });
+  await catatMulaiPeriodeBaru(label);
   return { periodeId, jumlah: targets.length };
 }
 
@@ -3186,10 +3857,8 @@ async function jalankanKenaikanKelas(label, catatan) {
   await batchUpdateSiswa(eligible, (d) => {
     const kelasBaru = NEXT_KELAS_MAP[d.kelas];
     return {
-      arsipRiwayat: {
-        ...(d.arsipRiwayat || {}),
-        [periodeId]: buildArsipEntry(d, label),
-      },
+      _arsipSet: { id: periodeId, data: buildArsipEntry(d, label) },
+      arsipPeriodeIds: [...(d.arsipPeriodeIds || []), periodeId],
       riwayat: [
         {
           t: `KENAIKAN KELAS ke ${kelasBaru}${catatan ? " — " + catatan : ""}`,
@@ -3215,6 +3884,7 @@ async function jalankanKenaikanKelas(label, catatan) {
     jumlahNaik: eligible.length,
     jumlahDilewati: skip,
   });
+  await catatMulaiPeriodeBaru(label);
   return { periodeId, naik: eligible.length, skip };
 }
 
@@ -3535,8 +4205,8 @@ window.pilihTransisiUntukBatal = function () {
     return;
   }
 
-  const eligible = masterDataSiswa.filter(
-    (s) => s.arsipRiwayat && s.arsipRiwayat[run.periodeId],
+  const eligible = masterDataSiswa.filter((s) =>
+    (s.arsipPeriodeIds || []).includes(run.periodeId),
   );
   const terkunci = eligible.filter(
     (s) => periodeIdTerbaru(s) !== run.periodeId,
@@ -3583,13 +4253,14 @@ window.toggleSemuaBatalTransisi = function (checked) {
     .forEach((el) => (el.checked = checked));
 };
 
-function buildUndoTransisiUpdate(d, periodeId) {
-  const arsip = { ...(d.arsipRiwayat || {}) };
-  const entry = arsip[periodeId];
-  if (!entry) return null;
-  delete arsip[periodeId];
+async function buildUndoTransisiUpdate(d, ref, periodeId) {
+  const { doc, getDoc } = window.fbFirestore;
+  const arsipSnap = await getDoc(doc(ref, "arsip", periodeId));
+  if (!arsipSnap.exists()) return null;
+  const entry = arsipSnap.data();
   return {
-    arsipRiwayat: arsip,
+    _arsipHapus: periodeId,
+    arsipPeriodeIds: (d.arsipPeriodeIds || []).filter((id) => id !== periodeId),
     totalPrestasi: entry.totalPrestasi || 0,
     totalPelanggaran: entry.totalPelanggaran || 0,
     dailyScore: entry.dailyScore || 0,
@@ -3628,7 +4299,7 @@ window.jalankanBatalTransisiUI = async function () {
       const targets = checked.map((nisn) => ({ nisn }));
       let dilewati = 0;
 
-      await batchUpdateSiswa(targets, (d) => {
+      await batchUpdateSiswa(targets, async (d, ref) => {
         // Cek ulang dari data server TERBARU (bukan dari tampilan/cache
         // browser): hanya batalkan kalau periode ini memang masih arsip
         // paling akhir milik siswa ini, supaya tidak menimpa perubahan
@@ -3637,7 +4308,7 @@ window.jalankanBatalTransisiUI = async function () {
           dilewati++;
           return {};
         }
-        const upd = buildUndoTransisiUpdate(d, run.periodeId);
+        const upd = await buildUndoTransisiUpdate(d, ref, run.periodeId);
         if (!upd) {
           dilewati++;
           return {}; // tidak ada perubahan field apa pun
@@ -3753,12 +4424,20 @@ function buildHtmlPopup(titleText, bodyHtml, closeLabel = "Tutup") {
 
 window._arsipKelasItems = [];
 
-window.lihatArsipKelas = function () {
+window.lihatArsipKelas = async function () {
   const data = window.currentStudentDataCache;
-  const arsip = (data && data.arsipRiwayat) || {};
-  const items = Object.values(arsip).sort(
-    (a, b) => (b.diarsipkanPada || 0) - (a.diarsipkanPada || 0),
-  );
+  const nisn = (data && data.nisn) || window.currentStudentNisn;
+  let items = [];
+  try {
+    if (nisn) items = await ambilArsipSiswa(nisn);
+  } catch (err) {
+    console.error("Gagal memuat arsip siswa:", err);
+    return window.customAlert(
+      "Gagal memuat riwayat sebelumnya. Periksa koneksi internet.",
+      "📜 Riwayat Sebelumnya",
+    );
+  }
+  items.sort((a, b) => (b.diarsipkanPada || 0) - (a.diarsipkanPada || 0));
 
   if (items.length === 0) {
     return window.customAlert(
@@ -3799,16 +4478,20 @@ window.tampilDetailArsipKelas = function (idx) {
 // ---- Tampilan alumni: transkrip akhir rekam jejak (read-only) ----
 let isAlumniSession = false;
 
-function tampilkanTranskripAlumni(siswa, nisn) {
+async function tampilkanTranskripAlumni(siswa, nisn) {
   isAlumniSession = true;
   setSiswaAppMode(false);
   $("hasilPoinSiswa").classList.add("hidden");
   $("boxInputNisnSiswa").classList.add("hidden");
   $("alumniTranscriptView").classList.remove("hidden");
 
-  const arsipList = Object.values(siswa.arsipRiwayat || {}).sort(
-    (a, b) => (a.diarsipkanPada || 0) - (b.diarsipkanPada || 0),
-  );
+  let arsipList = [];
+  try {
+    arsipList = await ambilArsipSiswa(siswa.nisn || nisn);
+  } catch (err) {
+    console.error("Gagal memuat arsip alumni:", err);
+  }
+  arsipList.sort((a, b) => (a.diarsipkanPada || 0) - (b.diarsipkanPada || 0));
   const periodeAkhir = {
     label: `${siswa.kelas || siswa.kelasAktif || "Kelas Akhir"} (Tahun Terakhir)`,
     kelas: siswa.kelas || siswa.kelasAktif || "-",
@@ -4227,10 +4910,10 @@ let cropperInstance = null;
 let sedangSimpanFoto = false;
 const MAX_FOTO_BYTES = 8 * 1024 * 1024;
 
-function buatCropper(imageElement) {
+function buatCropper(imageElement, aspectRatio = 1) {
   if (cropperInstance) cropperInstance.destroy();
   cropperInstance = new Cropper(imageElement, {
-    aspectRatio: 1,
+    aspectRatio: aspectRatio,
     viewMode: 1,
     dragMode: "move",
     autoCropArea: 0.8,
@@ -4419,6 +5102,14 @@ window.eksekusiResetFotoOlehWaliKelas = async function () {
     );
   }
 
+  // Pengaman: hanya wali kelas, dan hanya untuk siswa di kelas binaannya
+  const siswaTarget = masterDataSiswa.find((s) => s.nisn === nisnTarget);
+  if (!siswaTarget || !kelasBinaanList(currentUser).includes(siswaTarget.kelas)) {
+    return window.customAlert(
+      "⛔ Kamu hanya bisa mereset foto siswa di kelas binaanmu.",
+    );
+  }
+
   const namaSiswa = namaDariNisn(nisnTarget);
   const konfirmasi = await window.customConfirm(
     `Apakah Anda yakin ingin mereset foto profil untuk siswa ${namaSiswa}? Siswa akan dapat mengganti fotonya kembali secara mandiri.`,
@@ -4439,9 +5130,7 @@ window.eksekusiResetFotoOlehWaliKelas = async function () {
         `✅ Berhasil! Foto profil untuk ${namaSiswa} telah di-reset oleh Wali Kelas.`,
       );
 
-      $("waliKelasSelectKelas").value = "";
-      $("waliKelasSelectSiswa").innerHTML =
-        '<option value="">-- Pilih siswa setelah pilih kelas --</option>';
+      terapkanFiturWaliKelas();
     } catch (error) {
       done();
       console.error("Gagal mereset foto siswa:", error);
@@ -4776,6 +5465,7 @@ const LAYAR_BUTUH_LOGIN = ["entry", "admin"];
 
 async function initApp() {
   window.history.replaceState({ screen: "menu" }, "", "#menu");
+  mulaiPantauMaintenance();
 
   // Pasang Enter pada form login siswa
   ["nisnSiswaInput", "pinSiswaInput", "inputNisnTeman"].forEach((id) => {
@@ -4802,6 +5492,9 @@ async function initApp() {
     if (authUser) {
       try {
         const userObj = JSON.parse(savedUser);
+        // Pastikan email selalu ada & akurat (sesi lama sebelum fitur ini
+        // mungkin belum menyimpannya) — ambil dari Firebase Auth yang aktif.
+        userObj.email = authUser.email || userObj.email;
         currentUser = userObj;
         currentRole = userObj.role;
         if (userObj.role === "Super Admin") {
@@ -4811,10 +5504,10 @@ async function initApp() {
           cekBadgeLaporanBugAwal();
         } else {
           $("txtNamaGuru").innerText = userObj.nama;
-          $("txtRoleGuru").innerText = "Jabatan: " + userObj.role;
+          $("txtRoleGuru").innerText = "Jabatan: " + labelJabatan(userObj);
           showScreen("entry");
           initFormEntry();
-          window.switchTeacherTab("poin");
+          window.switchTeacherTab("profil");
           loadTugasAktif();
         }
         return;
