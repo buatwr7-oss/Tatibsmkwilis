@@ -9,7 +9,7 @@
     <title>Tatib SMK Wiraguna 🛡️</title>
 
     <!-- CSS UTAMA -->
-    <link rel="stylesheet" href="style.css?v=3.7.0" />
+    <link rel="stylesheet" href="style.css?v=3.8.0" />
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
@@ -663,7 +663,7 @@
           onclick="switchTeacherTab('profil')"
           style="background: #1e3c72; font-size: 11px; padding: 8px; flex: 1"
         >
-          👤 Profil
+          👤<br />Profil
         </button>
         <button
           id="navBtnInputPoin"
@@ -671,7 +671,7 @@
           class="btn-outline"
           style="font-size: 11px; padding: 8px; flex: 1"
         >
-          ⭐ Input Poin Tugas
+          ⭐<br />Input Poin
         </button>
         <button
           id="navBtnPostTugas"
@@ -679,7 +679,7 @@
           class="btn-outline"
           style="font-size: 11px; padding: 8px; flex: 1"
         >
-          📢 Posting & Hapus Tugas
+          📢<br />Tugas
         </button>
         <button
           id="navBtnMonitoring"
@@ -687,7 +687,15 @@
           class="btn-outline"
           style="font-size: 11px; padding: 8px; flex: 1; display: none"
         >
-          📋 Monitoring Siswa
+          📋<br />Monitoring Siswa
+        </button>
+        <button
+          id="navBtnMonitoringGuru"
+          onclick="switchTeacherTab('monitoringGuru')"
+          class="btn-outline"
+          style="font-size: 11px; padding: 8px; flex: 1; display: none"
+        >
+          👨‍🏫 Monitoring Guru
         </button>
       </div>
 
@@ -848,7 +856,10 @@
           </div>
         </div>
 
-        <div style="display: flex; gap: 8px; margin-top: 10px">
+        <div
+          id="rowStatGuruProfil"
+          style="display: flex; gap: 8px; margin-top: 10px"
+        >
           <div class="rpg-card-container guru-stat-box">
             <div
               id="cntGuruHarian"
@@ -881,7 +892,11 @@
           </div>
         </div>
 
-        <div class="rpg-card-container" style="margin-top: 10px">
+        <div
+          id="boxRiwayatGuruProfil"
+          class="rpg-card-container"
+          style="margin-top: 10px"
+        >
           <div class="guru-riwayat-title">
             📜 Riwayat Poin yang Kamu Berikan
           </div>
@@ -1021,7 +1036,7 @@
         </form>
       </div>
 
-      <!-- TAB: MONITORING SISWA (hanya untuk wali kelas) -->
+      <!-- TAB: MONITORING SISWA (wali kelas & kepala sekolah) -->
       <div id="teacherTabMonitoring" class="admin-tab-content hidden">
         <div class="rpg-card-container">
           <div class="guru-riwayat-title">
@@ -1043,6 +1058,27 @@
             id="btnMuatUlangMonitor"
             class="monitor-refresh"
             onclick="muatUlangMonitoring()"
+          >
+            🔄 Muat Ulang Data
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB: MONITORING GURU (khusus kepala sekolah) -->
+      <div id="teacherTabMonitoringGuru" class="admin-tab-content hidden">
+        <div class="rpg-card-container">
+          <div class="guru-riwayat-title">👨‍🏫 Monitoring Guru</div>
+          <div id="monGuruInfo" class="monitor-info"></div>
+          <div id="monGuruTabel" class="monitor-wrap"></div>
+          <div class="monitor-legend">
+            ⭐ Poin Harian • 🏆 Prestasi • ⚠️ Pelanggaran • 📢 Tugas (7 hari) •
+            Terakhir = tanggal input terakhir
+          </div>
+          <button
+            type="button"
+            id="btnMuatUlangMonGuru"
+            class="monitor-refresh"
+            onclick="renderMonitoringGuru()"
           >
             🔄 Muat Ulang Data
           </button>
@@ -1177,10 +1213,7 @@
               "
               >Pilih Nama Siswa:</label
             >
-            <select
-              id="waliKelasSelectSiswa"
-              class="rpg-input"
-            >
+            <select id="waliKelasSelectSiswa" class="rpg-input">
               <option value="">-- Pilih siswa setelah pilih kelas --</option>
             </select>
           </div>
@@ -2519,21 +2552,19 @@
       🛠️ MODE MAINTENANCE AKTIF — siswa & guru tidak bisa masuk
     </div>
 
-    <div class="app-version-badge">Tatib v3.7.0 • Beta</div>
+    <div class="app-version-badge">Tatib v3.8.0 • Beta</div>
 
     <!-- JAVASCRIPT UTAMA & FIREBASE MODULE -->
     <script>
       // Daftarkan service worker (syarat PWA agar bisa di-install)
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
-          navigator.serviceWorker
-            .register("sw.js?v=3.7.0")
-            .catch(function (e) {
-              console.warn("Service worker gagal didaftarkan:", e);
-            });
+          navigator.serviceWorker.register("sw.js?v=3.8.0").catch(function (e) {
+            console.warn("Service worker gagal didaftarkan:", e);
+          });
         });
       }
     </script>
-    <script src="app.js?v=3.7.0" type="module"></script>
+    <script src="app.js?v=3.8.0" type="module"></script>
   </body>
 </html>

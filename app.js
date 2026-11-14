@@ -122,7 +122,8 @@ function avatarFor(s) {
   return "assets/foto_siswa/avatar_l.webp";
 }
 
-const AVATAR_ONERROR = "this.onerror=null;this.src='assets/foto_siswa/avatar.webp'";
+const AVATAR_ONERROR =
+  "this.onerror=null;this.src='assets/foto_siswa/avatar.webp'";
 
 // ==========================================
 // CUSTOM MODAL (CUSTOM ALERT & CONFIRM)
@@ -266,7 +267,9 @@ let preloaderWatchdog = null;
 
 function showGamePreloader(customTitle, callback) {
   if (preloaderBusy) {
-    console.warn("Preloader sedang berjalan, permintaan diabaikan (cegah entri ganda).");
+    console.warn(
+      "Preloader sedang berjalan, permintaan diabaikan (cegah entri ganda).",
+    );
     return;
   }
   preloaderBusy = true;
@@ -724,7 +727,10 @@ function tampilkanProfilSiswa(siswa, nisn) {
 
 function startStudentSession(nisn, siswa) {
   localStorage.setItem("activeUser", nisn);
-  localStorage.setItem("activeUserExpiry", String(Date.now() + SESSION_SISWA_MS));
+  localStorage.setItem(
+    "activeUserExpiry",
+    String(Date.now() + SESSION_SISWA_MS),
+  );
   currentNisnSiswa = nisn;
   window.currentStudentNisn = nisn;
   window.currentStudentDataCache = siswa;
@@ -829,9 +835,7 @@ window.gantiPinSiswa = async function () {
     return window.customAlert("⚠️ Mohon isi PIN lama dan PIN baru Anda!");
   }
   if (!/^\d{4,6}$/.test(newPin)) {
-    return window.customAlert(
-      "⚠️ PIN baru harus berupa 4 sampai 6 angka!",
-    );
+    return window.customAlert("⚠️ PIN baru harus berupa 4 sampai 6 angka!");
   }
   if (newPin === "123456") {
     return window.customAlert(
@@ -947,7 +951,7 @@ async function tambahTemanImpl() {
     console.error("Gagal kirim undangan:", err);
     window.customAlert("Gagal mengirim undangan. Periksa koneksi internet.");
   }
-};
+}
 
 window.terimaUndangan = async function (senderNisn) {
   if (friendActionBusy) return;
@@ -1222,7 +1226,8 @@ function renderChatList() {
       const nama = teman ? teman.nama : `NISN: ${nisn}`;
       let preview = "Belum ada pesan. Ketuk untuk menyapa 👋";
       if (st.last) {
-        preview = (st.last.senderNisn === me ? "Kamu: " : "") + (st.last.text || "");
+        preview =
+          (st.last.senderNisn === me ? "Kamu: " : "") + (st.last.text || "");
       }
       return `
       <div class="chat-row ${st.unread ? "has-unread" : ""}" data-nisn="${escapeHtml(nisn)}" data-nama="${escapeHtml(nama)}" onclick="bukaChatTeman(this.dataset.nisn, this.dataset.nama)">
@@ -1285,7 +1290,11 @@ function setupFriendHub(friendsArray, requestsArray) {
 
       // Hanya pesan teman yang belum dibaca
       const unsubUnread = onSnapshot(
-        query(roomRef, where("senderNisn", "==", nisn), where("read", "==", false)),
+        query(
+          roomRef,
+          where("senderNisn", "==", nisn),
+          where("read", "==", false),
+        ),
         (snap) => {
           const st = friendState[nisn];
           if (!st) return;
@@ -1386,8 +1395,17 @@ async function loadPesanChatRealtime(targetNisn) {
   const container = $("chatMessageContainer");
 
   try {
-    const { collection, query, orderBy, where, onSnapshot, doc, updateDoc, getDocs, deleteDoc } =
-      window.fbFirestore;
+    const {
+      collection,
+      query,
+      orderBy,
+      where,
+      onSnapshot,
+      doc,
+      updateDoc,
+      getDocs,
+      deleteDoc,
+    } = window.fbFirestore;
     const messagesRef = collection(window.db, "chats", roomId, "messages");
     const tujuhHariLalu = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
@@ -1398,9 +1416,9 @@ async function loadPesanChatRealtime(targetNisn) {
       );
       await Promise.all(
         expiredSnap.docs.map((docSnap) =>
-          deleteDoc(doc(window.db, "chats", roomId, "messages", docSnap.id)).catch(
-            (err) => console.log("Gagal hapus pesan lama:", err),
-          ),
+          deleteDoc(
+            doc(window.db, "chats", roomId, "messages", docSnap.id),
+          ).catch((err) => console.log("Gagal hapus pesan lama:", err)),
         ),
       );
 
@@ -1419,7 +1437,8 @@ async function loadPesanChatRealtime(targetNisn) {
     }
 
     // Pengguna mungkin sudah pindah tab / ganti chat selama proses di atas
-    if (siswaActiveTab !== "chat" || currentChatTargetNisn !== targetNisn) return;
+    if (siswaActiveTab !== "chat" || currentChatTargetNisn !== targetNisn)
+      return;
 
     const qValid = query(
       messagesRef,
@@ -1553,7 +1572,10 @@ window.loadAdminChatRooms = async function () {
 
     const rooms = [];
     snapshot.forEach((docSnap) => {
-      rooms.push({ id: docSnap.id, lastUpdated: docSnap.data().lastUpdated || 0 });
+      rooms.push({
+        id: docSnap.id,
+        lastUpdated: docSnap.data().lastUpdated || 0,
+      });
     });
     rooms.sort((a, b) => b.lastUpdated - a.lastUpdated);
 
@@ -1588,7 +1610,8 @@ window.monitorAdminRoom = function (roomId) {
   headerEl.innerText = `Memantau: ${namaDariNisn(n1)} & ${namaDariNisn(n2)}`;
 
   try {
-    const { collection, query, orderBy, onSnapshot, limit } = window.fbFirestore;
+    const { collection, query, orderBy, onSnapshot, limit } =
+      window.fbFirestore;
     const q = query(
       collection(window.db, "chats", roomId, "messages"),
       orderBy("timestamp", "desc"),
@@ -1665,7 +1688,9 @@ window.adminHapusSemuaChatRoom = async function () {
       window.loadAdminChatRooms();
 
       done();
-      window.customAlert("✅ Ruang chat beserta semua pesannya berhasil dihapus!");
+      window.customAlert(
+        "✅ Ruang chat beserta semua pesannya berhasil dihapus!",
+      );
     } catch (err) {
       done();
       console.error("Gagal menghapus ruang chat:", err);
@@ -2099,8 +2124,7 @@ function terapkanMaintenance() {
 
   if (blokir) {
     $("maintenancePesan").textContent =
-      maintenanceState.pesan ||
-      "Sedang diperbaiki. Mohon tunggu sebentar.";
+      maintenanceState.pesan || "Sedang diperbaiki. Mohon tunggu sebentar.";
     const est = maintenanceState.perkiraanSelesai;
     const elEst = $("maintenanceEstimasi");
     elEst.textContent = est ? `⏱ Perkiraan selesai: ${est}` : "";
@@ -2148,7 +2172,10 @@ function mulaiPantauMaintenance() {
       },
       (err) => {
         // Gagal baca (offline/izin): jangan kunci aplikasi
-        console.warn("Pantau maintenance gagal (aplikasi tetap berjalan):", err);
+        console.warn(
+          "Pantau maintenance gagal (aplikasi tetap berjalan):",
+          err,
+        );
       },
     );
   } catch (e) {
@@ -2203,7 +2230,7 @@ window.kembaliKeMenu = function () {
 
 window.keluarSiswa = async function () {
   const ok = await window.customConfirm(
-    "Yakin ingin keluar dari akun ini? Kamu perlu login lagi dengan NISN dan PIN untuk masuk kembali.",
+    "Yakin ingin keluar dari akun ini?",
     "🚪 KONFIRMASI KELUAR",
   );
   if (!ok) return;
@@ -2338,7 +2365,9 @@ window.kirimLaporanBugUI = async function () {
     window.customAlert("Teksnya kepanjangan, maksimal 1000 karakter.");
     return;
   }
-  const kategori = $("laporanBugKategori") ? $("laporanBugKategori").value : "bug";
+  const kategori = $("laporanBugKategori")
+    ? $("laporanBugKategori").value
+    : "bug";
 
   let pelaporNama = "Anonim";
   let pelaporPeran = "Tidak diketahui";
@@ -2540,7 +2569,10 @@ async function cekBadgeLaporanBugAwal() {
   try {
     const { collection, getDocs, query, where } = window.fbFirestore;
     const snap = await getDocs(
-      query(collection(window.db, "laporan_bug"), where("status", "==", "baru")),
+      query(
+        collection(window.db, "laporan_bug"),
+        where("status", "==", "baru"),
+      ),
     );
     updateLaporanBugBadge(snap.size);
   } catch (err) {
@@ -2571,7 +2603,9 @@ window.login = async function () {
       const { doc, getDoc } = window.fbFirestore;
       let userData = { nama: "Petugas Sekolah", role: "Guru Mapel" };
       try {
-        const teacherDocSnap = await getDoc(doc(window.db, "teachers", emailLogin));
+        const teacherDocSnap = await getDoc(
+          doc(window.db, "teachers", emailLogin),
+        );
         if (teacherDocSnap.exists()) userData = teacherDocSnap.data();
       } catch (e) {
         console.warn("Profil guru tidak terbaca, pakai peran default:", e);
@@ -2639,6 +2673,26 @@ function kelasBinaanList(u) {
   return hasil;
 }
 
+// ---- ROLE KEPALA SEKOLAH ----
+// Diisi lewat field `role` = "Kepala Sekolah" di dokumen teachers/{email}.
+// Tugasnya memonitor guru & siswa (hanya melihat, tidak menginput poin/tugas).
+function isKepalaSekolah(u) {
+  return /kepala\s*sekolah/i.test(String((u && u.role) || ""));
+}
+
+// Kelas yang boleh dimonitor: wali kelas -> kelas binaan, kepala sekolah -> semua kelas.
+function kelasMonitorList(u) {
+  if (isKepalaSekolah(u)) {
+    const ada = new Set(
+      (masterDataSiswa || [])
+        .filter((s) => s.statusAkun !== "lulus" && s.kelas)
+        .map((s) => s.kelas),
+    );
+    return ada.size ? [...ada].sort() : ["10 SMK", "11 SMK", "12 SMK"];
+  }
+  return kelasBinaanList(u);
+}
+
 // Contoh hasil: "Guru Mapel • Wali Kelas 10" atau "Wali Kelas 10"
 // Kalau field `role` sudah berisi kata "Wali Kelas", kata itu tidak diulang.
 function labelJabatan(u) {
@@ -2655,11 +2709,20 @@ function labelJabatan(u) {
 // Kotak "Reset Foto Profil Siswa" hanya tampil untuk wali kelas, dan pilihan
 // kelasnya dibatasi ke kelas binaan guru itu sendiri.
 function terapkanFiturWaliKelas() {
-  // Tombol "Monitoring Siswa" hanya tampil untuk wali kelas
+  // Tombol "Monitoring Siswa" tampil untuk wali kelas & kepala sekolah
+  const kepsek = isKepalaSekolah(currentUser);
   const navMon = $("navBtnMonitoring");
   if (navMon) {
-    navMon.style.display = kelasBinaanList(currentUser).length ? "" : "none";
+    navMon.style.display =
+      kepsek || kelasBinaanList(currentUser).length ? "" : "none";
   }
+  // Kepala sekolah: tidak menginput poin/tugas, tapi bisa memonitor guru
+  const navPoin = $("navBtnInputPoin");
+  const navPost = $("navBtnPostTugas");
+  const navMonGuru = $("navBtnMonitoringGuru");
+  if (navPoin) navPoin.style.display = kepsek ? "none" : "";
+  if (navPost) navPost.style.display = kepsek ? "none" : "";
+  if (navMonGuru) navMonGuru.style.display = kepsek ? "" : "none";
   const box = $("boxResetFotoWaliKelas");
   const sel = $("waliKelasSelectKelas");
   if (!box || !sel) return;
@@ -2682,11 +2745,18 @@ window.switchTeacherTab = function (tab) {
   const btnPosting = $("navBtnPostTugas");
   const tabMonitoring = $("teacherTabMonitoring");
   const btnMonitoring = $("navBtnMonitoring");
+  const tabMonGuru = $("teacherTabMonitoringGuru");
+  const btnMonGuru = $("navBtnMonitoringGuru");
 
   tabProfil.classList.add("hidden");
   tabPoin.classList.add("hidden");
   tabPosting.classList.add("hidden");
   tabMonitoring.classList.add("hidden");
+  if (tabMonGuru) tabMonGuru.classList.add("hidden");
+  if (btnMonGuru) {
+    btnMonGuru.style.background = "transparent";
+    btnMonGuru.className = "btn-outline";
+  }
 
   btnProfil.style.background = "transparent";
   btnProfil.className = "btn-outline";
@@ -2697,9 +2767,16 @@ window.switchTeacherTab = function (tab) {
   btnMonitoring.style.background = "transparent";
   btnMonitoring.className = "btn-outline";
 
-  if (tab === "monitoring" && kelasBinaanList(currentUser).length === 0) {
-    tab = "profil"; // bukan wali kelas -> tidak boleh membuka tab ini
+  const kepsekTab = isKepalaSekolah(currentUser);
+  if (
+    tab === "monitoring" &&
+    !kepsekTab &&
+    kelasBinaanList(currentUser).length === 0
+  ) {
+    tab = "profil"; // bukan wali kelas / kepala sekolah -> tidak boleh membuka tab ini
   }
+  if (tab === "monitoringGuru" && !kepsekTab) tab = "profil";
+  if (kepsekTab && (tab === "poin" || tab === "posting")) tab = "profil";
 
   if (tab === "profil") {
     tabProfil.classList.remove("hidden");
@@ -2720,31 +2797,51 @@ window.switchTeacherTab = function (tab) {
     btnMonitoring.style.background = "#1e3c72";
     btnMonitoring.className = "";
     window.renderMonitoringSiswa();
+  } else if (tab === "monitoringGuru") {
+    tabMonGuru.classList.remove("hidden");
+    btnMonGuru.style.background = "#1e3c72";
+    btnMonGuru.className = "";
+    window.renderMonitoringGuru();
   }
 };
 
-// ---- Monitoring Siswa (wali kelas: hanya siswa di kelas binaannya) ----
+// ---- Monitoring Siswa (wali kelas: kelas binaan, kepala sekolah: semua kelas) ----
 window.renderMonitoringSiswa = function () {
   const sel = $("monitorKelasSelect");
   const tabel = $("monitorTabel");
   if (!sel || !tabel) return;
 
-  const kelasList = kelasBinaanList(currentUser);
+  const kepsek = isKepalaSekolah(currentUser);
+  const kelasList = kelasMonitorList(currentUser);
   if (kelasList.length === 0) {
-    tabel.innerHTML = `<div class="guru-riwayat-kosong">Fitur ini hanya untuk wali kelas.</div>`;
+    tabel.innerHTML = `<div class="guru-riwayat-kosong">Fitur ini hanya untuk wali kelas dan kepala sekolah.</div>`;
     return;
   }
 
-  const dipilih = kelasList.includes(sel.value) ? sel.value : kelasList[0];
-  sel.innerHTML = kelasList
-    .map((k) => `<option value="${k}"${k === dipilih ? " selected" : ""}>${k}</option>`)
+  // Kepala sekolah mendapat pilihan tambahan "Semua Kelas"
+  const opsi = kepsek ? ["Semua Kelas", ...kelasList] : kelasList;
+  const dipilih = opsi.includes(sel.value) ? sel.value : opsi[0];
+  sel.innerHTML = opsi
+    .map(
+      (k) =>
+        `<option value="${k}"${k === dipilih ? " selected" : ""}>${k}</option>`,
+    )
     .join("");
-  sel.classList.toggle("hidden", kelasList.length === 1);
+  sel.classList.toggle("hidden", opsi.length === 1);
   $("lblMonitorKelas").textContent = dipilih;
 
+  const semuaKelas = dipilih === "Semua Kelas";
   const daftar = (masterDataSiswa || [])
-    .filter((s) => s.kelas === dipilih && s.statusAkun !== "lulus")
-    .sort((a, b) => String(a.nama).localeCompare(String(b.nama)));
+    .filter(
+      (s) =>
+        s.statusAkun !== "lulus" &&
+        (semuaKelas ? kelasList.includes(s.kelas) : s.kelas === dipilih),
+    )
+    .sort(
+      (a, b) =>
+        (semuaKelas ? String(a.kelas).localeCompare(String(b.kelas)) : 0) ||
+        String(a.nama).localeCompare(String(b.nama)),
+    );
 
   $("monitorInfo").textContent = `${daftar.length} siswa aktif`;
 
@@ -2758,9 +2855,12 @@ window.renderMonitoringSiswa = function () {
       const hp = Math.max(0, s.hp !== undefined ? s.hp : 200);
       const pel = s.totalPelanggaran || 0;
       const pres = s.totalPrestasi || 0;
+      const kelasTag = semuaKelas
+        ? ` <span class="monitor-sub">${escapeHtml(s.kelas || "-")}</span>`
+        : "";
       return `
       <tr>
-        <td class="monitor-nama">${i + 1}. ${escapeHtml(s.nama)}</td>
+        <td class="monitor-nama">${i + 1}. ${escapeHtml(s.nama)}${kelasTag}</td>
         <td${hp < 60 ? ' class="monitor-merah"' : ""}>${hp}</td>
         <td>${s.shield || 0}</td>
         <td>${s.dailyScore || 0}</td>
@@ -2790,6 +2890,190 @@ window.muatUlangMonitoring = async function () {
   }
 };
 
+// ---- Monitoring Guru (khusus Kepala Sekolah) ----
+// Murni menghitung: dipisah dari tampilan supaya mudah diuji.
+//  siswaList : array data siswa (masing-masing punya `riwayat`)
+//  teacherList: array {email, nama, role, kelasBinaan}; boleh kosong (null) kalau
+//               koleksi `teachers` tidak bisa dibaca -> daftar dibuat dari riwayat
+//  tugasList : array tugas aktif {namaGuru}
+function hitungStatistikGuru(siswaList, teacherList, tugasList) {
+  const kunciNama = (n) =>
+    String(n || "")
+      .trim()
+      .toLowerCase();
+  const peta = new Map(); // kunci -> statistik
+  const byEmail = new Map();
+  const byNama = new Map();
+
+  const buatStat = (g) => ({
+    nama: g.nama || g.email || "-",
+    email: g.email || "",
+    jabatan: g.jabatan || "",
+    harian: 0,
+    prestasi: 0,
+    pelanggaran: 0,
+    tugas: 0,
+    terakhir: "",
+  });
+
+  const punyaDaftar = Array.isArray(teacherList) && teacherList.length > 0;
+  if (punyaDaftar) {
+    teacherList.forEach((t) => {
+      if (/super\s*admin/i.test(t.role || "") || isKepalaSekolah(t)) return;
+      const st = buatStat({
+        nama: t.nama,
+        email: t.email,
+        jabatan: labelJabatan(t),
+      });
+      const key = (t.email || kunciNama(t.nama)).toLowerCase();
+      peta.set(key, st);
+      if (t.email) byEmail.set(t.email.toLowerCase(), st);
+      if (t.nama) byNama.set(kunciNama(t.nama), st);
+    });
+  }
+
+  const cari = (ge, g) => {
+    let st =
+      (ge && byEmail.get(String(ge).toLowerCase())) ||
+      (g && byNama.get(kunciNama(g)));
+    if (!st && !punyaDaftar && (ge || g)) {
+      // tanpa daftar guru: buat dari catatan riwayat
+      const key = String(ge || kunciNama(g)).toLowerCase();
+      st = peta.get(key);
+      if (!st) {
+        st = buatStat({ nama: g, email: ge });
+        peta.set(key, st);
+        if (ge) byEmail.set(String(ge).toLowerCase(), st);
+        if (g) byNama.set(kunciNama(g), st);
+      }
+    }
+    return st || null;
+  };
+
+  (siswaList || []).forEach((s) => {
+    (s.riwayat || []).forEach((r) => {
+      if (!r || (!r.g && !r.ge)) return;
+      const st = cari(r.ge, r.g);
+      if (!st) return;
+      const kat = kategoriRiwayat(r);
+      if (kat === "TugasHarian") st.harian++;
+      else if (kat === "Prestasi") st.prestasi++;
+      else st.pelanggaran++;
+      if (r.d && String(r.d) > st.terakhir) st.terakhir = String(r.d);
+    });
+  });
+
+  (tugasList || []).forEach((t) => {
+    const st = byNama.get(kunciNama(t.namaGuru));
+    if (st) st.tugas++;
+  });
+
+  return [...peta.values()].sort(
+    (a, b) =>
+      b.harian +
+        b.prestasi +
+        b.pelanggaran -
+        (a.harian + a.prestasi + a.pelanggaran) ||
+      String(a.nama).localeCompare(String(b.nama)),
+  );
+}
+
+// "2026-11-14 09:30" -> "14/11"
+function formatTanggalSingkat(d) {
+  const m = String(d || "").match(/^\d{4}-(\d{2})-(\d{2})/);
+  return m ? `${m[2]}/${m[1]}` : "-";
+}
+
+let monGuruBusy = false;
+window.renderMonitoringGuru = async function () {
+  const tabel = $("monGuruTabel");
+  const info = $("monGuruInfo");
+  if (!tabel || !info) return;
+  if (!isKepalaSekolah(currentUser)) {
+    tabel.innerHTML = `<div class="guru-riwayat-kosong">Fitur ini hanya untuk kepala sekolah.</div>`;
+    return;
+  }
+  if (monGuruBusy) return;
+  monGuruBusy = true;
+  info.textContent = "";
+  tabel.innerHTML = `<div class="guru-riwayat-kosong">Memuat data guru...</div>`;
+
+  try {
+    const { collection, getDocs, query, where } = window.fbFirestore;
+    const [siswaSnap, teacherSnap, tugasSnap] = await Promise.all([
+      getDocs(collection(window.db, "siswa")),
+      getDocs(collection(window.db, "teachers")).catch((e) => {
+        console.warn("Daftar guru tidak bisa dibaca:", e);
+        return null;
+      }),
+      getDocs(
+        query(
+          collection(window.db, "tugas"),
+          where("timestamp", ">=", Date.now() - 7 * 24 * 60 * 60 * 1000),
+        ),
+      ).catch(() => null),
+    ]);
+
+    const siswaList = [];
+    siswaSnap.forEach((d) => siswaList.push(d.data()));
+    let teacherList = null;
+    if (teacherSnap) {
+      teacherList = [];
+      teacherSnap.forEach((d) =>
+        teacherList.push({ email: d.id, ...d.data() }),
+      );
+    }
+    const tugasList = [];
+    if (tugasSnap) tugasSnap.forEach((d) => tugasList.push(d.data()));
+
+    const hasil = hitungStatistikGuru(siswaList, teacherList, tugasList);
+    info.textContent =
+      `${hasil.length} guru • data semester ini` +
+      (teacherList
+        ? ""
+        : " • (daftar guru tidak terbaca, hanya guru yang pernah input)");
+
+    if (hasil.length === 0) {
+      tabel.innerHTML = `<div class="guru-riwayat-kosong">Belum ada data guru.</div>`;
+      return;
+    }
+
+    const baris = hasil
+      .map((g, i) => {
+        const total = g.harian + g.prestasi + g.pelanggaran;
+        const sub = g.jabatan
+          ? ` <span class="monitor-sub">${escapeHtml(g.jabatan)}</span>`
+          : "";
+        const terakhir = g.terakhir
+          ? formatTanggalSingkat(g.terakhir)
+          : `<span class="monitor-merah">Belum</span>`;
+        return `
+      <tr>
+        <td class="monitor-nama">${i + 1}. ${escapeHtml(g.nama)}${sub}</td>
+        <td${total === 0 ? ' class="monitor-merah"' : ""}>${g.harian}</td>
+        <td${g.prestasi > 0 ? ' class="monitor-hijau"' : ""}>${g.prestasi}</td>
+        <td${g.pelanggaran > 0 ? ' class="monitor-merah"' : ""}>${g.pelanggaran}</td>
+        <td>${g.tugas}</td>
+        <td>${terakhir}</td>
+      </tr>`;
+      })
+      .join("");
+
+    tabel.innerHTML = `
+    <table class="monitor-table">
+      <thead>
+        <tr><th class="monitor-nama">Guru</th><th>⭐</th><th>🏆</th><th>⚠️</th><th>📢</th><th>Terakhir</th></tr>
+      </thead>
+      <tbody>${baris}</tbody>
+    </table>`;
+  } catch (e) {
+    console.warn("Gagal memuat monitoring guru:", e);
+    tabel.innerHTML = `<div class="guru-riwayat-kosong">Gagal memuat data. Periksa koneksi internet.</div>`;
+  } finally {
+    monGuruBusy = false;
+  }
+};
+
 // ==========================================
 // TAB PROFIL GURU
 // ==========================================
@@ -2803,7 +3087,10 @@ const AVATAR_GURU_DEFAULT = {
 };
 function avatarForGuru(u) {
   if (u && u.fotoUrl) return u.fotoUrl;
-  const jk = String((u && u.jk) || "").trim().toUpperCase().charAt(0);
+  const jk = String((u && u.jk) || "")
+    .trim()
+    .toUpperCase()
+    .charAt(0);
   return AVATAR_GURU_DEFAULT[jk] || "assets/foto_siswa/avatar.webp";
 }
 
@@ -2840,6 +3127,14 @@ window.loadProfilGuru = async function () {
     }
   }
 
+  // Kepala sekolah tidak menginput poin: kotak statistik & riwayat poin disembunyikan
+  const kepsekProfil = isKepalaSekolah(currentUser);
+  const rowStat = $("rowStatGuruProfil");
+  const boxRiwayat = $("boxRiwayatGuruProfil");
+  if (rowStat) rowStat.classList.toggle("hidden", kepsekProfil);
+  if (boxRiwayat) boxRiwayat.classList.toggle("hidden", kepsekProfil);
+  if (kepsekProfil) return;
+
   renderRiwayatInputGuru(namaGuru);
 };
 
@@ -2855,9 +3150,21 @@ let riwayatGuruTabAktif = "TugasHarian";
 const RIWAYAT_GURU_TTL_MS = 2 * 60 * 1000;
 
 const RIWAYAT_GURU_META = {
-  TugasHarian: { label: "Poin Harian", warna: "#f1c40f", kosong: "Belum ada poin harian yang kamu berikan semester ini." },
-  Prestasi: { label: "Prestasi", warna: "#2ecc71", kosong: "Belum ada prestasi yang kamu catat semester ini." },
-  Pelanggaran: { label: "Pelanggaran", warna: "#e74c3c", kosong: "Belum ada pelanggaran yang kamu catat semester ini." },
+  TugasHarian: {
+    label: "Poin Harian",
+    warna: "#f1c40f",
+    kosong: "Belum ada poin harian yang kamu berikan semester ini.",
+  },
+  Prestasi: {
+    label: "Prestasi",
+    warna: "#2ecc71",
+    kosong: "Belum ada prestasi yang kamu catat semester ini.",
+  },
+  Pelanggaran: {
+    label: "Pelanggaran",
+    warna: "#e74c3c",
+    kosong: "Belum ada pelanggaran yang kamu catat semester ini.",
+  },
 };
 
 // Catatan lama (sebelum ada field `k`) ditebak dari nilai poin & judulnya.
@@ -3004,7 +3311,9 @@ window.handleFileSelectedForCropGuru = function (input) {
   if (!file) return;
 
   if (!file.type.startsWith("image/")) {
-    window.customAlert("⚠️ Format file harus berupa gambar (JPG, PNG, atau WEBP)!");
+    window.customAlert(
+      "⚠️ Format file harus berupa gambar (JPG, PNG, atau WEBP)!",
+    );
     input.value = "";
     return;
   }
@@ -3111,7 +3420,9 @@ window.handleFileSelectedForCropBanner = function (input) {
   if (!file) return;
 
   if (!file.type.startsWith("image/")) {
-    window.customAlert("⚠️ Format file harus berupa gambar (JPG, PNG, atau WEBP)!");
+    window.customAlert(
+      "⚠️ Format file harus berupa gambar (JPG, PNG, atau WEBP)!",
+    );
     input.value = "";
     return;
   }
@@ -3199,7 +3510,15 @@ window.simpanBannerProfilGuruBaru = async function () {
 // ==========================================
 function initFormEntry() {
   const now = new Date();
-  const namaHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at", "Sabtu"];
+  const namaHari = [
+    "Minggu",
+    "Senin",
+    "Selasa",
+    "Rabu",
+    "Kamis",
+    "Jum'at",
+    "Sabtu",
+  ];
   $("hari").value = namaHari[now.getDay()];
   $("tanggal").value = localDateStr(now);
   $("jam").value = localTimeStr(now);
@@ -3253,7 +3572,9 @@ window.renderOpsiPoin = function () {
   const prefix = kat === "Pelanggaran" ? "-" : "+";
   container.innerHTML = listTampil
     .map(
-      (item) => `<label class="option-item"><input type="radio" name="opsiPoin" value="${escapeHtml(item.t)}" data-poin="${item.p}" required>
+      (
+        item,
+      ) => `<label class="option-item"><input type="radio" name="opsiPoin" value="${escapeHtml(item.t)}" data-poin="${item.p}" required>
                 <span>${escapeHtml(item.t)} <strong>(${prefix}${item.p} Pts)</strong></span></label>`,
     )
     .join("");
@@ -3319,14 +3640,18 @@ function getSelectedSiswa() {
 }
 
 window.konfirmasiSimpan = function () {
-  const selectedRadio = document.querySelector('input[name="opsiPoin"]:checked');
+  const selectedRadio = document.querySelector(
+    'input[name="opsiPoin"]:checked',
+  );
   if (!selectedRadio)
     return window.customAlert("Pilih detail jenis kejadian terlebih dahulu!");
 
   const daftar = getSelectedSiswa();
   if (daftar.length === 0)
     return window.customAlert(
-      isMultiMode ? "Pilih minimal 1 siswa!" : "Pilih nama siswa terlebih dahulu!",
+      isMultiMode
+        ? "Pilih minimal 1 siswa!"
+        : "Pilih nama siswa terlebih dahulu!",
     );
 
   const kat = $("kategori").value;
@@ -3390,7 +3715,9 @@ function tambahRiwayat(listLama, entryBaru) {
 
 window.eksekusiSimpanWithLoading = async function () {
   window.tutupModal();
-  const selectedRadio = document.querySelector('input[name="opsiPoin"]:checked');
+  const selectedRadio = document.querySelector(
+    'input[name="opsiPoin"]:checked',
+  );
   if (!selectedRadio) return;
 
   const desc = selectedRadio.value;
@@ -3445,7 +3772,9 @@ window.eksekusiSimpanWithLoading = async function () {
     done();
 
     if (gagal.length === 0) {
-      window.customAlert("✅ Poin Berhasil Disimpan & Disinkronkan ke Leaderboard!");
+      window.customAlert(
+        "✅ Poin Berhasil Disimpan & Disinkronkan ke Leaderboard!",
+      );
     } else {
       window.customAlert(
         `⚠️ ${berhasil} siswa berhasil, ${gagal.length} gagal:\n${gagal.join(", ")}`,
@@ -3678,7 +4007,8 @@ window.jalankanTambahSiswaBaruUI = async function () {
   const kelasDefault = $("kelasSiswaBaruSelect").value;
   const teksInput = $("teksSiswaBaru").value;
 
-  if (!kelasDefault) return window.customAlert("Pilih kelas tujuan untuk siswa baru.");
+  if (!kelasDefault)
+    return window.customAlert("Pilih kelas tujuan untuk siswa baru.");
 
   const baris = parseBarisSiswaBaru(teksInput);
   if (baris.length === 0)
@@ -3767,7 +4097,9 @@ window.jalankanTambahSiswaBaruUI = async function () {
     } catch (err) {
       done();
       console.error("Gagal menambahkan siswa baru:", err);
-      window.customAlert("Gagal menambahkan siswa baru. Periksa koneksi internet.");
+      window.customAlert(
+        "Gagal menambahkan siswa baru. Periksa koneksi internet.",
+      );
     }
   });
 };
@@ -3975,7 +4307,9 @@ window.simpanPeriodeAktifUI = async function () {
         updatedBy: currentUser?.nama || "-",
       });
       done();
-      window.customAlert("✅ Keterangan tahun ajaran tersimpan dan langsung tampil di Profil siswa.");
+      window.customAlert(
+        "✅ Keterangan tahun ajaran tersimpan dan langsung tampil di Profil siswa.",
+      );
     } catch (err) {
       done();
       console.error("Gagal simpan periode aktif:", err);
@@ -3990,7 +4324,8 @@ window.muatPeriodeAktifAdmin = async function () {
     const snap = await getDoc(doc(window.db, "app_meta", "akademik"));
     if (snap.exists()) {
       const d = snap.data();
-      if ($("inputTahunAjaran")) $("inputTahunAjaran").value = d.tahunAjaran || "";
+      if ($("inputTahunAjaran"))
+        $("inputTahunAjaran").value = d.tahunAjaran || "";
       if ($("inputSemesterAktif") && d.semester)
         $("inputSemesterAktif").value = d.semester;
     }
@@ -4078,22 +4413,27 @@ window.jalankanBatalKelulusanUI = async function () {
       await refreshMasterSiswa();
       window.muatDaftarAlumni();
       done();
-      window.customAlert(`✅ ${checked.length} siswa dikembalikan menjadi Aktif.`);
+      window.customAlert(
+        `✅ ${checked.length} siswa dikembalikan menjadi Aktif.`,
+      );
       $("catatanBatalKelulusan").value = "";
     } catch (err) {
       done();
       console.error("Gagal batalkan kelulusan:", err);
-      window.customAlert("Gagal mengembalikan status. Periksa koneksi internet.");
+      window.customAlert(
+        "Gagal mengembalikan status. Periksa koneksi internet.",
+      );
     }
   });
 };
-
 
 window.jalankanGantiSemesterUI = async function () {
   const label = $("labelGantiSemester").value.trim();
   const catatan = $("catatanGantiSemester").value.trim();
   if (!label)
-    return window.customAlert("Isi nama semester yang sedang berjalan (akan jadi label arsip).");
+    return window.customAlert(
+      "Isi nama semester yang sedang berjalan (akan jadi label arsip).",
+    );
   if (!catatan) return window.customAlert("Catatan/alasan wajib diisi.");
 
   const ok = await window.customConfirm(
@@ -4116,7 +4456,9 @@ window.jalankanGantiSemesterUI = async function () {
     } catch (err) {
       done();
       console.error("Gagal ganti semester:", err);
-      window.customAlert("Gagal menjalankan Ganti Semester. Periksa koneksi internet.");
+      window.customAlert(
+        "Gagal menjalankan Ganti Semester. Periksa koneksi internet.",
+      );
     }
   });
 };
@@ -4125,7 +4467,9 @@ window.jalankanKenaikanKelasUI = async function () {
   const label = $("labelKenaikanKelas").value.trim();
   const catatan = $("catatanKenaikanKelas").value.trim();
   if (!label)
-    return window.customAlert("Isi nama semester/tahun ajaran yang diarsipkan.");
+    return window.customAlert(
+      "Isi nama semester/tahun ajaran yang diarsipkan.",
+    );
   if (!catatan) return window.customAlert("Catatan/alasan wajib diisi.");
 
   const ok = await window.customConfirm(
@@ -4148,7 +4492,9 @@ window.jalankanKenaikanKelasUI = async function () {
     } catch (err) {
       done();
       console.error("Gagal kenaikan kelas:", err);
-      window.customAlert("Gagal menjalankan Kenaikan Kelas. Periksa koneksi internet.");
+      window.customAlert(
+        "Gagal menjalankan Kenaikan Kelas. Periksa koneksi internet.",
+      );
     }
   });
 };
@@ -4170,7 +4516,8 @@ window.muatRiwayatTransisiUntukBatal = async function () {
   if (infoEl) infoEl.textContent = "";
 
   try {
-    const { collection, query, where, orderBy, limit, getDocs } = window.fbFirestore;
+    const { collection, query, where, orderBy, limit, getDocs } =
+      window.fbFirestore;
     const snap = await getDocs(
       query(
         collection(window.db, "admin_logs"),
@@ -4200,7 +4547,8 @@ window.muatRiwayatTransisiUntukBatal = async function () {
     window._transisiRuns = runs;
     selectEl.innerHTML = runs
       .map((r, idx) => {
-        const nama = r.aksi === "GANTI_SEMESTER" ? "Ganti Semester" : "Kenaikan Kelas";
+        const nama =
+          r.aksi === "GANTI_SEMESTER" ? "Ganti Semester" : "Kenaikan Kelas";
         return `<option value="${idx}">${escapeHtml(nama)}: "${escapeHtml(r.label || "-")}" — ${escapeHtml(r.waktuStr || "")}</option>`;
       })
       .join("");
@@ -4246,7 +4594,8 @@ window.pilihTransisiUntukBatal = function () {
   }
 
   if (eligible.length === 0) {
-    listEl.innerHTML = '<div class="empty-note">Tidak ada siswa untuk proses ini.</div>';
+    listEl.innerHTML =
+      '<div class="empty-note">Tidak ada siswa untuk proses ini.</div>';
     return;
   }
 
@@ -4310,7 +4659,8 @@ window.jalankanBatalTransisiUI = async function () {
       "Centang minimal satu siswa yang mau dikembalikan (atau centang Pilih Semua).",
     );
 
-  const nama = run.aksi === "GANTI_SEMESTER" ? "Ganti Semester" : "Kenaikan Kelas";
+  const nama =
+    run.aksi === "GANTI_SEMESTER" ? "Ganti Semester" : "Kenaikan Kelas";
   const ok = await window.customConfirm(
     `Mengembalikan ${checked.length} siswa ke kondisi sebelum "${nama}: ${run.label}" dijalankan — HP, Shield, Poin Harian, Prestasi, Pelanggaran, Riwayat${run.aksi === "KENAIKAN_KELAS" ? ", dan tingkat kelas" : ""} akan dikembalikan seperti semula. TIDAK DAPAT DIBATALKAN LAGI. Lanjutkan?`,
     "↩️ BATALKAN " + nama.toUpperCase(),
@@ -4358,7 +4708,9 @@ window.jalankanBatalTransisiUI = async function () {
       done();
       window.customAlert(
         `✅ ${checked.length - dilewati} siswa dikembalikan ke kondisi sebelum "${run.label}".` +
-          (dilewati ? ` ${dilewati} siswa dilewati karena sudah ada perubahan lebih baru.` : ""),
+          (dilewati
+            ? ` ${dilewati} siswa dilewati karena sudah ada perubahan lebih baru.`
+            : ""),
       );
       $("catatanBatalTransisi").value = "";
     } catch (err) {
@@ -4377,7 +4729,9 @@ window.jalankanKelulusanUI = async function () {
     (s) => s.kelas === "12 SMK" && s.statusAkun !== "lulus",
   ).length;
   if (calon === 0)
-    return window.customAlert("Tidak ada siswa kelas 12 SMK yang berstatus aktif.");
+    return window.customAlert(
+      "Tidak ada siswa kelas 12 SMK yang berstatus aktif.",
+    );
 
   const ok = await window.customConfirm(
     `Meluluskan ${calon} siswa kelas 12 SMK. Akun mereka berubah jadi ALUMNI (data tidak dihapus, fitur chat/pertemanan/ubah profil ditutup, portal menampilkan transkrip akhir). TIDAK DAPAT DIBATALKAN. Lanjutkan?`,
@@ -4390,12 +4744,16 @@ window.jalankanKelulusanUI = async function () {
       const jumlah = await jalankanKelulusan(catatan);
       await refreshMasterSiswa();
       done();
-      window.customAlert(`🎓 ${jumlah} siswa berhasil diluluskan menjadi Alumni.`);
+      window.customAlert(
+        `🎓 ${jumlah} siswa berhasil diluluskan menjadi Alumni.`,
+      );
       $("catatanKelulusan").value = "";
     } catch (err) {
       done();
       console.error("Gagal proses kelulusan:", err);
-      window.customAlert("Gagal menjalankan Proses Kelulusan. Periksa koneksi internet.");
+      window.customAlert(
+        "Gagal menjalankan Proses Kelulusan. Periksa koneksi internet.",
+      );
     }
   });
 };
@@ -4525,7 +4883,10 @@ async function tampilkanTranskripAlumni(siswa, nisn) {
   };
   const semuaPeriode = [...arsipList, periodeAkhir];
 
-  const totalPrestasi = semuaPeriode.reduce((s, p) => s + (p.totalPrestasi || 0), 0);
+  const totalPrestasi = semuaPeriode.reduce(
+    (s, p) => s + (p.totalPrestasi || 0),
+    0,
+  );
   const totalPelanggaran = semuaPeriode.reduce(
     (s, p) => s + (p.totalPelanggaran || 0),
     0,
@@ -4576,14 +4937,16 @@ window.tampilkanPeriodeAlumniTerpilih = function () {
 
 function startAlumniView(nisn, siswa) {
   localStorage.setItem("activeUser", nisn);
-  localStorage.setItem("activeUserExpiry", String(Date.now() + SESSION_SISWA_MS));
+  localStorage.setItem(
+    "activeUserExpiry",
+    String(Date.now() + SESSION_SISWA_MS),
+  );
   currentNisnSiswa = nisn;
   window.currentStudentNisn = nisn;
   window.currentStudentDataCache = siswa;
   tampilkanTranskripAlumni(siswa, nisn);
   updateFabLaporanBug();
 }
-
 
 window.prosesActionAdminWithLoading = async function () {
   const act = $("adminActionType").value;
@@ -4741,7 +5104,6 @@ window.toggleAccordion = function (header) {
   }
 };
 
-
 // ==========================================
 // SISTEM CETAK & EKSPOR LAPORAN ADMIN
 // ==========================================
@@ -4767,7 +5129,8 @@ function renderPilihanSiswaCetak(dataArray) {
         `<option value="${escapeHtml(s.nisn)}">${escapeHtml(s.nama)} (${escapeHtml(s.kelas)})</option>`,
     )
     .join("");
-  selectEl.innerHTML = html || '<option value="">Tidak ada siswa ditemukan</option>';
+  selectEl.innerHTML =
+    html || '<option value="">Tidak ada siswa ditemukan</option>';
 }
 
 window.filterPilihanSiswaCetak = function () {
@@ -5012,7 +5375,9 @@ window.handleFileSelectedForCrop = function (input) {
   if (!file) return;
 
   if (!file.type.startsWith("image/")) {
-    window.customAlert("⚠️ Format file harus berupa gambar (JPG, PNG, atau WEBP)!");
+    window.customAlert(
+      "⚠️ Format file harus berupa gambar (JPG, PNG, atau WEBP)!",
+    );
     input.value = "";
     return;
   }
@@ -5083,7 +5448,9 @@ window.simpanFotoProfilBaru = async function () {
 
     invalidateMasterCache();
     window.tutupModalGantiFoto();
-    window.customAlert("🎉 Berhasil! Foto profil kamu telah dipaskan dan diperbarui.");
+    window.customAlert(
+      "🎉 Berhasil! Foto profil kamu telah dipaskan dan diperbarui.",
+    );
   } catch (error) {
     console.error("Gagal menyimpan foto:", error);
     window.customAlert(
@@ -5128,7 +5495,10 @@ window.eksekusiResetFotoOlehWaliKelas = async function () {
 
   // Pengaman: hanya wali kelas, dan hanya untuk siswa di kelas binaannya
   const siswaTarget = masterDataSiswa.find((s) => s.nisn === nisnTarget);
-  if (!siswaTarget || !kelasBinaanList(currentUser).includes(siswaTarget.kelas)) {
+  if (
+    !siswaTarget ||
+    !kelasBinaanList(currentUser).includes(siswaTarget.kelas)
+  ) {
     return window.customAlert(
       "⛔ Kamu hanya bisa mereset foto siswa di kelas binaanmu.",
     );
@@ -5285,7 +5655,10 @@ async function bersihkanGlobalChatKedaluwarsa() {
   const { collection, query, where, getDocs } = window.fbFirestore;
   const tujuhHariLalu = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const expiredSnap = await getDocs(
-    query(collection(window.db, "global_chat"), where("timestamp", "<", tujuhHariLalu)),
+    query(
+      collection(window.db, "global_chat"),
+      where("timestamp", "<", tujuhHariLalu),
+    ),
   );
   if (!expiredSnap.empty) {
     await deleteDocsInChunks(expiredSnap.docs.map((d) => d.ref));
@@ -5356,7 +5729,8 @@ window.initGlobalChat = function (siswaAktif) {
           container.scrollTop = container.scrollHeight;
         } else {
           globalUnread = messages.filter(
-            (m) => m.nisn !== siswaAktif.nisn && (m.timestamp || 0) > globalSeenTs,
+            (m) =>
+              m.nisn !== siswaAktif.nisn && (m.timestamp || 0) > globalSeenTs,
           ).length;
           updateTabBadges();
         }
@@ -5415,7 +5789,8 @@ window.loadAdminGlobalChat = function () {
   container.innerHTML = `<div style="text-align: center; color: #888;">Memuat Global Chat...</div>`;
 
   try {
-    const { collection, query, limit, orderBy, onSnapshot } = window.fbFirestore;
+    const { collection, query, limit, orderBy, onSnapshot } =
+      window.fbFirestore;
     const q = query(
       collection(window.db, "global_chat"),
       orderBy("timestamp", "desc"),
@@ -5473,7 +5848,9 @@ window.adminHapusSemuaGlobalChat = async function () {
       const snapshot = await getDocs(collection(window.db, "global_chat"));
       await deleteDocsInChunks(snapshot.docs.map((d) => d.ref));
       done();
-      window.customAlert("✅ Seluruh isi Global Chat berhasil dibersihkan oleh Admin!");
+      window.customAlert(
+        "✅ Seluruh isi Global Chat berhasil dibersihkan oleh Admin!",
+      );
     } catch (err) {
       done();
       console.error("Gagal menghapus global chat:", err);

@@ -1,7 +1,7 @@
 // Service Worker — Tatib SMK Wiraguna
 // Network-first untuk file milik sendiri (selalu versi terbaru); cache hanya cadangan offline.
 // Request ke Firebase/CDN/font tidak disentuh.
-const VERSION = "3.7.0";
+const VERSION = "3.8.0";
 const CACHE = "tatib-" + VERSION;
 const SHELL = [
   "./",

@@ -38,7 +38,12 @@
 * Publikasi Tugas & PR kelas yang langsung terintegrasi dengan *Task Board* siswa.
 * **Cetak & Ekspor Laporan:** Pembuatan laporan rekapitulasi kedisiplinan siap cetak (*Print-Ready*) per kelas atau per siswa.
 
-### 5. 👑 Super Admin Panel
+### 5. 🏫 Portal Kepala Sekolah
+* Role khusus `Kepala Sekolah` (field `role` pada dokumen `teachers/{email}` di Firestore) untuk memantau tanpa menginput data.
+* **Monitoring Siswa:** melihat HP, Shield, poin harian, prestasi, dan pelanggaran siswa dari seluruh kelas (atau per kelas).
+* **Monitoring Guru:** rekap per guru semester berjalan: jumlah poin harian, prestasi, pelanggaran yang diinput, tugas yang diposting (7 hari terakhir), serta tanggal input terakhir. Guru yang belum pernah input ditandai merah.
+
+### 6. 👑 Super Admin Panel
 * **Pemutihan & Reset Data:** Kontrol penuh untuk melakukan pemutihan penuh (*Full Reset*) atau reset poin harian (*Daily Reset*) secara global, per kelas, maupun perorangan.
 * **Monitoring Chat Global:** Panel khusus bagi admin untuk memantau dan mengelola seluruh percakapan aktif siswa.
 * Reset PIN akun siswa kembali ke default (`123456`) jika mengalami kendala akses.
@@ -56,4 +61,5 @@
 ## 🔐 Hak Akses & Keamanan
 * **Siswa:** Login menggunakan NISN & PIN (Default: `123456`, dapat diubah mandiri).
 * **Guru / Petugas:** Login menggunakan kredensial email resmi yang terdaftar di sistem Firebase Auth.
+* **Kepala Sekolah:** Login seperti guru (email Firebase Auth), hanya bisa melihat Monitoring Siswa & Monitoring Guru.
 * **Super Admin:** Akses kontrol penuh atas pemeliharaan dan pemutihan data kedisiplinan sekolah.
