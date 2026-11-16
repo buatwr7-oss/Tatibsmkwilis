@@ -1,0 +1,2971 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Tatib SMK Wiraguna 🛡️</title>
+
+    <!-- CSS UTAMA -->
+    <link rel="stylesheet" href="style.css?v=3.16.0" />
+    <link rel="stylesheet" href="ambient.css?v=3.16.0" />
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+    <!-- favicon -->
+    <link rel="icon" type="image/x-icon" href="logo.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+
+    <!-- PWA / ICON HP & IOS -->
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+    <meta name="theme-color" content="#1e3c72" />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- CROPPER.JS CSS & JS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  </head>
+  <body>
+    <!-- LATAR SUASANA ALAM (pagi/siang/sore/malam) — diatur ambient.js & app.js -->
+  <div id="ambient-background" data-mood="pagi" style="position: fixed; inset: 0; z-index: -1; pointer-events: none;" aria-hidden="true">
+    <!-- Definisi Gradasi Transparan SVG untuk Awan -->
+    <svg width="0" height="0" style="position: absolute;" aria-hidden="true">
+      <defs>
+        <linearGradient id="ambientCloudGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color: var(--cloud-start); transition: stop-color 1.75s ease;" />
+          <stop offset="100%" style="stop-color: var(--cloud-end); transition: stop-color 1.75s ease;" />
+        </linearGradient>
+      </defs>
+    </svg>
+
+    <!-- 4 Lapisan Langit Bertumpuk -->
+    <div class="ambient-sky-layer sky-pagi is-active" data-sky="pagi"></div>
+    <div class="ambient-sky-layer sky-siang" data-sky="siang"></div>
+    <div class="ambient-sky-layer sky-sore" data-sky="sore"></div>
+    <div class="ambient-sky-layer sky-malam" data-sky="malam"></div>
+
+    <!-- Overlay Cahaya Suasana -->
+    <div class="ambient-atmosphere-glow glow-pagi"></div>
+    <div class="ambient-atmosphere-glow glow-siang"></div>
+    <div class="ambient-atmosphere-glow glow-sore"></div>
+    <div class="ambient-atmosphere-glow glow-malam"></div>
+
+    <!-- Bintang & Bintang Jatuh (Malam) -->
+    <div class="ambient-stars-layer" id="ambient-stars-container"></div>
+    <div id="ambient-shooting-container"></div>
+
+    <!-- Benda Langit -->
+    <div class="celestial-body sun-pagi"></div>
+
+    <div class="sun-siang-wrap">
+      <div class="sun-siang-rays"></div>
+      <div class="sun-siang-core"></div>
+    </div>
+
+    <div class="celestial-body sun-sore"></div>
+    <div class="celestial-body moon-malam"></div>
+
+    <!-- Lapisan Awan Melayang -->
+    <div class="ambient-clouds-layer">
+      <!-- Awan 1 -->
+      <div class="ambient-cloud" style="top: 12%; width: 220px; animation-duration: 78s; animation-delay: -18s;">
+        <svg viewBox="0 0 240 85" fill="none">
+          <path class="cloud-body" d="M48 72H195C216 72 232 57 232 39C232 22 218 8 200 8C196 8 192 9 188 10C179 -1 163 -4 149 2C138 -3 124 -2 114 6C101 -1 84 2 76 14C72 13 68 12 64 12C43 12 26 27 26 45C26 60 36 72 48 72Z" />
+          <path class="cloud-shade" d="M35 66H212C205 70 198 72 190 72H48C42 72 38 70 35 66Z" />
+        </svg>
+      </div>
+      <!-- Awan 2 -->
+      <div class="ambient-cloud" style="top: 24%; width: 165px; animation-duration: 95s; animation-delay: -52s;">
+        <svg viewBox="0 0 240 85" fill="none">
+          <path class="cloud-body" d="M48 72H195C216 72 232 57 232 39C232 22 218 8 200 8C196 8 192 9 188 10C179 -1 163 -4 149 2C138 -3 124 -2 114 6C101 -1 84 2 76 14C72 13 68 12 64 12C43 12 26 27 26 45C26 60 36 72 48 72Z" />
+        </svg>
+      </div>
+      <!-- Awan 3 -->
+      <div class="ambient-cloud" style="top: 18%; width: 270px; animation-duration: 112s; animation-delay: -75s;">
+        <svg viewBox="0 0 280 95" fill="none">
+          <path class="cloud-body" d="M54 82H232C256 82 274 65 274 44C274 25 258 9 238 9C233 9 228 10 223 12C212 -1 193 -4 176 3C163 -3 146 -1 134 8C119 0 99 3 89 17C84 15 79 14 73 14C48 14 28 32 28 53C28 69 39 82 54 82Z" />
+          <path class="cloud-shade" d="M38 74H252C245 79 238 82 228 82H54C47 82 42 79 38 74Z" />
+        </svg>
+      </div>
+      <!-- Awan 4 (Kecil di kejauhan) -->
+      <div class="ambient-cloud" style="top: 33%; width: 135px; animation-duration: 68s; animation-delay: -9s;">
+        <svg viewBox="0 0 240 85" fill="none">
+          <path class="cloud-body" d="M48 72H195C216 72 232 57 232 39C232 22 218 8 200 8C196 8 192 9 188 10C179 -1 163 -4 149 2C138 -3 124 -2 114 6C101 -1 84 2 76 14C72 13 68 12 64 12C43 12 26 27 26 45C26 60 36 72 48 72Z" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Siluet Burung Pagi -->
+    <div class="ambient-birds-layer">
+      <div class="bird-flock" style="top: 22%; animation-duration: 42s; animation-delay: -6s;">
+        <svg class="bird-svg" width="76" height="28" viewBox="0 0 76 28" fill="none">
+          <path d="M2 16C8 10 14 10 18 15C22 10 28 10 34 16" stroke="#2c4a63" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M36 9C40 4 45 4 48 8C51 4 56 4 60 9" stroke="#2c4a63" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M52 21C56 17 60 17 63 20C66 17 70 17 74 21" stroke="#2c4a63" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Partikel Debu Emas Sore -->
+    <div class="ambient-particles-layer" id="ambient-particles-container"></div>
+
+    <!-- Kunang-kunang Malam -->
+    <div class="ambient-fireflies-layer" id="ambient-fireflies-container"></div>
+
+    <!-- Kabut Lembut Pagi -->
+    <div class="ambient-mist-layer">
+      <div class="mist-band" style="bottom: 18px; animation-duration: 16s;"></div>
+      <div class="mist-band" style="bottom: -10px; animation-duration: 22s; animation-direction: alternate-reverse;"></div>
+    </div>
+
+    <!-- Siluet Pegunungan Berlapis di Cakrawala Bawah -->
+    <div class="ambient-horizon-hills">
+      <svg viewBox="0 0 1440 220" preserveAspectRatio="none">
+        <!-- Bukit Jauh -->
+        <path class="hill-layer-far" d="M0,125 C220,75 410,145 660,105 C910,65 1160,130 1440,88 L1440,220 L0,220 Z" />
+        <!-- Bukit Tengah -->
+        <path class="hill-layer-mid" d="M0,152 C280,115 520,178 820,136 C1080,100 1280,155 1440,132 L1440,220 L0,220 Z" />
+        <!-- Bukit Depan -->
+        <path class="hill-layer-near" d="M0,178 C340,148 640,198 980,166 C1190,146 1330,176 1440,164 L1440,220 L0,220 Z" />
+      </svg>
+    </div>
+
+    <!-- Vignette & Kabut Bawah Transparan agar Menyatu Halus dengan Halaman Web -->
+    <div class="ambient-vignette-layer"></div>
+  </div>
+
+    <!-- PRELOADER -->
+    <div id="gamePreloader" class="game-preloader hidden">
+      <div class="loading-box-game">
+        <div id="loadingTitleText" class="loading-title-game">
+          SYNCHRONIZING DATABASE...
+        </div>
+        <div class="progress-bar-bg">
+          <div id="progressBarFill" class="progress-bar-fill"></div>
+        </div>
+        <div id="loadingPercentText" class="loading-percent-game">0%</div>
+      </div>
+    </div>
+
+    <div class="particles-container">
+      <span class="particle"></span><span class="particle"></span>
+      <span class="particle"></span><span class="particle"></span>
+      <span class="particle"></span><span class="particle"></span>
+    </div>
+
+    <!-- MENU UTAMA -->
+    <div id="menuWrapper" class="menu-wrapper-container">
+      <div id="mainMenuCard" class="card text-center main-menu-card-style">
+        <img
+          src="logo.png"
+          alt="Logo SMK Wiraguna"
+          class="logo"
+          onerror="
+            this.src = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
+          "
+        />
+        <h2 style="margin-bottom: 0">TATA TERTIB</h2>
+        <h2 style="color: #1e3c72; margin-top: 0">SMK WIRAGUNA LIMBANGAN</h2>
+        <p class="subtitle-menu">
+          SISTEM MANAJEMEN KARAKTER & KEDISIPLINAN SISWA
+        </p>
+        <button onclick="bukaPortal('guru')">👨‍🏫 Portal Guru</button>
+        <button class="btn-outline" onclick="bukaPortal('siswa')">
+          👨‍🎓 Portal Siswa
+        </button>
+      </div>
+
+      <!-- KARTU BERSEBELAHAN: PAPAN QUEST & GLOBAL LEADERBOARD -->
+      <div class="quest-leaderboard-row">
+        <div class="card quest-card-btn" onclick="bukaPortal('quest')">
+          <span style="font-size: 28px; flex-shrink: 0">📜</span>
+          <div class="flex-column-overflow">
+            <h3 class="card-title-small">Papan Quest</h3>
+            <p class="card-desc-small">Panduan Poin Tata Tertib</p>
+          </div>
+        </div>
+
+        <div
+          class="card quest-card-btn"
+          style="border-color: #f1c40f"
+          onclick="bukaPortal('leaderboard')"
+        >
+          <span style="font-size: 28px; flex-shrink: 0">🏆</span>
+          <div class="flex-column-overflow">
+            <h3 class="card-title-small">Top Global Rank</h3>
+            <p class="card-desc-small">Leaderboard Siswa</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- BAGIAN BAWAH: DAFTAR TUGAS / PR AKTIF DARI GURU -->
+      <div class="card" style="width: 100%; padding: 15px; text-align: left">
+        <div class="task-board-header">
+          <h3 style="font-size: 12px; color: #1e3c72; font-weight: 700">
+            📚 Papan Tugas (PR Aktif) & Pengumuman
+          </h3>
+          <span class="task-board-sub">(Berlaku untuk ±1 Minggu)</span>
+        </div>
+        <div id="mainTaskBoardList" class="main-task-list-box">
+          <div
+            style="
+              font-size: 10.5px;
+              color: #888;
+              text-align: center;
+              padding: 10px;
+            "
+          >
+            Memuat tugas aktif dari guru...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HALAMAN LOGIN GURU -->
+    <div id="loginCard" class="card text-center hidden">
+      <img
+        src="logo.png"
+        alt="Logo SMK"
+        class="logo"
+        onerror="
+          this.src = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
+        "
+      />
+      <h2>Login Petugas</h2>
+      <form
+        id="formLogin"
+        onsubmit="
+          event.preventDefault();
+          login();
+        "
+      >
+        <div class="input-box">
+          <input
+            type="text"
+            id="namaGuruInput"
+            placeholder="Nama Guru / Email"
+            required
+            autocomplete="off"
+          />
+        </div>
+        <div class="input-box password-container">
+          <input
+            type="password"
+            id="password"
+            placeholder="Password"
+            required
+          />
+          <span id="eyeIcon" class="eye-icon" onclick="togglePassword()"
+            >👁️</span
+          >
+        </div>
+        <button type="submit">Masuk Halaman</button>
+        <button type="button" class="btn-outline" onclick="kembaliKeMenu()">
+          Kembali
+        </button>
+      </form>
+      <p id="pesanEror">Nama atau Password salah!</p>
+    </div>
+
+    <!-- PORTAL SISWA -->
+    <div id="siswaCard" class="card hidden">
+      <div class="header-app">
+        <div class="user-info">
+          <h3>Portal Siswa</h3>
+          <p>Status Karakter & Kedisiplinan</p>
+        </div>
+        <button class="btn-logout" onclick="keluarSiswa()">Keluar</button>
+      </div>
+
+      <!-- KOTAK INPUT NISN & PIN SISWA -->
+      <div id="boxInputNisnSiswa">
+        <div class="input-box">
+          <label>NOMOR NISN *</label>
+          <input
+            type="text"
+            id="nisnSiswaInput"
+            inputmode="numeric"
+            placeholder="Ketik NISN Kamu"
+            autocomplete="off"
+          />
+        </div>
+
+        <!-- Tambahan Input PIN Keamanan -->
+        <div class="input-box" style="margin-top: 10px">
+          <label>PIN KEAMANAN *</label>
+          <input
+            type="password"
+            id="pinSiswaInput"
+            inputmode="numeric"
+            maxlength="6"
+            placeholder="Ketik PIN Kamu"
+            autocomplete="off"
+            required
+          />
+        </div>
+
+        <button onclick="loginSiswaWithPin()" style="margin-top: 12px">
+          Tampilkan Status Saya
+        </button>
+      </div>
+
+      <!-- ================= APLIKASI SISWA (setelah login) ================= -->
+      <div id="hasilPoinSiswa" class="siswa-app hidden">
+        <!-- HEADER MINI (selalu tampil di semua tab) -->
+        <div class="siswa-mini-header">
+          <div
+            class="mini-avatar"
+            onclick="switchSiswaTab('profil')"
+            title="Buka profil"
+          >
+            <img
+              id="miniAvatar"
+              src="assets/foto_siswa/avatar.webp"
+              alt="Avatar"
+              onerror="
+                this.onerror = null;
+                this.src = 'assets/foto_siswa/avatar.webp';
+              "
+            />
+          </div>
+          <div class="mini-info">
+            <div id="miniSapaan" class="sapaan-judul sapaan-gelap">Halo!</div>
+            <div id="miniAfirmasi" class="sapaan-afirmasi sapaan-gelap"></div>
+          </div>
+          <button
+            type="button"
+            class="btn-logout mini-logout"
+            onclick="keluarSiswa()"
+          >
+            Keluar
+          </button>
+        </div>
+
+        <!-- BAR NAVIGASI ATAS -->
+        <nav class="siswa-tabbar">
+          <button
+            type="button"
+            class="siswa-tab-btn active"
+            data-tab="profil"
+            onclick="switchSiswaTab('profil')"
+          >
+            <span class="tab-ico">🛡️</span><span class="tab-lbl">Profil</span>
+          </button>
+          <button
+            type="button"
+            class="siswa-tab-btn"
+            data-tab="teman"
+            onclick="switchSiswaTab('teman')"
+          >
+            <span class="tab-ico">👥</span><span class="tab-lbl">Teman</span>
+            <span id="tabBadgeTeman" class="tab-badge hidden">0</span>
+          </button>
+          <button
+            type="button"
+            class="siswa-tab-btn"
+            data-tab="chat"
+            onclick="switchSiswaTab('chat')"
+          >
+            <span class="tab-ico">💬</span><span class="tab-lbl">Chat</span>
+            <span id="tabBadgeChat" class="tab-badge hidden">0</span>
+          </button>
+          <button
+            type="button"
+            class="siswa-tab-btn"
+            data-tab="global"
+            onclick="switchSiswaTab('global')"
+          >
+            <span class="tab-ico">🌍</span><span class="tab-lbl">Global</span>
+            <span id="tabBadgeGlobal" class="tab-badge hidden">0</span>
+          </button>
+          <button
+            type="button"
+            class="siswa-tab-btn"
+            data-tab="game"
+            onclick="switchSiswaTab('game')"
+          >
+            <span class="tab-ico">🎮</span><span class="tab-lbl">Game</span>
+          </button>
+        </nav>
+
+        <div class="siswa-panels">
+          <!-- ============ TAB 1: PROFIL ============ -->
+          <section id="siswaTabProfil" class="siswa-panel">
+            <div
+              id="txtPeriodeAktif"
+              style="
+                text-align: center;
+                font-size: 10.5px;
+                color: #f1c40f;
+                background: #1a2536;
+                border: 1px solid #334155;
+                border-radius: 8px;
+                padding: 6px 10px;
+                margin-bottom: 10px;
+              "
+            >
+              📅 Memuat...
+            </div>
+            <div class="rpg-card-container">
+              <div class="rpg-top-section">
+                <div class="rpg-avatar-wrapper-outer">
+                  <div
+                    class="rpg-avatar-box"
+                    onclick="handleAvatarClick()"
+                    style="cursor: pointer"
+                    title="Ketuk untuk melihat atau mengganti foto profil"
+                  >
+                    <img
+                      id="avatarSiswaMain"
+                      src="assets/foto_siswa/avatar.webp"
+                      alt="Avatar"
+                      style="
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        border-radius: 4px;
+                        cursor: pointer;
+                      "
+                      onerror="
+                        this.onerror = null;
+                        this.src = 'assets/foto_siswa/avatar.webp';
+                      "
+                    />
+                  </div>
+                  <div id="txtDailyScoreTextOnly" class="rpg-daily-score-badge">
+                    ⭐ 0 Pts
+                  </div>
+                </div>
+                <div class="rpg-info-box">
+                  <div id="txtNamaSiswaHasil" class="rpg-name">-</div>
+                  <div id="txtKelasSiswaHasil" class="rpg-class-lvl">-</div>
+                  <div id="txtTierRankContainer" style="margin-top: 1px"></div>
+                </div>
+              </div>
+
+              <div class="rpg-bar-group">
+                <div class="rpg-bar-row">
+                  <div class="rpg-bar-meta">
+                    <span style="color: #2ecc71">❤️ HEALTH POINT (HP)</span>
+                    <span id="txtHpPercent" style="color: #2ecc71"
+                      >200/200</span
+                    >
+                  </div>
+                  <div class="rpg-bar-outer">
+                    <div
+                      id="barHpFill"
+                      class="rpg-hp-fill"
+                      style="width: 100%"
+                    ></div>
+                  </div>
+                </div>
+                <div class="rpg-bar-row" style="margin-top: 4px">
+                  <div class="rpg-bar-meta">
+                    <span style="color: #3498db">🛡️ SHIELD POINT (BONUS)</span>
+                    <span id="txtShieldPercent" style="color: #3498db"
+                      >0 Pts</span
+                    >
+                  </div>
+                  <div class="rpg-bar-outer">
+                    <div
+                      id="barShieldFill"
+                      class="rpg-shield-fill"
+                      style="width: 0%"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="rpgStatusBanner" class="rpg-status-banner">
+                <strong id="txtStatusKondisi">STATUS: NORMAL</strong>
+                <span id="txtStatusPenanganan" style="color: #ecf0f1"
+                  >Tidak ada catatan pelanggaran.</span
+                >
+              </div>
+
+              <div class="rpg-stats-mini">
+                <div class="rpg-stat-item">
+                  <span class="rpg-stat-number-green" id="txtCountPrestasi"
+                    >0 Pts</span
+                  >
+                  <span class="rpg-stat-label">TOTAL PRESTASI</span>
+                </div>
+                <div class="rpg-stat-item">
+                  <span class="rpg-stat-number-red" id="txtCountPelanggaran"
+                    >0 Pts</span
+                  >
+                  <span class="rpg-stat-label">TOTAL PELANGGARAN</span>
+                </div>
+              </div>
+
+              <div class="history-container-main">
+                <div class="history-title-main">
+                  📜 Riwayat Kejadian & Poin:
+                </div>
+                <div id="historyListSiswa" class="history-list-box"></div>
+              </div>
+
+              <button
+                type="button"
+                class="mini-btn"
+                style="width: 100%; margin-top: 10px; padding: 8px"
+                onclick="lihatArsipKelas()"
+              >
+                📜 Riwayat Kelas/Semester Sebelumnya
+              </button>
+            </div>
+
+            <!-- KARTU GANTI PIN SISWA -->
+            <div id="cardGantiPin" class="rpg-card-container pin-card">
+              <div class="pin-card-title">🔐 Keamanan Akun (Ganti PIN)</div>
+
+              <div class="input-box" style="margin-bottom: 8px">
+                <label class="pin-label">PIN LAMA</label>
+                <input
+                  type="password"
+                  id="oldPinInput"
+                  class="pin-input"
+                  placeholder="Masukkan PIN lama"
+                  maxlength="6"
+                  inputmode="numeric"
+                  autocomplete="off"
+                />
+              </div>
+
+              <div class="input-box" style="margin-bottom: 12px">
+                <label class="pin-label">PIN BARU</label>
+                <input
+                  type="password"
+                  id="newPinInput"
+                  class="pin-input"
+                  placeholder="Masukkan PIN baru (4-6 angka)"
+                  maxlength="6"
+                  inputmode="numeric"
+                  autocomplete="off"
+                />
+              </div>
+
+              <button
+                type="button"
+                onclick="gantiPinSiswa()"
+                class="pin-save-btn"
+              >
+                Simpan PIN Baru 🔑
+              </button>
+            </div>
+          </section>
+
+          <!-- ============ TAB 2: TEMAN ============ -->
+          <section id="siswaTabTeman" class="siswa-panel hidden">
+            <div class="rpg-card-container">
+              <div class="pin-card-title">➕ Tambah Teman</div>
+              <div class="friend-add-row">
+                <input
+                  type="text"
+                  id="inputNisnTeman"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  placeholder="Masukkan NISN teman..."
+                />
+                <button type="button" onclick="tambahTeman()">Invite</button>
+              </div>
+              <div id="jumlahTemanTxt" class="friend-count">0 Teman</div>
+              <div id="containerUndanganMasuk"></div>
+              <div id="listTemanContainer" class="friend-list"></div>
+            </div>
+          </section>
+
+          <!-- ============ TAB 3: CHAT PRIBADI ============ -->
+          <section id="siswaTabChat" class="siswa-panel panel-chat hidden">
+            <!-- Daftar percakapan (seperti WhatsApp) -->
+            <div id="chatListView" class="chat-view">
+              <div class="chat-list-title">💬 Percakapan</div>
+              <div id="chatListContainer" class="chat-list"></div>
+            </div>
+
+            <!-- Ruang obrolan -->
+            <div id="chatRoomView" class="chat-view hidden">
+              <div class="chat-room-header">
+                <button
+                  type="button"
+                  class="chat-back-btn"
+                  onclick="tutupChatTeman()"
+                  title="Kembali ke daftar percakapan"
+                >
+                  ←
+                </button>
+                <div class="chat-room-avatar">
+                  <img
+                    id="chatRoomAvatar"
+                    src="assets/foto_siswa/avatar.webp"
+                    alt=""
+                    onerror="
+                      this.onerror = null;
+                      this.src = 'assets/foto_siswa/avatar.webp';
+                    "
+                  />
+                </div>
+                <div class="chat-room-info">
+                  <div id="chatTitleNama">Nama Teman</div>
+                  <div id="chatSubStatus">Offline</div>
+                </div>
+              </div>
+
+              <div id="chatMessageContainer" class="chat-messages"></div>
+
+              <form
+                id="formKirimChat"
+                class="chat-form-bar"
+                onsubmit="
+                  event.preventDefault();
+                  kirimPesanChat();
+                "
+              >
+                <input
+                  type="text"
+                  id="inputPesanChat"
+                  maxlength="250"
+                  placeholder="Ketik pesan..."
+                  autocomplete="off"
+                  required
+                />
+                <button type="submit">Kirim 🚀</button>
+              </form>
+            </div>
+          </section>
+
+          <!-- ============ TAB 4: GLOBAL CHAT ============ -->
+          <section id="siswaTabGlobal" class="siswa-panel panel-chat hidden">
+            <div class="global-online-bar">
+              <div class="global-online-head">
+                <span class="online-pulse"></span>
+                <span id="globalOnlineCount">0 siswa online</span>
+              </div>
+              <div id="globalOnlineList" class="global-online-list"></div>
+            </div>
+
+            <div id="globalChatContainer" class="chat-messages">
+              <div class="empty-note">Memuat obrolan global...</div>
+            </div>
+
+            <div class="chat-form-bar">
+              <input
+                type="text"
+                id="inputGlobalChat"
+                maxlength="250"
+                autocomplete="off"
+                placeholder="Ketik pesan ke seluruh warga sekolah..."
+              />
+              <button type="button" id="btnKirimGlobalChat">Kirim</button>
+            </div>
+          </section>
+
+          <!-- ============ TAB 5: GAME ============ -->
+          <section id="siswaTabGame" class="siswa-panel hidden">
+            <div class="game-head">
+              <div class="game-head-ico">🎮</div>
+              <div>
+                <div class="game-head-judul">Arena Game</div>
+                <div class="game-head-sub">Tantang siswa lain yang sedang online. Hanya untuk seru-seruan, tidak mengubah poin.</div>
+              </div>
+            </div>
+            <div id="gameTutupInfo" class="game-tutup hidden">🚧 Game sedang ditutup sementara.</div>
+            <div id="gameDaftar" class="game-daftar">
+              <div class="game-kartu">
+                <div class="game-banner gb-ttt"><span>⚔️</span><span class="gb-vs">VS</span><span>🛡️</span></div>
+                <div class="game-isi">
+                  <div class="game-nama">Duel Arena: Tic-Tac-Toe</div>
+                  <div class="game-ket">Pedang vs Perisai. Susun 3 simbol sejajar untuk menang.</div>
+                  <div class="game-tag-row"><span class="game-tag">👥 1 vs 1</span><span class="game-tag">🌐 Online</span><span class="game-tag">⏱️ ±2 menit</span></div>
+                  <button type="button" class="game-main" onclick="bukaGame('tictactoe')">▶ MAIN SEKARANG</button>
+                </div>
+              </div>
+              <div class="game-kartu game-segera">
+                <div class="game-banner gb-soon"><span>❓</span></div>
+                <div class="game-isi">
+                  <div class="game-nama">Game berikutnya</div>
+                  <div class="game-ket">Segera hadir…</div>
+                  <button type="button" class="game-main" disabled>🔒 SEGERA</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+
+        </div>
+      </div>
+
+      <!-- ================= TRANSKRIP ALUMNI (read-only) ================= -->
+      <div id="alumniTranscriptView" class="siswa-app hidden">
+        <div class="siswa-mini-header">
+          <div class="mini-avatar">
+            <img
+              id="alumniAvatar"
+              src="assets/foto_siswa/avatar.webp"
+              alt="Avatar"
+              onerror="
+                this.onerror = null;
+                this.src = 'assets/foto_siswa/avatar.webp';
+              "
+            />
+          </div>
+          <div class="mini-info">
+            <div id="alumniNama" class="mini-nama">-</div>
+            <div class="mini-chips">
+              <span class="mini-kelas" style="background: #f1c40f; color: #111"
+                >🎓 ALUMNI</span
+              >
+              <span id="alumniNisn" class="mini-chip">NISN: -</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="btn-logout mini-logout"
+            onclick="keluarSiswa()"
+          >
+            Keluar
+          </button>
+        </div>
+
+        <div class="siswa-panels">
+          <section class="siswa-panel">
+            <div class="rpg-card-container">
+              <div
+                style="
+                  text-align: center;
+                  font-size: 11px;
+                  color: #94a3b8;
+                  line-height: 1.6;
+                  margin-bottom: 10px;
+                "
+              >
+                📜 Transkrip Akhir Rekam Jejak Kedisiplinan<br />
+                Status: <strong style="color: #f1c40f">ALUMNI (Lulus)</strong> —
+                akun tidak dapat lagi memakai Chat, Pertemanan, atau mengubah
+                profil.
+              </div>
+              <div class="rpg-stats-mini">
+                <div class="rpg-stat-item">
+                  <span class="rpg-stat-number-green" id="alumniTotalPrestasi"
+                    >0 Pts</span
+                  >
+                  <span class="rpg-stat-label">TOTAL PRESTASI</span>
+                </div>
+                <div class="rpg-stat-item">
+                  <span class="rpg-stat-number-red" id="alumniTotalPelanggaran"
+                    >0 Pts</span
+                  >
+                  <span class="rpg-stat-label">TOTAL PELANGGARAN</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="rpg-card-container">
+              <label
+                style="
+                  display: block;
+                  font-size: 11px;
+                  color: #f1c40f;
+                  font-weight: bold;
+                  margin-bottom: 6px;
+                "
+                >📂 PILIH KELAS / PERIODE</label
+              >
+              <select
+                id="alumniPeriodeSelect"
+                onchange="window.tampilkanPeriodeAlumniTerpilih()"
+              ></select>
+            </div>
+            <div id="alumniPeriodeDetail"></div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- HALAMAN ENTRY GURU -->
+    <div id="entryCard" class="card hidden" style="max-width: 520px">
+      <div class="header-app">
+        <div class="user-info sapaan-wrap">
+          <div id="sapaanGuruJudul" class="sapaan-judul sapaan-terang">
+            Halo!
+          </div>
+          <div id="sapaanGuruAfirmasi" class="sapaan-afirmasi sapaan-terang"></div>
+          <!-- Nama & jabatan disembunyikan (masih dipakai fitur lain, mis. laporan cetak) -->
+          <span id="txtNamaGuru" class="hidden">Nama Guru</span>
+          <span id="txtRoleGuru" class="hidden">Role Guru</span>
+        </div>
+        <button class="btn-logout" onclick="logout()">Keluar</button>
+      </div>
+
+      <!-- NAVIGASI TAB GURU -->
+      <div class="admin-nav" style="margin-bottom: 15px">
+        <button
+          id="navBtnProfilGuru"
+          onclick="switchTeacherTab('profil')"
+          style="background: #1e3c72; font-size: 11px; padding: 8px; flex: 1"
+        >
+          👤 Profil
+        </button>
+        <button
+          id="navBtnInputPoin"
+          onclick="switchTeacherTab('poin')"
+          class="btn-outline"
+          style="font-size: 11px; padding: 8px; flex: 1"
+        >
+          ⭐<br />Input Poin
+        </button>
+        <button
+          id="navBtnPostTugas"
+          onclick="switchTeacherTab('posting')"
+          class="btn-outline"
+          style="font-size: 11px; padding: 8px; flex: 1"
+        >
+          📢<br />Pemberian Tugas
+        </button>
+        <button
+          id="navBtnMonitoring"
+          onclick="switchTeacherTab('monitoring')"
+          class="btn-outline"
+          style="font-size: 11px; padding: 8px; flex: 1; display: none"
+        >
+          📋<br />Monitoring Siswa
+        </button>
+        <button
+          id="navBtnMonitoringGuru"
+          onclick="switchTeacherTab('monitoringGuru')"
+          class="btn-outline"
+          style="font-size: 11px; padding: 8px; flex: 1; display: none"
+        >
+          👨‍🏫<br />Monitoring Guru
+        </button>
+        <button
+          id="navBtnOnline"
+          onclick="switchTeacherTab('online')"
+          class="btn-outline"
+          style="font-size: 11px; padding: 8px; flex: 1"
+        >
+          🟢<br />Online
+        </button>
+      </div>
+
+      <!-- TAB BARU: PROFIL GURU -->
+      <div id="teacherTabProfil" class="admin-tab-content">
+        <div
+          style="
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            min-height: 112px;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(
+              135deg,
+              #1e3c72 0%,
+              #2a5298 55%,
+              #f1c40f 100%
+            );
+          "
+        >
+          <!-- Banner (kalau guru sudah mengatur banner sendiri, gambar ini
+               menutupi penuh kartu; kalau belum, gradien di atas yang tampil) -->
+          <img
+            id="bannerGuruMain"
+            src=""
+            alt=""
+            style="
+              display: none;
+              position: absolute;
+              inset: 0;
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+            "
+            onerror="
+              this.style.display = 'none';
+              this.removeAttribute('src');
+            "
+          />
+          <!-- Lapisan gelap transparan di atas banner supaya nama & jabatan
+               tetap mudah dibaca apapun foto yang dipilih guru -->
+          <div
+            style="
+              position: absolute;
+              inset: 0;
+              background: linear-gradient(
+                180deg,
+                rgba(10, 17, 32, 0.55) 0%,
+                rgba(10, 17, 32, 0.82) 100%
+              );
+            "
+          ></div>
+
+          <button
+            type="button"
+            onclick="bukaModalGantiBannerGuru()"
+            title="Ketuk untuk mengganti banner profil"
+            style="
+              position: absolute;
+              z-index: 3;
+              top: 7px;
+              right: 7px;
+              width: auto;
+              margin: 0;
+              padding: 4px 9px;
+              font-size: 9px;
+              border-radius: 6px;
+              background: rgba(15, 23, 42, 0.55);
+              border: 1px solid rgba(255, 255, 255, 0.35);
+              color: #fff;
+              cursor: pointer;
+            "
+          >
+            🖼️ Banner
+          </button>
+
+          <div
+            style="
+              position: relative;
+              z-index: 2;
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              width: 100%;
+              padding: 14px;
+            "
+          >
+            <div
+              class="rpg-avatar-box"
+              onclick="bukaModalGantiFotoGuru()"
+              style="
+                width: 64px;
+                height: 64px;
+                cursor: pointer;
+                border-radius: 10px;
+                overflow: hidden;
+                border: 2px solid #f1c40f;
+                flex-shrink: 0;
+                background: #0f172a;
+              "
+              title="Ketuk untuk mengganti foto profil"
+            >
+              <img
+                id="avatarGuruMain"
+                src="assets/foto_siswa/avatar.webp"
+                alt="Foto Profil Guru"
+                style="width: 100%; height: 100%; object-fit: cover"
+                onerror="
+                  this.onerror = null;
+                  this.src = 'assets/foto_siswa/avatar.webp';
+                "
+              />
+            </div>
+            <div style="flex: 1; min-width: 0">
+              <div
+                id="txtNamaGuruProfil"
+                style="
+                  color: #fff;
+                  font-weight: bold;
+                  font-size: 14px;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+                  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+                "
+              >
+                -
+              </div>
+              <div
+                id="badgeJabatanGuruProfil"
+                style="
+                  display: inline-block;
+                  margin-top: 4px;
+                  padding: 2px 8px;
+                  border-radius: 5px;
+                  font-size: 9px;
+                  font-weight: 700;
+                  background: rgba(241, 196, 15, 0.92);
+                  color: #1e293b;
+                "
+              >
+                -
+              </div>
+              <div
+                id="rowNipGuruProfil"
+                class="hidden"
+                style="
+                  color: #e2e8f0;
+                  font-size: 9.5px;
+                  margin-top: 5px;
+                  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+                "
+              >
+                🆔 NIP: <span id="txtNipGuruProfil">-</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="rowStatGuruProfil"
+          style="display: flex; gap: 8px; margin-top: 10px"
+        >
+          <div class="rpg-card-container guru-stat-box">
+            <div
+              id="cntGuruHarian"
+              class="guru-stat-num"
+              style="color: #f1c40f"
+            >
+              0
+            </div>
+            <div class="guru-stat-lbl">POIN HARIAN</div>
+          </div>
+          <div class="rpg-card-container guru-stat-box">
+            <div
+              id="cntGuruPrestasi"
+              class="guru-stat-num"
+              style="color: #2ecc71"
+            >
+              0
+            </div>
+            <div class="guru-stat-lbl">PRESTASI</div>
+          </div>
+          <div class="rpg-card-container guru-stat-box">
+            <div
+              id="cntGuruPelanggaran"
+              class="guru-stat-num"
+              style="color: #e74c3c"
+            >
+              0
+            </div>
+            <div class="guru-stat-lbl">PELANGGARAN</div>
+          </div>
+        </div>
+
+        <!-- RINGKASAN SEKOLAH (khusus kepala sekolah) -->
+        <div id="boxRingkasanKepsek" class="hidden">
+          <div style="display: flex; gap: 8px; margin-top: 10px">
+            <div class="rpg-card-container guru-stat-box">
+              <div
+                id="kepsekTotalGuru"
+                class="guru-stat-num"
+                style="color: #f1c40f"
+              >
+                -
+              </div>
+              <div class="guru-stat-lbl">JUMLAH GURU</div>
+            </div>
+            <div class="rpg-card-container guru-stat-box">
+              <div
+                id="kepsekTotalSiswa"
+                class="guru-stat-num"
+                style="color: #2ecc71"
+              >
+                -
+              </div>
+              <div class="guru-stat-lbl">JUMLAH SISWA</div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="boxRiwayatGuruProfil"
+          class="rpg-card-container"
+          style="margin-top: 10px"
+        >
+          <div class="guru-riwayat-title">
+            📜 Riwayat Poin yang Kamu Berikan
+          </div>
+          <div class="guru-riwayat-tabs">
+            <button
+              type="button"
+              id="tabRiwayatTugasHarian"
+              class="guru-riwayat-tab active"
+              onclick="switchRiwayatGuruTab('TugasHarian')"
+            >
+              ⭐ Poin Harian
+            </button>
+            <button
+              type="button"
+              id="tabRiwayatPrestasi"
+              class="guru-riwayat-tab"
+              onclick="switchRiwayatGuruTab('Prestasi')"
+            >
+              🏆 Prestasi
+            </button>
+            <button
+              type="button"
+              id="tabRiwayatPelanggaran"
+              class="guru-riwayat-tab"
+              onclick="switchRiwayatGuruTab('Pelanggaran')"
+            >
+              ⚠️ Pelanggaran
+            </button>
+          </div>
+          <div id="riwayatInputGuruList" class="guru-riwayat-list">
+            <div
+              style="
+                font-size: 10px;
+                color: #888;
+                text-align: center;
+                padding: 10px;
+              "
+            >
+              Memuat riwayat...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 1: INPUT POIN TUGAS HARIAN -->
+      <div id="teacherTabPoin" class="admin-tab-content hidden">
+        <form
+          id="formEntry"
+          onsubmit="
+            event.preventDefault();
+            konfirmasiSimpan();
+          "
+        >
+          <div class="row-group">
+            <div class="input-box" style="flex: 1.2">
+              <label>HARI *</label>
+              <select id="hari" required>
+                <option value="Senin">Senin</option>
+                <option value="Selasa">Selasa</option>
+                <option value="Rabu">Rabu</option>
+                <option value="Kamis">Kamis</option>
+                <option value="Jum'at">Jum'at</option>
+                <option value="Sabtu">Sabtu</option>
+                <option value="Minggu">Minggu</option>
+              </select>
+            </div>
+            <div class="input-box" style="flex: 1.5">
+              <label>TANGGAL *</label>
+              <input type="date" id="tanggal" required />
+            </div>
+            <div class="input-box" style="flex: 1.1">
+              <label>JAM *</label>
+              <input type="time" id="jam" required />
+            </div>
+          </div>
+
+          <div class="row-group">
+            <div class="input-box">
+              <label>TEMPAT *</label>
+              <select id="tempat" required>
+                <option value="">-- Lokasi --</option>
+                <option value="Ruang Kelas">Ruang Kelas</option>
+                <option value="Laboratorium">Laboratorium</option>
+                <option value="Online / Daring">Online / Daring</option>
+                <option value="Lainnya">Lainnya</option>
+              </select>
+            </div>
+            <div class="input-box">
+              <label>KATEGORI *</label>
+              <select id="kategori" onchange="handleKategoriChange()" required>
+                <option value="Prestasi">🏆 Prestasi (+HP/Shield)</option>
+                <option value="Pelanggaran">⚠️ Pelanggaran (-HP)</option>
+                <option value="TugasHarian" selected>
+                  ⭐ Poin Harian / Tugas Kelas (+XP)
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div id="boxSubKategori" class="input-box hidden">
+            <label>TINGKAT PELANGGARAN *</label>
+            <select id="subKategori" onchange="renderOpsiPoin()"></select>
+          </div>
+
+          <div class="input-box">
+            <label>KELAS *</label>
+            <select id="kelas" onchange="updateEntrySiswaList()" required>
+              <option value="">-- Pilih Kelas --</option>
+              <option value="10 SMK">10 SMK</option>
+              <option value="11 SMK">11 SMK</option>
+              <option value="12 SMK">12 SMK</option>
+            </select>
+          </div>
+
+          <div class="input-box">
+            <div class="target-siswa-header-row">
+              <label style="margin: 0">TARGET SISWA *</label>
+              <span class="target-mode-toggle" onclick="toggleModeSiswa()">
+                🔄 <span id="txtModeSiswa">Mode: Banyak Siswa</span>
+              </span>
+            </div>
+            <select id="selectSingleSiswa" class="hidden">
+              <option value="">-- Pilih Kelas Dulu --</option>
+            </select>
+            <div id="boxMultiSiswa" class="checkbox-container">
+              <span style="font-size: 11px; color: #888"
+                >Pilih kelas dulu...</span
+              >
+            </div>
+          </div>
+
+          <div class="input-box" style="margin-top: 10px">
+            <label id="lblDetailOpsi">DETAIL AKTIVITAS HARIAN / TUGAS *</label>
+            <div id="containerOpsi" class="options-container"></div>
+          </div>
+          <button type="submit" id="btnSubmit">Proses Simpan Poin Tugas</button>
+        </form>
+      </div>
+
+      <!-- TAB: MONITORING SISWA (wali kelas & kepala sekolah) -->
+      <div id="teacherTabMonitoring" class="admin-tab-content hidden">
+        <div class="rpg-card-container">
+          <div class="guru-riwayat-title">
+            📋 Monitoring Siswa
+            <span id="lblMonitorKelas" class="monitor-kelas-lbl"></span>
+          </div>
+          <select
+            id="monitorKelasSelect"
+            class="monitor-select hidden"
+            onchange="renderMonitoringSiswa()"
+          ></select>
+          <div id="monitorInfo" class="monitor-info"></div>
+          <div id="monitorTabel" class="monitor-wrap"></div>
+          <div class="monitor-legend">
+            ❤️ HP • 🛡️ Shield • ⭐ Poin Harian • 🏆 Prestasi • ⚠️ Pelanggaran
+          </div>
+          <button
+            type="button"
+            id="btnMuatUlangMonitor"
+            class="monitor-refresh"
+            onclick="muatUlangMonitoring()"
+          >
+            🔄 Muat Ulang Data
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB: ONLINE SEKARANG (semua guru: siswa aktif; kepala sekolah: + guru aktif) -->
+      <div id="teacherTabOnline" class="admin-tab-content hidden">
+        <div class="rpg-card-container">
+          <div class="guru-riwayat-title">🟢 Online Sekarang</div>
+          <div class="global-online-head" style="margin: 6px 0 4px">
+            <span class="online-pulse"></span>
+            <span id="onlineSiswaCount">0 siswa online</span>
+          </div>
+          <div id="onlineSiswaList"></div>
+          <div id="onlineGuruWrap" class="hidden" style="margin-top: 14px">
+            <div class="global-online-head" style="margin-bottom: 4px">
+              <span class="online-pulse"></span>
+              <span id="onlineGuruCount">0 guru online</span>
+            </div>
+            <div id="onlineGuruList"></div>
+          </div>
+          <div class="monitor-legend">
+            Online = sedang membuka aplikasi dan aktif (bukan bukti kehadiran di
+            sekolah). Daftar diperbarui otomatis.
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: MONITORING GURU (khusus kepala sekolah) -->
+      <div id="teacherTabMonitoringGuru" class="admin-tab-content hidden">
+        <div class="rpg-card-container">
+          <div class="guru-riwayat-title">👨‍🏫 Monitoring Guru</div>
+          <div id="monGuruInfo" class="monitor-info"></div>
+          <div id="monGuruTabel" class="monitor-wrap"></div>
+          <div class="monitor-legend">
+            ⭐ Poin Harian • 🏆 Prestasi • ⚠️ Pelanggaran • 📢 Tugas (7 hari) •
+            Terakhir = tanggal input terakhir
+          </div>
+          <button
+            type="button"
+            id="btnMuatUlangMonGuru"
+            class="monitor-refresh"
+            onclick="renderMonitoringGuru(true)"
+          >
+            🔄 Muat Ulang Data
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 2: POSTING, KELOLA TUGAS & RESET FOTO WALI KELAS -->
+      <div id="teacherTabPosting" class="admin-tab-content hidden">
+        <form
+          id="formPostTugas"
+          onsubmit="
+            event.preventDefault();
+            simpanPengumumanTugas();
+          "
+        >
+          <div class="input-box">
+            <label>TARGET KELAS *</label>
+            <select id="postKelasTarget" required>
+              <option value="Semua Kelas">Semua Kelas (Global)</option>
+              <option value="10 SMK">Khusus Kelas 10 SMK</option>
+              <option value="11 SMK">Khusus Kelas 11 SMK</option>
+              <option value="12 SMK">Khusus Kelas 12 SMK</option>
+            </select>
+          </div>
+          <div class="input-box">
+            <label>JUDUL TUGAS / MATA PELAJARAN *</label>
+            <input
+              type="text"
+              id="postJudul"
+              placeholder="Contoh: PR Matematika Bab Integral / Tugas PBO"
+              required
+              autocomplete="off"
+            />
+          </div>
+          <div class="input-box">
+            <label>INSTRUKSI / KETERANGAN TUGAS *</label>
+            <textarea
+              id="postIsi"
+              rows="3"
+              placeholder="Tuliskan detail instruksi tugas di sini..."
+              required
+              style="resize: none"
+            ></textarea>
+          </div>
+          <button type="submit" style="background: #27ae60">
+            📢 Publikasikan ke Halaman Utama
+          </button>
+        </form>
+
+        <div class="teacher-task-manage-box">
+          <h4
+            style="
+              font-size: 11.5px;
+              color: #1e3c72;
+              margin-bottom: 8px;
+              font-weight: 700;
+            "
+          >
+            📋 Kelola & Hapus Tugas Aktif:
+          </h4>
+          <div id="teacherTaskList" class="teacher-task-list-box">
+            <div
+              style="
+                font-size: 10px;
+                color: #888;
+                text-align: center;
+                padding: 10px;
+              "
+            >
+              Memuat daftar tugas...
+            </div>
+          </div>
+        </div>
+
+        <!-- KOTAK RESET FOTO PROFIL SISWA OLEH WALI KELAS -->
+        <div
+          id="boxResetFotoWaliKelas"
+          class="rpg-card-container hidden"
+          style="
+            margin-top: 15px;
+            border-color: #d97706;
+            background: #111823;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1.5px solid #d97706;
+          "
+        >
+          <h3 style="color: #f59e0b; font-size: 12px; margin-bottom: 6px">
+            🔄 Reset Foto Profil Siswa (Wali Kelas)
+          </h3>
+          <p
+            style="
+              font-size: 10px;
+              color: #cbd5e1;
+              margin-bottom: 10px;
+              line-height: 1.4;
+            "
+          >
+            Pilih kelas binaanmu, lalu pilih siswa yang ingin di-reset foto
+            profilnya agar bisa mengganti foto mandiri kembali.
+          </p>
+
+          <div style="margin-bottom: 8px; text-align: left">
+            <label
+              style="
+                font-size: 10px;
+                color: #f1c40f;
+                display: block;
+                margin-bottom: 3px;
+              "
+              >Pilih Kelas:</label
+            >
+            <select
+              id="waliKelasSelectKelas"
+              class="rpg-input"
+              onchange="handleWaliKelasPilihKelas()"
+            >
+              <option value="">-- Pilih Kelas --</option>
+              <option value="10 SMK">10 SMK</option>
+              <option value="11 SMK">11 SMK</option>
+              <option value="12 SMK">12 SMK</option>
+            </select>
+          </div>
+
+          <div style="margin-bottom: 12px; text-align: left">
+            <label
+              style="
+                font-size: 10px;
+                color: #f1c40f;
+                display: block;
+                margin-bottom: 3px;
+              "
+              >Pilih Nama Siswa:</label
+            >
+            <select id="waliKelasSelectSiswa" class="rpg-input">
+              <option value="">-- Pilih siswa setelah pilih kelas --</option>
+            </select>
+          </div>
+
+          <button
+            type="button"
+            onclick="eksekusiResetFotoOlehWaliKelas()"
+            style="
+              width: 100%;
+              padding: 8px;
+              background: linear-gradient(135deg, #d97706, #b45309);
+              color: #fff;
+              border: none;
+              border-radius: 6px;
+              font-weight: bold;
+              cursor: pointer;
+              font-size: 11px;
+            "
+          >
+            🔄 Eksekusi Reset Foto Siswa Terpilih
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HALAMAN SUPER ADMIN -->
+    <div id="adminCard" class="card hidden" style="max-width: 560px">
+      <div class="header-app">
+        <div class="user-info">
+          <h3 id="txtNamaAdmin">Ahmad Qabil</h3>
+          <p>Super Admin / BK</p>
+        </div>
+        <button class="btn-logout" onclick="logout()">Keluar</button>
+      </div>
+
+      <!-- NAVIGASI TAB ADMIN -->
+      <div class="admin-nav">
+        <button
+          id="navBtnRekap"
+          onclick="switchAdminTab('rekap')"
+          style="background: #1e3c72"
+        >
+          📊 Rekap
+        </button>
+        <button
+          id="navBtnKontrol"
+          onclick="switchAdminTab('kontrol')"
+          class="btn-outline"
+        >
+          👑 Kontrol
+        </button>
+        <button
+          id="navBtnAkademik"
+          onclick="switchAdminTab('akademik')"
+          class="btn-outline"
+        >
+          🎓 Akademik
+        </button>
+        <button
+          id="navBtnCetak"
+          onclick="switchAdminTab('cetak')"
+          class="btn-outline"
+        >
+          🖨️ Cetak
+        </button>
+        <button
+          id="navBtnChatAdmin"
+          onclick="switchAdminTab('chat')"
+          class="btn-outline"
+        >
+          🛡️ Chat
+        </button>
+        <button
+          id="navBtnLaporan"
+          onclick="switchAdminTab('laporan')"
+          class="btn-outline"
+          style="position: relative"
+        >
+          🐞 Laporan
+          <span id="navBtnLaporanBadge" class="admin-nav-badge hidden">0</span>
+        </button>
+        <button
+          id="navBtnPratinjau"
+          onclick="switchAdminTab('pratinjau')"
+          class="btn-outline"
+        >
+          🎨 Pratinjau
+        </button>
+      </div>
+
+      <!-- TAB 1: REKAPITULASI -->
+      <div id="adminTabRekap" class="admin-tab-content">
+        <!-- Ringkasan: ketuk kartu untuk menyaring tabel -->
+        <div id="rkRingkas" class="rk-ringkas">
+          <button type="button" class="rk-kartu" data-f="semua" onclick="rekapFilterKartu('semua')">
+            <span class="rk-angka" id="rkTotal">0</span><span class="rk-label">Total Siswa</span>
+          </button>
+          <button type="button" class="rk-kartu rk-hijau" data-f="online" onclick="rekapFilterKartu('online')">
+            <span class="rk-angka" id="rkOnline">–</span><span class="rk-label">🟢 Online</span>
+          </button>
+          <button type="button" class="rk-kartu rk-merah" data-f="hpkritis" onclick="rekapFilterKartu('hpkritis')">
+            <span class="rk-angka" id="rkKritis">0</span><span class="rk-label">❤️ HP Kritis</span>
+          </button>
+          <button type="button" class="rk-kartu rk-oranye" data-f="pembinaan" onclick="rekapFilterKartu('pembinaan')">
+            <span class="rk-angka" id="rkBina">0</span><span class="rk-label">⚖️ Perlu BK</span>
+          </button>
+          <button type="button" class="rk-kartu rk-biru" data-f="pinbawaan" onclick="rekapFilterKartu('pinbawaan')">
+            <span class="rk-angka" id="rkPin">0</span><span class="rk-label">🔑 PIN Bawaan</span>
+          </button>
+        </div>
+
+        <div class="admin-chart-box">
+          <canvas id="statistikChart" style="max-height: 160px; width: 100%"></canvas>
+        </div>
+
+        <div class="rk-kontrol">
+          <input id="rekapCari" type="search" placeholder="🔍 Cari nama atau NISN..." oninput="rekapCariTunda()" autocomplete="off" />
+          <select id="filterKelasRekap" onchange="saringRekap()" class="admin-filter-select">
+            <option value="SEMUA">Semua Kelas</option>
+            <option value="10 SMK">10 SMK</option>
+            <option value="11 SMK">11 SMK</option>
+            <option value="12 SMK">12 SMK</option>
+          </select>
+          <select id="urutRekap" onchange="saringRekap()" class="admin-filter-select">
+            <option value="nama">A–Z</option>
+            <option value="pelanggaran">Pelanggaran ↓</option>
+            <option value="hp">HP terendah</option>
+            <option value="shield">Shield ↓</option>
+          </select>
+        </div>
+        <div class="rk-info">
+          <span id="rekapJumlah">–</span>
+          <button type="button" class="pv-btn rk-salin" onclick="rekapSalin()">📋 Salin daftar</button>
+        </div>
+
+        <div class="rekap-container rk-scroll">
+          <table class="rekap-table">
+            <thead>
+              <tr>
+                <th>Nama Siswa</th>
+                <th>Kelas</th>
+                <th>HP/Shield</th>
+                <th>Pelanggaran</th>
+              </tr>
+            </thead>
+            <tbody id="tabelRekapBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 2: KONTROL SISWA -->
+      <div id="adminTabKontrol" class="admin-tab-content hidden">
+        <form
+          id="formAdminAction"
+          onsubmit="
+            event.preventDefault();
+            prosesActionAdminWithLoading();
+          "
+        >
+          <div class="input-box">
+            <label>TINDAKAN SAKTI *</label>
+            <select
+              id="adminActionType"
+              onchange="handleAdminActionTypeChange()"
+              required
+            >
+              <option value="RESET_DAILY_GLOBAL">
+                ⭐ Reset Poin Harian SEMUA SISWA (Global)
+              </option>
+              <option value="RESET_DAILY_CLASS">
+                ⭐ Reset Poin Harian PER KELAS
+              </option>
+              <option value="RESET_DAILY_INDIVIDUAL">
+                ⭐ Reset Poin Harian SISWA PERORANGAN
+              </option>
+              <option value="RESET_FULL_GLOBAL">
+                🔄 Pemutihan Penuh SEMUA SISWA (Global Tatib)
+              </option>
+              <option value="RESET_FULL_CLASS">
+                🔄 Pemutihan Penuh PER KELAS (Tatib)
+              </option>
+              <option value="RESET_FULL_INDIVIDUAL">
+                🔄 Pemutihan Penuh SISWA PERORANGAN (Tatib)
+              </option>
+              <option value="RESET_PIN_SISWA">
+                🔑 Reset PIN Siswa ke Default (123456)
+              </option>
+            </select>
+          </div>
+
+          <div id="boxAdminKelas" class="input-box hidden">
+            <label>PILIH KELAS TARGET *</label>
+            <select id="adminKelasSelect" onchange="handleAdminKelasChange()">
+              <option value="">-- Pilih Kelas --</option>
+              <option value="10 SMK">10 SMK</option>
+              <option value="11 SMK">11 SMK</option>
+              <option value="12 SMK">12 SMK</option>
+            </select>
+          </div>
+
+          <div id="boxAdminSiswa" class="input-box hidden">
+            <label>PILIH SISWA TARGET *</label>
+            <select id="adminSiswaSelect">
+              <option value="">-- Pilih Kelas Dulu --</option>
+            </select>
+          </div>
+
+          <div class="input-box">
+            <label>CATATAN SIDANG / KETERANGAN *</label>
+            <input
+              type="text"
+              id="adminNotes"
+              placeholder="Contoh: Reset mingguan / Pemutihan akhir semester"
+              required
+            />
+          </div>
+
+          <button type="submit" class="btn-danger" style="margin-top: 5px">
+            Eksekusi Keputusan Admin
+          </button>
+        </form>
+
+        <div class="pv-card" style="margin-top: 14px">
+          <h4 class="pv-judul">📜 Riwayat Tindakan Admin</h4>
+          <p class="pv-ket">15 tindakan terakhir (siapa, apa, kapan). Berguna kalau ada guru yang bertanya kenapa poin siswanya berubah.</p>
+          <div id="adminRiwayatList" class="adm-riwayat"></div>
+          <button type="button" class="pv-btn" style="width: 100%; margin-top: 8px" onclick="muatRiwayatAdmin()">🔄 Muat ulang</button>
+        </div>
+      </div>
+
+      <!-- TAB BARU: MANAJEMEN AKADEMIK (ARSIP SEMESTER / KENAIKAN KELAS / KELULUSAN) -->
+      <div id="adminTabAkademik" class="admin-tab-content hidden">
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>➕ Tambah Siswa Baru</span><span>▼</span>
+          </div>
+          <div class="accordion-body">
+            <div class="akademik-body-inner">
+              <p class="akademik-desc">
+                Dipakai saat intake siswa kelas 10 baru (atau siswa pindahan).
+                Tempel daftar siswa, satu per baris, format
+                <code>NISN,Nama</code>
+                — bisa langsung salin dari Excel/spreadsheet. PIN awal otomatis
+                <strong>123456</strong>, dan NISN yang sudah terdaftar otomatis
+                dilewati (tidak menimpa data lama).
+              </p>
+              <div class="input-box">
+                <label>KELAS TUJUAN *</label>
+                <select id="kelasSiswaBaruSelect">
+                  <option value="">-- Pilih Kelas --</option>
+                  <option value="10 SMK">10 SMK</option>
+                  <option value="11 SMK">11 SMK</option>
+                  <option value="12 SMK">12 SMK</option>
+                </select>
+              </div>
+              <div class="input-box">
+                <label>DAFTAR SISWA (satu per baris) *</label>
+                <textarea
+                  id="teksSiswaBaru"
+                  rows="6"
+                  placeholder="3012345678,Ahmad Fauzi&#10;3012345679,Siti Nurhaliza"
+                ></textarea>
+              </div>
+              <button
+                type="button"
+                class="btn-danger"
+                style="margin-top: 5px"
+                onclick="jalankanTambahSiswaBaruUI()"
+              >
+                Tambahkan Siswa
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>🗓️ Tahun Ajaran & Semester Aktif</span><span>▼</span>
+          </div>
+          <div class="accordion-body">
+            <div class="akademik-body-inner">
+              <p class="akademik-desc">
+                Keterangan ini tampil di halaman Profil semua siswa aktif.
+                Mengubahnya hanya label informasi, TIDAK memengaruhi poin atau
+                arsip.
+              </p>
+              <div class="input-box">
+                <label>TAHUN AJARAN</label>
+                <input
+                  type="text"
+                  id="inputTahunAjaran"
+                  placeholder="Contoh: 2025/2026"
+                />
+              </div>
+              <div class="input-box">
+                <label>SEMESTER</label>
+                <select id="inputSemesterAktif">
+                  <option value="Ganjil">Ganjil</option>
+                  <option value="Genap">Genap</option>
+                </select>
+              </div>
+              <button
+                type="button"
+                class="btn-danger"
+                style="margin-top: 5px"
+                onclick="simpanPeriodeAktifUI()"
+              >
+                Simpan Keterangan
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>📦 Ganti Semester Baru</span><span>▼</span>
+          </div>
+          <div class="accordion-body">
+            <div class="akademik-body-inner">
+              <p class="akademik-desc">
+                Mengarsipkan riwayat berjalan SEMUA siswa aktif, lalu mereset
+                HP, Shield, dan Poin Harian. Tingkat kelas tidak berubah.
+              </p>
+              <div class="input-box">
+                <label>NAMA SEMESTER (label arsip) *</label>
+                <input
+                  type="text"
+                  id="labelGantiSemester"
+                  placeholder="Contoh: Semester Ganjil 2025/2026"
+                />
+              </div>
+              <div class="input-box">
+                <label>CATATAN / ALASAN *</label>
+                <input
+                  type="text"
+                  id="catatanGantiSemester"
+                  placeholder="Contoh: Tutup semester ganjil"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn-danger"
+                style="margin-top: 5px"
+                onclick="jalankanGantiSemesterUI()"
+              >
+                Jalankan Ganti Semester
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>🏫 Kenaikan Kelas Massal</span><span>▼</span>
+          </div>
+          <div class="accordion-body">
+            <div class="akademik-body-inner">
+              <p class="akademik-desc">
+                Mengarsipkan riwayat, menaikkan tingkat kelas semua siswa aktif
+                (10→11, 11→12), dan mereset poin aktif. Siswa kelas 12 dilewati
+                (pakai Proses Kelulusan di bawah).
+              </p>
+              <div class="input-box">
+                <label>NAMA TAHUN AJARAN (label arsip) *</label>
+                <input
+                  type="text"
+                  id="labelKenaikanKelas"
+                  placeholder="Contoh: Tahun Ajaran 2025/2026"
+                />
+              </div>
+              <div class="input-box">
+                <label>CATATAN / ALASAN *</label>
+                <input
+                  type="text"
+                  id="catatanKenaikanKelas"
+                  placeholder="Contoh: Kenaikan kelas akhir tahun ajaran"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn-danger"
+                style="margin-top: 5px"
+                onclick="jalankanKenaikanKelasUI()"
+              >
+                Jalankan Kenaikan Kelas
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>↩️ Batalkan Ganti Semester / Kenaikan Kelas</span
+            ><span>▼</span>
+          </div>
+          <div class="accordion-body">
+            <div class="akademik-body-inner">
+              <p class="akademik-desc">
+                Mengembalikan siswa ke kondisi sebelum proses Ganti Semester
+                atau Kenaikan Kelas <strong>TERAKHIR</strong> dijalankan — HP,
+                Shield, Poin Harian, Prestasi, Pelanggaran, Riwayat, dan tingkat
+                kelas (khusus Kenaikan Kelas) dikembalikan. Siswa yang sudah
+                mengalami perubahan lebih baru ditandai abu-abu dan tidak bisa
+                dipilih.
+              </p>
+              <div class="input-box">
+                <label>PILIH PROSES *</label>
+                <select
+                  id="transisiBatalSelect"
+                  onchange="pilihTransisiUntukBatal()"
+                >
+                  <option value="">Memuat...</option>
+                </select>
+              </div>
+              <div id="transisiBatalInfo" class="akademik-info"></div>
+              <div class="input-box">
+                <label>PILIH SISWA *</label>
+                <div class="akademik-check-row">
+                  <input
+                    type="checkbox"
+                    id="chkPilihSemuaTransisi"
+                    onchange="toggleSemuaBatalTransisi(this.checked)"
+                    style="width: auto"
+                  />
+                  <label for="chkPilihSemuaTransisi"
+                    >Pilih Semua (yang bisa dibatalkan)</label
+                  >
+                </div>
+                <div
+                  id="transisiBatalList"
+                  class="friend-list admin-check-list"
+                  style="max-height: 260px; overflow-y: auto"
+                ></div>
+              </div>
+              <div class="input-box">
+                <label>CATATAN / ALASAN *</label>
+                <input
+                  type="text"
+                  id="catatanBatalTransisi"
+                  placeholder="Contoh: Uji coba fitur, data salah"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn-danger"
+                style="margin-top: 5px"
+                onclick="jalankanBatalTransisiUI()"
+              >
+                Batalkan Proses Ini
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>🎓 Proses Kelulusan Kelas 12</span><span>▼</span>
+          </div>
+          <div class="accordion-body">
+            <div class="akademik-body-inner">
+              <p class="akademik-desc">
+                Menandai semua siswa kelas 12 SMK yang masih aktif menjadi
+                Alumni. Data tidak dihapus; portal siswa mereka akan menampilkan
+                transkrip akhir rekam jejak, dan fitur chat/pertemanan/ubah
+                profil ditutup.
+              </p>
+              <div class="input-box">
+                <label>CATATAN / ALASAN *</label>
+                <input
+                  type="text"
+                  id="catatanKelulusan"
+                  placeholder="Contoh: Kelulusan Tahun Ajaran 2025/2026"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn-danger"
+                style="margin-top: 5px"
+                onclick="jalankanKelulusanUI()"
+              >
+                Jalankan Proses Kelulusan
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>↩️ Batalkan Status Lulus (Uji Coba / Koreksi)</span
+            ><span>▼</span>
+          </div>
+          <div class="accordion-body">
+            <div class="akademik-body-inner">
+              <p class="akademik-desc">
+                Mengembalikan satu, beberapa, atau semua alumni menjadi siswa
+                aktif kembali. Berguna untuk uji coba fitur atau membetulkan
+                siswa yang salah diluluskan.
+              </p>
+              <div class="input-box">
+                <label>PILIH SISWA (status: Lulus) *</label>
+                <div class="akademik-check-row">
+                  <input
+                    type="checkbox"
+                    id="chkPilihSemuaAlumni"
+                    onchange="toggleSemuaBatalKelulusan(this.checked)"
+                    style="width: auto"
+                  />
+                  <label for="chkPilihSemuaAlumni">Pilih Semua</label>
+                </div>
+                <div
+                  id="batalKelulusanList"
+                  class="friend-list admin-check-list"
+                  style="max-height: 260px; overflow-y: auto"
+                ></div>
+              </div>
+              <div class="input-box">
+                <label>CATATAN / ALASAN *</label>
+                <input
+                  type="text"
+                  id="catatanBatalKelulusan"
+                  placeholder="Contoh: Uji coba fitur alumni"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn-danger"
+                style="margin-top: 5px"
+                onclick="jalankanBatalKelulusanUI()"
+              >
+                Kembalikan ke Status Aktif
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: CETAK LAPORAN -->
+      <div id="adminTabCetak" class="admin-tab-content hidden">
+        <div class="admin-cetak-card-box">
+          <h4 style="font-size: 13px; color: #1e3c72; margin-bottom: 10px">
+            🖨️ Ekspor Laporan Kedisiplinan
+          </h4>
+          <div class="input-box">
+            <label>KATEGORI CETAK</label>
+            <select id="cetakKategori" onchange="handleCetakKategoriChange()">
+              <option value="semua">Semua Siswa (Rekap Keseluruhan)</option>
+              <option value="kelas">Berdasarkan Kelas Tertentu</option>
+              <option value="siswa">Berdasarkan Siswa Perorangan</option>
+            </select>
+          </div>
+          <div id="boxCetakKelas" class="input-box hidden">
+            <label>PILIH KELAS</label>
+            <select id="cetakKelasSelect">
+              <option value="10 SMK">10 SMK</option>
+              <option value="11 SMK">11 SMK</option>
+              <option value="12 SMK">12 SMK</option>
+            </select>
+          </div>
+          <div id="boxCetakSiswa" class="input-box hidden">
+            <label>CARI NAMA SISWA</label>
+            <input
+              type="text"
+              id="searchSiswaInput"
+              placeholder="Ketik nama siswa..."
+              oninput="filterPilihanSiswaCetak()"
+              style="margin-bottom: 6px"
+            />
+            <select
+              id="cetakSiswaSelect"
+              size="3"
+              style="height: 80px"
+            ></select>
+          </div>
+          <button
+            type="button"
+            onclick="prosesCetakLaporanWithLoading()"
+            style="margin-top: 10px"
+          >
+            Download Dokumen Laporan
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 4: MONITORING CHAT SISWA -->
+      <div id="adminTabChat" class="admin-tab-content hidden">
+        <div class="admin-chat-monitor-wrapper">
+          <div class="admin-chat-top-bar">
+            <div>
+              <h4
+                style="
+                  margin: 0;
+                  font-size: 11.5px;
+                  color: #1e3c72;
+                  font-weight: bold;
+                "
+              >
+                🛡️ Monitoring Chat Siswa
+              </h4>
+              <p style="font-size: 9px; color: #666; margin: 1px 0 0 0">
+                Pengawasan ruang obrolan siswa.
+              </p>
+            </div>
+            <div style="display: flex; gap: 5px">
+              <button
+                type="button"
+                onclick="loadAdminChatRooms()"
+                class="admin-chat-btn-refresh"
+              >
+                Muat Ulang 🔄
+              </button>
+              <button
+                type="button"
+                onclick="adminHapusSemuaChatRoom()"
+                class="admin-chat-btn-delete"
+              >
+                Hapus Semua 🗑️
+              </button>
+            </div>
+          </div>
+
+          <div class="admin-chat-grid-layout">
+            <div id="adminRoomList" class="admin-room-list-box">
+              <div
+                style="
+                  font-size: 10px;
+                  color: #888;
+                  text-align: center;
+                  margin: auto;
+                "
+              >
+                Memuat daftar...
+              </div>
+            </div>
+            <div class="admin-chat-pane-box">
+              <div id="adminChatHeader" class="admin-chat-pane-header">
+                💬 Pilih ruang chat di kiri
+              </div>
+              <div id="adminMessageContainer" class="admin-chat-pane-messages">
+                <div
+                  style="
+                    font-size: 11px;
+                    color: #888;
+                    text-align: center;
+                    margin: auto;
+                  "
+                >
+                  Belum ada ruang chat yang dipilih.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ================= TAMBAHAN FITUR MONITORING GLOBAL CHAT ================= -->
+          <div
+            style="
+              margin-top: 12px;
+              padding: 10px;
+              background: #111823;
+              border: 1px solid #34495e;
+              border-radius: 8px;
+            "
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 6px;
+              "
+            >
+              <span style="font-size: 11px; font-weight: bold; color: #f1c40f"
+                >🌍 Monitoring Global Chat Sekolah</span
+              >
+              <button
+                type="button"
+                onclick="loadAdminGlobalChat()"
+                style="
+                  padding: 3px 8px;
+                  font-size: 9px;
+                  background: #3498db;
+                  color: #fff;
+                  border: none;
+                  border-radius: 4px;
+                  cursor: pointer;
+                "
+              >
+                Muat Global Chat
+              </button>
+            </div>
+            <div
+              id="adminGlobalChatContainer"
+              style="
+                height: 150px;
+                overflow-y: auto;
+                background: #0b0f17;
+                border: 1px solid #222f3e;
+                border-radius: 6px;
+                padding: 8px;
+                font-size: 10px;
+                color: #cbd5e1;
+              "
+            >
+              Klik "Muat Global Chat" untuk memantau obrolan seluruh siswa.
+            </div>
+            <div style="margin-top: 6px; text-align: right">
+              <button
+                type="button"
+                onclick="adminHapusSemuaGlobalChat()"
+                style="
+                  padding: 3px 8px;
+                  font-size: 9px;
+                  background: #e74c3c;
+                  color: #fff;
+                  border: none;
+                  border-radius: 4px;
+                  cursor: pointer;
+                "
+              >
+                Hapus Semua Global Chat 🗑️
+              </button>
+            </div>
+          </div>
+          <!-- ======================================================================== -->
+        </div>
+      </div>
+
+      <!-- TAB BARU: LAPORAN BUG & MASUKAN -->
+      <!-- TAB PRATINJAU: uji tampilan tanpa menyentuh data (hanya Super Admin) -->
+      <div id="adminTabPratinjau" class="admin-tab-content hidden">
+        <div class="pv-card">
+          <h4 class="pv-judul">🌄 Suasana Latar</h4>
+          <p class="pv-ket">Ganti latar sekarang juga. Kembali otomatis saat kamu pindah tab.</p>
+          <div class="pv-row">
+            <button type="button" class="pv-btn" data-mood="pagi" onclick="pratinjauMood('pagi')">🌅 Pagi</button>
+            <button type="button" class="pv-btn" data-mood="siang" onclick="pratinjauMood('siang')">☀️ Siang</button>
+            <button type="button" class="pv-btn" data-mood="sore" onclick="pratinjauMood('sore')">🌇 Sore</button>
+            <button type="button" class="pv-btn" data-mood="malam" onclick="pratinjauMood('malam')">🌙 Malam</button>
+            <button type="button" class="pv-btn pv-btn-auto" data-mood="auto" onclick="pratinjauMood('auto')">🔄 Otomatis</button>
+          </div>
+        </div>
+
+        <div class="pv-card">
+          <h4 class="pv-judul">🔋 Mode Hemat Latar</h4>
+          <p class="pv-ket" id="pvRinganInfo">–</p>
+          <div class="pv-row">
+            <button type="button" class="pv-btn" data-ringan="auto" onclick="pratinjauRingan('auto')">⚙️ Otomatis</button>
+            <button type="button" class="pv-btn" data-ringan="1" onclick="pratinjauRingan('1')">🍃 Ringan</button>
+            <button type="button" class="pv-btn" data-ringan="0" onclick="pratinjauRingan('0')">✨ Penuh</button>
+          </div>
+        </div>
+
+        <div class="pv-card">
+          <h4 class="pv-judul">🖼️ Bingkai Tier</h4>
+          <p class="pv-ket">Semua bingkai dipasang pada foto. Ketuk satu untuk memperbesar.</p>
+          <div id="pvTierGrid" class="pv-tier-grid"></div>
+          <div id="pvTierBesar" class="pv-tier-besar"></div>
+        </div>
+
+        <div class="pv-card">
+          <h4 class="pv-judul">❤️ Uji Bar HP &amp; Shield</h4>
+          <p class="pv-ket">Geser untuk melihat animasi bar naik/turun dan tier yang ikut berubah. Tidak menulis ke database.</p>
+          <div class="rpg-bar-group">
+            <div class="rpg-bar-row">
+              <div class="rpg-bar-meta">
+                <span style="color:#2ecc71">❤️ HP</span>
+                <span id="pvHpTeks" style="color:#2ecc71">200/200</span>
+              </div>
+              <div class="rpg-bar-outer"><div id="pvHpFill" class="rpg-hp-fill" style="width:100%"></div></div>
+            </div>
+            <div class="rpg-bar-row">
+              <div class="rpg-bar-meta">
+                <span style="color:#3498db">🛡️ SHIELD</span>
+                <span id="pvShTeks" style="color:#3498db">0 Pts</span>
+              </div>
+              <div class="rpg-bar-outer"><div id="pvShFill" class="rpg-shield-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+          <label class="pv-label">HP: <b id="pvHpNilai">200</b></label>
+          <input id="pvHpGeser" type="range" min="0" max="200" value="200" oninput="pratinjauBar()" />
+          <label class="pv-label">Shield: <b id="pvShNilai">0</b></label>
+          <input id="pvShGeser" type="range" min="0" max="300" value="0" oninput="pratinjauBar()" />
+          <div class="pv-row" style="margin-top:8px">
+            <button type="button" class="pv-btn" onclick="pratinjauPreset(200,0)">Penuh</button>
+            <button type="button" class="pv-btn" onclick="pratinjauPreset(120,95)">Sedang</button>
+            <button type="button" class="pv-btn" onclick="pratinjauPreset(30,175)">HP kritis</button>
+            <button type="button" class="pv-btn" onclick="pratinjauPreset(200,300)">Maksimal</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="adminTabLaporan" class="admin-tab-content hidden">
+        <div class="laporan-bug-top-bar">
+          <div>
+            <h4
+              style="
+                margin: 0;
+                font-size: 11.5px;
+                color: #1e3c72;
+                font-weight: bold;
+              "
+            >
+              🐞 Laporan Bug & Masukan
+            </h4>
+            <p style="font-size: 9px; color: #666; margin: 1px 0 0 0">
+              Masukan dan laporan bug dari siswa, guru, dan admin.
+            </p>
+          </div>
+          <button
+            type="button"
+            onclick="loadLaporanBugAdmin()"
+            class="admin-chat-btn-refresh"
+          >
+            Muat Ulang 🔄
+          </button>
+        </div>
+        <div id="adminLaporanBugList" class="laporan-bug-list-box">
+          <div
+            style="
+              font-size: 10px;
+              color: #888;
+              text-align: center;
+              padding: 15px;
+            "
+          >
+            Klik "Muat Ulang" untuk melihat laporan.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HALAMAN PAPAN QUEST -->
+    <div
+      id="questBoardCard"
+      class="card hidden"
+      style="max-width: 550px; max-height: 90vh"
+    >
+      <div class="header-app" style="margin-bottom: 5px">
+        <div class="user-info">
+          <h3>📜 Papan Quest</h3>
+          <p>Sistem Poin Prestasi & Pelanggaran</p>
+        </div>
+        <button class="btn-logout" onclick="kembaliKeMenu()">Tutup</button>
+      </div>
+
+      <div class="quest-tabs">
+        <button
+          id="tabQuestPrestasi"
+          onclick="renderQuestUI('prestasi')"
+          style="background: #3498db; color: white"
+        >
+          🛡️ Prestasi (+Poin)
+        </button>
+        <button
+          id="tabQuestPelanggaran"
+          onclick="renderQuestUI('pelanggaran')"
+          class="btn-outline"
+          style="color: #e74c3c; border-color: #e74c3c"
+        >
+          ⚠️ Pelanggaran (-Poin)
+        </button>
+      </div>
+
+      <div id="questContainerUI" class="quest-container-ui-box"></div>
+    </div>
+
+    <!-- HALAMAN GLOBAL LEADERBOARD -->
+    <div
+      id="leaderboardCard"
+      class="card hidden"
+      style="max-width: 520px; max-height: 90vh"
+    >
+      <div class="header-app" style="margin-bottom: 8px">
+        <div class="user-info">
+          <h3>🏆 Global Leaderboard</h3>
+          <p>Papan Peringkat Poin Harian Siswa</p>
+        </div>
+        <button class="btn-logout" onclick="kembaliKeMenu()">Tutup</button>
+      </div>
+
+      <div class="leaderboard-filter-row">
+        <label style="margin: 0; font-size: 10.5px; color: #1e3c72"
+          >FILTER KELAS:</label
+        >
+        <select
+          id="filterLeaderboardKelas"
+          onchange="renderGlobalLeaderboard()"
+          class="leaderboard-filter-select"
+        >
+          <option value="SEMUA">Semua Kelas (Global)</option>
+          <option value="10 SMK">Kelas 10 SMK</option>
+          <option value="11 SMK">Kelas 11 SMK</option>
+          <option value="12 SMK">Kelas 12 SMK</option>
+        </select>
+      </div>
+
+      <div id="globalLeaderboardList" class="global-leaderboard-list-box"></div>
+    </div>
+
+    <!-- MODAL KONFIRMASI -->
+    <div id="modalKonfirmasi" class="modal-overlay hidden">
+      <div class="modal-box">
+        <h4>📌 Konfirmasi Input Poin</h4>
+        <div id="modalDetailContent" class="modal-detail"></div>
+        <button onclick="eksekusiSimpanWithLoading()">Ya, Simpan Data</button>
+        <button
+          type="button"
+          class="btn-outline"
+          onclick="tutupModal()"
+          style="margin-top: 8px"
+        >
+          Batal
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL GANTI FOTO PROFIL -->
+    <div id="modalGantiFoto" class="modal-overlay hidden">
+      <div class="modal-box" style="text-align: center; max-width: 380px">
+        <h4 style="color: #1e3a8a; margin-bottom: 10px">🖼️ ATUR FOTO PROFIL</h4>
+        <p style="font-size: 9.5px; color: #64748b; margin-bottom: 10px">
+          Pilih foto lewat tombol di bawah, lalu geser atau zoom agar pas di
+          dalam bingkai.
+        </p>
+
+        <!-- Area Crop / Penyesuaian Foto -->
+        <div
+          style="
+            width: 220px;
+            height: 220px;
+            margin: 0 auto 10px auto;
+            background: #0f172a;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #cbd5e1;
+          "
+        >
+          <img
+            id="imageToCrop"
+            src=""
+            style="max-width: 100%; display: block"
+          />
+        </div>
+
+        <!-- Tombol Pilih File -->
+        <input
+          type="file"
+          id="inputFileFotoSiswa"
+          accept="image/*"
+          style="display: none"
+          onchange="handleFileSelectedForCrop(this)"
+        />
+        <button
+          type="button"
+          onclick="document.getElementById('inputFileFotoSiswa').click()"
+          style="
+            padding: 7px 12px;
+            font-size: 10.5px;
+            margin-bottom: 10px;
+            width: auto;
+          "
+        >
+          📁 Pilih Berkas Foto
+        </button>
+
+        <!-- Kotak Himbauan & Catatan Disiplin -->
+        <div
+          style="
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: left;
+            font-size: 9.5px;
+            color: #334155;
+            line-height: 1.4;
+            margin-bottom: 12px;
+          "
+        >
+          <strong style="color: #b45309; display: block; margin-bottom: 2px"
+            >⚠️ KETENTUAN PENGGANTIAN:</strong
+          >
+          1. Mengganti foto profil hanya dapat digunakan
+          <strong>1x dalam 1 semester (6 bulan)</strong>.<br />
+          2. Dilarang menggunakan gambar yang
+          <strong>vulgar, editan berlebihan, atau tidak senonoh</strong>.
+        </div>
+
+        <!-- Tombol Aksi -->
+        <div style="display: flex; gap: 8px">
+          <button
+            type="button"
+            onclick="tutupModalGantiFoto()"
+            class="btn-outline"
+            style="margin-top: 0; flex: 1"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            onclick="simpanFotoProfilBaru()"
+            style="
+              margin-top: 0;
+              flex: 1;
+              background: #16a34a;
+              border-color: #16a34a;
+              color: #fff;
+            "
+          >
+            Simpan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL GANTI FOTO PROFIL (GURU) -->
+    <div id="modalGantiFotoGuru" class="modal-overlay hidden">
+      <div class="modal-box" style="text-align: center; max-width: 380px">
+        <h4 style="color: #1e3a8a; margin-bottom: 10px">🖼️ ATUR FOTO PROFIL</h4>
+        <p style="font-size: 9.5px; color: #64748b; margin-bottom: 10px">
+          Pilih foto lewat tombol di bawah, lalu geser atau zoom agar pas di
+          dalam bingkai.
+        </p>
+
+        <div
+          style="
+            width: 220px;
+            height: 220px;
+            margin: 0 auto 10px auto;
+            background: #0f172a;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #cbd5e1;
+          "
+        >
+          <img
+            id="imageToCropGuru"
+            src=""
+            style="max-width: 100%; display: block"
+          />
+        </div>
+
+        <input
+          type="file"
+          id="inputFileFotoGuru"
+          accept="image/*"
+          style="display: none"
+          onchange="handleFileSelectedForCropGuru(this)"
+        />
+        <button
+          type="button"
+          onclick="document.getElementById('inputFileFotoGuru').click()"
+          style="
+            padding: 7px 12px;
+            font-size: 10.5px;
+            margin-bottom: 10px;
+            width: auto;
+          "
+        >
+          📁 Pilih Berkas Foto
+        </button>
+
+        <!-- <div
+          style="
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: left;
+            font-size: 9.5px;
+            color: #334155;
+            line-height: 1.4;
+            margin-bottom: 12px;
+          "
+        >
+          <strong style="color: #b45309; display: block; margin-bottom: 2px"
+            >⚠️ KETENTUAN:</strong
+          >
+          Gunakan foto diri yang pantas dan profesional sebagai tenaga pendidik.
+        </div> -->
+
+        <div style="display: flex; gap: 8px">
+          <button
+            type="button"
+            onclick="tutupModalGantiFotoGuru()"
+            class="btn-outline"
+            style="margin-top: 0; flex: 1"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            onclick="simpanFotoProfilGuruBaru()"
+            style="
+              margin-top: 0;
+              flex: 1;
+              background: #16a34a;
+              border-color: #16a34a;
+              color: #fff;
+            "
+          >
+            Simpan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL GANTI BANNER PROFIL (GURU) -->
+    <div id="modalGantiBannerGuru" class="modal-overlay hidden">
+      <div class="modal-box" style="text-align: center; max-width: 380px">
+        <h4 style="color: #1e3a8a; margin-bottom: 10px">
+          🖼️ ATUR BANNER PROFIL
+        </h4>
+        <p style="font-size: 9.5px; color: #64748b; margin-bottom: 10px">
+          Pilih foto lewat tombol di bawah, lalu geser atau zoom agar bagian
+          pentingnya tidak tertutup kotak crop. Foto ini akan jadi latar penuh
+          kartu profilmu.
+        </p>
+
+        <div
+          style="
+            width: 280px;
+            height: 100px;
+            margin: 0 auto 10px auto;
+            background: #0f172a;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #cbd5e1;
+          "
+        >
+          <img
+            id="imageToCropBanner"
+            src=""
+            style="max-width: 100%; display: block"
+          />
+        </div>
+
+        <input
+          type="file"
+          id="inputFileFotoBanner"
+          accept="image/*"
+          style="display: none"
+          onchange="handleFileSelectedForCropBanner(this)"
+        />
+        <button
+          type="button"
+          onclick="document.getElementById('inputFileFotoBanner').click()"
+          style="
+            padding: 7px 12px;
+            font-size: 10.5px;
+            margin-bottom: 10px;
+            width: auto;
+          "
+        >
+          📁 Pilih Berkas Foto
+        </button>
+
+        <!-- <div
+          style="
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: left;
+            font-size: 9.5px;
+            color: #334155;
+            line-height: 1.4;
+            margin-bottom: 12px;
+          "
+        >
+          <strong style="color: #b45309; display: block; margin-bottom: 2px"
+            >⚠️ KETENTUAN:</strong
+          >
+          Gunakan gambar yang pantas. Nama & jabatanmu akan ditampilkan di atas
+          foto ini dengan lapisan gelap transparan, jadi tetap terbaca apapun
+          fotonya — tapi pilih foto yang bagian pentingnya tidak persis di area
+          kiri-atas supaya tidak tertutup teks.
+        </div> -->
+
+        <div style="display: flex; gap: 8px">
+          <button
+            type="button"
+            onclick="tutupModalGantiBannerGuru()"
+            class="btn-outline"
+            style="margin-top: 0; flex: 1"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            onclick="simpanBannerProfilGuruBaru()"
+            style="
+              margin-top: 0;
+              flex: 1;
+              background: #16a34a;
+              border-color: #16a34a;
+              color: #fff;
+            "
+          >
+            Simpan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL PREVIEW FOTO PROFIL (FACEBOOK STYLE) -->
+    <div
+      id="modalPreviewFoto"
+      class="modal-overlay hidden"
+      onclick="tutupPreviewFoto(event)"
+      style="
+        background: rgba(0, 0, 0, 0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      "
+    >
+      <div
+        class="modal-box"
+        onclick="event.stopPropagation()"
+        style="
+          background: #1e293b;
+          border: 1px solid #334155;
+          text-align: center;
+          max-width: 320px;
+          padding: 16px;
+          border-radius: 12px;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        "
+      >
+        <!-- Header: Judul dan Tombol X Merah Sejajar -->
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+          "
+        >
+          <h4 style="color: #f8fafc; font-size: 13px; margin: 0">
+            🖼️ Foto Profil
+          </h4>
+          <button
+            type="button"
+            onclick="tutupPreviewFoto()"
+            style="
+              background: rgba(239, 68, 68, 0.15);
+              border: 1px solid #ef4444;
+              color: #ef4444;
+              font-size: 12px;
+              font-weight: bold;
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 0;
+              line-height: 1;
+            "
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Wadah Gambar Besar -->
+        <div
+          style="
+            width: 240px;
+            height: 240px;
+            margin: 0 auto 12px auto;
+            background: #0f172a;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #475569;
+          "
+        >
+          <img
+            id="imgPreviewBesar"
+            src=""
+            style="width: 100%; height: 100%; object-fit: cover; display: block"
+          />
+        </div>
+
+        <!-- Tombol Tutup -->
+        <button
+          type="button"
+          onclick="tutupPreviewFoto()"
+          style="
+            width: 100%;
+            padding: 8px;
+            background: #334155;
+            border: none;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+          "
+        >
+          Tutup
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL ERROR / NISN TIDAK DITEMUKAN -->
+    <!-- PENGINGAT GANTI PIN BAWAAN (muncul saat login dengan PIN 123456; bisa ditutup) -->
+    <div id="modalWajibGantiPin" class="modal-overlay hidden">
+      <div class="modal-box">
+        <h4>🔐 Ganti PIN-mu, Yuk!</h4>
+        <p class="modal-detail">
+          PIN kamu masih PIN bawaan (123456), jadi mudah ditebak teman. Buat PIN
+          baru (4–6 angka) supaya akunmu aman. Kamu boleh menutup ini dulu, tapi
+          pengingat ini muncul lagi setiap login sampai PIN diganti.
+        </p>
+        <div class="input-box">
+          <label>PIN BARU</label>
+          <input
+            type="password"
+            id="wajibPinBaru"
+            inputmode="numeric"
+            maxlength="6"
+            placeholder="4 sampai 6 angka"
+            autocomplete="off"
+          />
+        </div>
+        <div class="input-box">
+          <label>ULANGI PIN BARU</label>
+          <input
+            type="password"
+            id="wajibPinUlang"
+            inputmode="numeric"
+            maxlength="6"
+            placeholder="Ketik ulang PIN baru"
+            autocomplete="off"
+          />
+        </div>
+        <div
+          id="wajibPinError"
+          style="
+            display: none;
+            color: #e74c3c;
+            font-size: 11.5px;
+            font-weight: 600;
+            margin-bottom: 6px;
+          "
+        ></div>
+        <button type="button" id="btnSimpanPinWajib" onclick="simpanPinWajib()">
+          Simpan PIN Baru 🔑
+        </button>
+        <button type="button" class="btn-outline" onclick="tutupWajibPin()">
+          Nanti saja
+        </button>
+      </div>
+    </div>
+
+    <!-- PERANGKAT BARU: menunggu izin pemilik akun -->
+    <div id="modalMenungguIzin" class="modal-overlay hidden" style="z-index: 10001">
+      <div class="modal-box" style="text-align: center">
+        <h4>⏳ Akun Sedang Dipakai</h4>
+        <p class="modal-detail">
+          Akun ini sedang aktif di perangkat lain. Permintaan masuk sudah
+          dikirim ke pemilik akun — tunggu persetujuannya ya.
+        </p>
+        <div
+          style="font-size: 28px; font-weight: 800; color: #1e3c72; margin-bottom: 4px"
+        >
+          <span id="menungguIzinDetik">60</span>
+          <span style="font-size: 13px; font-weight: 600">detik</span>
+        </div>
+        <button
+          type="button"
+          class="btn-outline"
+          onclick="window.batalMenungguIzin && window.batalMenungguIzin()"
+        >
+          Batal
+        </button>
+      </div>
+    </div>
+
+    <!-- PERANGKAT PEMILIK: ada yang mencoba masuk -->
+    <div id="modalIzinLogin" class="modal-overlay hidden" style="z-index: 10001">
+      <div class="modal-box" style="text-align: center">
+        <h4>🔔 Ada yang Mencoba Masuk ke Akunmu</h4>
+        <p class="modal-detail">
+          <strong id="izinLoginPerangkat">-</strong> mencoba masuk ke akunmu
+          pukul <strong id="izinLoginWaktu">-</strong>.<br /><br />
+          Kalau itu <strong>kamu</strong>, tekan Izinkan (kamu akan keluar dari
+          perangkat ini). Kalau <strong>bukan kamu</strong>, tekan Tolak lalu
+          segera ganti PIN.
+        </p>
+        <button
+          type="button"
+          style="background: #27ae60"
+          onclick="jawabIzinLogin(true)"
+        >
+          ✅ Izinkan
+        </button>
+        <button type="button" class="btn-danger" onclick="jawabIzinLogin(false)">
+          ⛔ Tolak
+        </button>
+      </div>
+    </div>
+
+    <div id="modalErrorSiswa" class="hidden modal-error-overlay-box">
+      <div class="modal-error-inner-box">
+        <div style="font-size: 38px; margin-bottom: 8px">⚠️</div>
+        <h3 class="modal-error-title">NISN Tidak Ditemukan</h3>
+        <div class="modal-error-desc">
+          Maaf, nomor NISN yang kamu masukkan tidak terdaftar di database cloud
+          SMK Wiraguna. <br />Pastikan kembali nomor yang kamu ketik sudah benar
+          atau hubungi petugas sekolah! 📚
+        </div>
+        <button
+          onclick="
+            document.getElementById('modalErrorSiswa').classList.add('hidden')
+          "
+          class="modal-error-btn"
+        >
+          Coba Lagi ⚔️
+        </button>
+      </div>
+    </div>
+
+    <!-- TOMBOL MELAYANG: LAPORAN BUG & MASUKAN (muncul setelah login) -->
+    <button
+      id="btnFabLaporanBug"
+      class="fab-laporan-bug hidden"
+      onclick="bukaModalLaporanBug()"
+      title="Laporan Bug & Masukan"
+    >
+      🐞
+    </button>
+
+    <!-- MODAL: FORM LAPORAN BUG & MASUKAN -->
+    <div id="modalLaporanBug" class="modal-overlay hidden">
+      <div class="modal-box" style="max-width: 400px">
+        <h4 style="color: #1e3a8a; margin-bottom: 10px">
+          🐞 Laporan Bug & Masukan
+        </h4>
+        <p style="font-size: 9.5px; color: #64748b; margin-bottom: 10px">
+          Temukan masalah di aplikasi atau punya ide perbaikan? Tulis di sini,
+          laporanmu akan langsung sampai ke Admin.
+        </p>
+        <label
+          style="
+            display: block;
+            font-size: 9.5px;
+            color: #1e3c72;
+            font-weight: bold;
+            margin-bottom: 4px;
+            text-align: left;
+          "
+          >JENIS LAPORAN</label
+        >
+        <select id="laporanBugKategori" style="margin-bottom: 10px">
+          <option value="bug">🐞 Laporan Bug / Error</option>
+          <option value="masukan">💡 Saran & Masukan</option>
+        </select>
+        <label
+          style="
+            display: block;
+            font-size: 9.5px;
+            color: #1e3c72;
+            font-weight: bold;
+            margin-bottom: 4px;
+            text-align: left;
+          "
+          >DETAIL</label
+        >
+        <textarea
+          id="laporanBugIsi"
+          rows="4"
+          maxlength="1000"
+          placeholder="Ceritakan apa yang terjadi atau masukanmu di sini..."
+          style="
+            width: 100%;
+            resize: vertical;
+            padding: 8px 10px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 11px;
+            font-family: inherit;
+            margin-bottom: 10px;
+          "
+        ></textarea>
+        <button id="btnKirimLaporanBug" onclick="kirimLaporanBugUI()">
+          Kirim Laporan ✉️
+        </button>
+        <button
+          type="button"
+          class="btn-outline"
+          onclick="tutupModalLaporanBug()"
+          style="margin-top: 8px"
+        >
+          Batal
+        </button>
+      </div>
+    </div>
+
+    <!-- LAYAR MAINTENANCE (saklar: Firestore app_meta/maintenance) -->
+    <div id="maintenanceOverlay" class="maintenance-overlay hidden">
+      <div class="maintenance-stripe maintenance-stripe-top"></div>
+      <div class="maintenance-box">
+        <div class="maintenance-icon-ring" onclick="ketukIkonMaintenance()">
+          <span class="maintenance-icon">🛠️</span>
+        </div>
+        <div class="maintenance-badge">⛔ AKSES DITUTUP</div>
+        <h2 class="maintenance-title">MAINTENANCE</h2>
+        <p id="maintenancePesan" class="maintenance-pesan"></p>
+        <div id="maintenanceEstimasi" class="maintenance-estimasi hidden"></div>
+      </div>
+      <div class="maintenance-stripe maintenance-stripe-bottom"></div>
+    </div>
+    <div id="maintenanceAdminBanner" class="maintenance-admin-banner hidden">
+      🛠️ MODE MAINTENANCE AKTIF — siswa & guru tidak bisa masuk
+    </div>
+
+    <div class="app-version-badge">Tatib v3.16.0 • Beta</div>
+
+    <!-- JAVASCRIPT UTAMA & FIREBASE MODULE -->
+    <script>
+      // Daftarkan service worker (syarat PWA agar bisa di-install)
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("sw.js?v=3.16.0").catch(function (e) {
+            console.warn("Service worker gagal didaftarkan:", e);
+          });
+        });
+      }
+    </script>
+    <script src="ambient.js?v=3.16.0"></script>
+    <script src="app.js?v=3.16.0" type="module"></script>
+  </body>
+</html>

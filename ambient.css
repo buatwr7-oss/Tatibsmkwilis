@@ -1,4 +1,4 @@
-/* Latar suasana alam Tatib — pagi / siang / sore / malam (v3.14.0) */
+/* Latar suasana alam Tatib — pagi / siang / sore / malam (v3.16.0) */
     /* Reset & Variabel Suasana (Responsif HP & Laptop) */
     #ambient-background {
       position: fixed;
@@ -531,7 +531,7 @@
     }
 
 /* ============================================================
-   INTEGRASI KE TATIB (v3.14.0)
+   INTEGRASI KE TATIB (v3.16.0)
    - menggantikan latar lama body[data-waktu] (langit sederhana)
    - mood diatur app.js lewat window.setAmbientMood(pagi|siang|sore|malam)
    ============================================================ */
@@ -552,3 +552,37 @@ body[data-waktu]::after { display: none !important; }
 .particles-container { display: none !important; }
 /* hemat baterai: jeda animasi latar saat tab tidak terlihat */
 html.tab-tersembunyi #ambient-background * { animation-play-state: paused !important; }
+
+
+/* ============================================================
+   HEMAT TENAGA (v3.16.0)
+   1) Animasi lapisan yang sedang tidak tampil dijeda (sebelumnya 148
+      animasi berjalan terus walau lapisannya transparan).
+   2) Mode ringan untuk HP lemah (otomatis / manual): .ambient-ringan
+   ============================================================ */
+#ambient-background:not([data-mood="pagi"]) .ambient-mist-layer *,
+#ambient-background:not([data-mood="pagi"]) .ambient-birds-layer *,
+#ambient-background:not([data-mood="siang"]) .sun-siang-rays,
+#ambient-background:not([data-mood="sore"]) .ambient-particles-layer *,
+#ambient-background:not([data-mood="malam"]) .ambient-stars-layer *,
+#ambient-background:not([data-mood="malam"]) .ambient-fireflies-layer * {
+  animation-play-state: paused !important;
+}
+/* kabut: blur(12px) pada elemen besar yang bergerak sangat berat di HP; gradasinya sudah lembut */
+.mist-band { filter: none; }
+/* isolasi pengecatan: perubahan di latar tidak memicu hitung ulang tata letak halaman */
+#ambient-background { contain: layout paint style; }
+
+/* ---- Mode ringan ---- */
+#ambient-background.ambient-ringan .ambient-mist-layer,
+#ambient-background.ambient-ringan .ambient-birds-layer,
+#ambient-background.ambient-ringan .ambient-star:nth-child(n+36),
+#ambient-background.ambient-ringan .golden-mote:nth-child(n+7),
+#ambient-background.ambient-ringan .firefly-dot:nth-child(n+7),
+#ambient-background.ambient-ringan .ambient-cloud:nth-child(n+3),
+#ambient-background.ambient-ringan #ambient-shooting-container { display: none !important; }
+#ambient-background.ambient-ringan .sun-siang-rays { animation: none !important; }
+#ambient-background.ambient-ringan .firefly-dot {
+  box-shadow: 0 0 8px 2px rgba(218, 255, 94, 0.7);
+  animation: ambientFireflyMove var(--ff-dur, 10s) ease-in-out infinite alternate var(--ff-delay, 0s) !important;
+}

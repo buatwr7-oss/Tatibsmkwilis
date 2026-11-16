@@ -1,4 +1,4 @@
-/* Latar suasana alam Tatib (v3.14.0) — skrip biasa (bukan module), dimuat sebelum app.js */
+/* Latar suasana alam Tatib (v3.16.0) — skrip biasa (bukan module), dimuat sebelum app.js */
     (function () {
       const bgRoot = document.getElementById('ambient-background');
       const skyLayers = document.querySelectorAll('.ambient-sky-layer');
@@ -16,7 +16,7 @@
        */
       function initStars(count) {
         if (!starsContainer) return;
-        const total = count || (isMobileViewport ? 95 : 175);
+        const total = count || (isMobileViewport ? 70 : 150);
         const fragment = document.createDocumentFragment();
 
         for (let i = 0; i < total; i++) {
@@ -92,7 +92,7 @@
        */
       function initFireflies(count) {
         if (!firefliesContainer) return;
-        const total = count || (isMobileViewport ? 14 : 24);
+        const total = count || (isMobileViewport ? 10 : 20);
         const fragment = document.createDocumentFragment();
 
         for (let i = 0; i < total; i++) {
@@ -164,6 +164,51 @@
         window.setAmbientMood(moodDariJam());
         requestAnimationFrame(() => requestAnimationFrame(() => bgRoot.classList.remove('no-trans')));
       }
+      // ---- Mode ringan: otomatis untuk HP lemah, bisa diubah manual (window.setAmbientRingan) ----
+      // Alasan: ~150 animasi + banyak elemen berat untuk HP RAM kecil / CPU lambat.
+      const KUNCI_RINGAN = 'tatibAmbientRingan'; // '1' = paksa ringan, '0' = paksa penuh, kosong = otomatis
+      function bacaPilihan() { try { return localStorage.getItem(KUNCI_RINGAN); } catch (e) { return null; } }
+      function simpanPilihan(v) { try { v === null ? localStorage.removeItem(KUNCI_RINGAN) : localStorage.setItem(KUNCI_RINGAN, v); } catch (e) {} }
+      function terapkanRingan(on) {
+        if (bgRoot) bgRoot.classList.toggle('ambient-ringan', !!on);
+        window.dispatchEvent(new CustomEvent('ambientRinganChanged', { detail: { ringan: !!on } }));
+      }
+      function perangkatLemah() {
+        const mem = navigator.deviceMemory;          // GB (Chrome/Android)
+        const inti = navigator.hardwareConcurrency;  // jumlah core
+        const hemat = navigator.connection && navigator.connection.saveData;
+        return !!hemat || (mem && mem <= 3) || (inti && inti <= 4);
+      }
+      // null = otomatis, true/false = paksa
+      window.setAmbientRingan = function (nilai) {
+        if (nilai === null || nilai === undefined || nilai === 'auto') {
+          simpanPilihan(null);
+          terapkanRingan(perangkatLemah());
+        } else {
+          simpanPilihan(nilai ? '1' : '0');
+          terapkanRingan(!!nilai);
+        }
+      };
+      window.ambientRinganAktif = function () { return !!(bgRoot && bgRoot.classList.contains('ambient-ringan')); };
+      window.ambientRinganPilihan = bacaPilihan;
+      (function () {
+        const p = bacaPilihan();
+        if (p === '1') return terapkanRingan(true);
+        if (p === '0') return terapkanRingan(false);
+        terapkanRingan(perangkatLemah());
+        // Pantau kelancaran 4 detik pertama; kalau patah-patah, otomatis beralih ke mode ringan.
+        if (window.ambientRinganAktif()) return;
+        setTimeout(() => {
+          let n = 0, lambat = 0, last = performance.now(), akhir = last + 4000;
+          (function f(t) {
+            const d = t - last; last = t;
+            if (!document.hidden && d < 250) { n++; if (d > 40) lambat++; } // >40 ms = di bawah 25 fps
+            if (t < akhir) requestAnimationFrame(f);
+            else if (n > 30 && lambat / n > 0.35 && bacaPilihan() === null) terapkanRingan(true);
+          })(last);
+        }, 2500);
+      })();
+
       document.addEventListener('visibilitychange', () => {
         document.documentElement.classList.toggle('tab-tersembunyi', document.hidden);
       });

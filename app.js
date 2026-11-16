@@ -26,7 +26,7 @@ import {
   writeBatch,
   getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=3.14.1";
+import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=3.16.0";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
@@ -478,6 +478,76 @@ window.customAlert = function (message, title = "INFORMASI SISTEM") {
 
 window.customConfirm = function (message, title = "KONFIRMASI TINDAKAN") {
   return buildPopup({ message, title, isConfirm: true });
+};
+
+// Konfirmasi berpengaman: tombol baru aktif setelah pengguna mengetik kata kunci.
+// Dipakai untuk tindakan yang menghapus data banyak siswa sekaligus.
+window.konfirmasiKetik = function (message, title, kata) {
+  return new Promise((resolve) => {
+    injectCustomModalStyles();
+    const existing = $("customPopupOverlay");
+    if (existing) {
+      existing.remove();
+      if (activePopupResolve) activePopupResolve(false);
+    }
+    activePopupResolve = resolve;
+
+    const overlay = document.createElement("div");
+    overlay.id = "customPopupOverlay";
+    const box = document.createElement("div");
+    box.id = "customPopupBox";
+    const titleEl = document.createElement("div");
+    titleEl.id = "customPopupTitle";
+    titleEl.textContent = title;
+    const msgEl = document.createElement("div");
+    msgEl.id = "customPopupMessage";
+    msgEl.textContent = message;
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "adm-kunci-input";
+    input.placeholder = kata;
+    input.autocomplete = "off";
+    input.setAttribute("autocapitalize", "characters");
+
+    const btnWrap = document.createElement("div");
+    btnWrap.id = "customPopupButtons";
+    const finish = (val) => {
+      overlay.remove();
+      activePopupResolve = null;
+      resolve(val);
+    };
+    const btnCancel = document.createElement("button");
+    btnCancel.id = "customPopupBtnCancel";
+    btnCancel.type = "button";
+    btnCancel.className = "custom-popup-btn";
+    btnCancel.textContent = "Batal";
+    btnCancel.onclick = () => finish(false);
+    const btnOk = document.createElement("button");
+    btnOk.id = "customPopupBtnOk";
+    btnOk.type = "button";
+    btnOk.className = "custom-popup-btn";
+    btnOk.textContent = "Eksekusi";
+    btnOk.disabled = true;
+    btnOk.style.opacity = "0.4";
+    btnOk.onclick = () => {
+      if (input.value.trim().toUpperCase() === kata) finish(true);
+    };
+    input.oninput = () => {
+      const cocok = input.value.trim().toUpperCase() === kata;
+      btnOk.disabled = !cocok;
+      btnOk.style.opacity = cocok ? "1" : "0.4";
+      input.classList.toggle("cocok", cocok);
+    };
+    input.onkeydown = (ev) => {
+      if (ev.key === "Enter") btnOk.onclick();
+    };
+    btnWrap.append(btnCancel, btnOk);
+    box.append(titleEl, msgEl, input, btnWrap);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    input.focus();
+  });
 };
 
 // ==========================================
@@ -1991,7 +2061,7 @@ window.bukaGame = function (nama) {
   if (!DAFTAR[nama]) return;
   // Catatan: jangan pakai fitur "noopener" di sini — window.open lalu selalu
   // mengembalikan null sehingga terbaca seolah pop-up diblokir.
-  const w = window.open(DAFTAR[nama] + "?v=3.14.1", "_blank");
+  const w = window.open(DAFTAR[nama] + "?v=3.16.0", "_blank");
   if (w) {
     try {
       w.opener = null;
@@ -4970,7 +5040,7 @@ window.eksekusiSimpanWithLoading = async function () {
 // ADMIN: TAB, REKAP, KONTROL
 // ==========================================
 window.switchAdminTab = function (tabName) {
-  ["Rekap", "Kontrol", "Akademik", "Cetak", "Chat", "Laporan"].forEach((n) => {
+  ["Rekap", "Kontrol", "Akademik", "Cetak", "Chat", "Laporan", "Pratinjau"].forEach((n) => {
     const el = $("adminTab" + n);
     const btn = $("navBtn" + (n === "Chat" ? "ChatAdmin" : n));
     if (el) el.classList.add("hidden");
@@ -4991,13 +5061,21 @@ window.switchAdminTab = function (tabName) {
   if (activeBtn) {
     activeBtn.className = "";
     activeBtn.style.background = "#1e3c72";
+    // nav satu baris yang bisa digeser: bawa tombol aktif ke tengah
+    try { activeBtn.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) { /* abaikan */ }
   }
 
   // Hentikan pemantauan chat saat keluar dari tab chat
   if (tabName !== "chat") cleanupAdminListeners();
 
+  // Keluar dari tab Pratinjau: latar kembali mengikuti jam
+  if (tabName !== "pratinjau") pratinjauKembali();
+
   if (tabName === "rekap") window.renderTabelRekap();
-  if (tabName === "kontrol") window.handleAdminActionTypeChange();
+  if (tabName === "kontrol") {
+    window.handleAdminActionTypeChange();
+    window.muatRiwayatAdmin();
+  }
   if (tabName === "chat") window.loadAdminChatRooms();
   if (tabName === "akademik") {
     window.muatDaftarAlumni();
@@ -5005,35 +5083,271 @@ window.switchAdminTab = function (tabName) {
     window.muatRiwayatTransisiUntukBatal();
   }
   if (tabName === "laporan") window.loadLaporanBugAdmin();
+  if (tabName === "pratinjau") pratinjauMulai();
+};
+
+// ==========================================
+// TAB PRATINJAU (Super Admin) — hanya mengubah tampilan lokal, tanpa Firestore
+// ==========================================
+const PRATINJAU_TIER = [
+  { shield: 0, nama: "Novice" },
+  { shield: 11, nama: "Iron" },
+  { shield: 51, nama: "Bronze" },
+  { shield: 91, nama: "Silver" },
+  { shield: 131, nama: "Gold" },
+  { shield: 171, nama: "Platinum" },
+  { shield: 211, nama: "Diamond" },
+  { shield: 251, nama: "Master" },
+  { shield: 290, nama: "Mythic" },
+];
+let pvBarPrev = null;
+
+function pratinjauTandaiMood(mood) {
+  document.querySelectorAll("#adminTabPratinjau .pv-btn[data-mood]").forEach((b) => {
+    b.classList.toggle("aktif", b.dataset.mood === mood);
+  });
+}
+function pratinjauMood(mood) {
+  if (mood === "auto") {
+    pratinjauKembali();
+    pratinjauTandaiMood("auto");
+    return;
+  }
+  if (window.setAmbientMood) window.setAmbientMood(mood);
+  pratinjauTandaiMood(mood);
+}
+function pratinjauKembali() {
+  // paksa terapkanLatarWaktu() menerapkan ulang mood sesuai jam
+  if (!document.body.dataset.pvPakai) return;
+  delete document.body.dataset.pvPakai;
+  document.body.dataset.waktu = "";
+  terapkanLatarWaktu();
+}
+window.pratinjauMood = function (mood) {
+  if (mood !== "auto") document.body.dataset.pvPakai = "1";
+  pratinjauMood(mood);
+};
+
+function pratinjauMulai() {
+  const grid = $("pvTierGrid");
+  if (grid && !grid.childElementCount) {
+    const src = $("avatarSiswaMain") ? $("avatarSiswaMain").src : "assets/foto_siswa/avatar.webp";
+    PRATINJAU_TIER.forEach((t) => {
+      const info = getTierRank(t.shield);
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "pv-tier-item";
+      b.innerHTML = `<div class="rpg-avatar-box ${info.frame}"><img src="${src}" alt="" /></div>
+        <span class="pv-tier-nama">${info.title}</span>`;
+      b.onclick = () => pratinjauTierBesar(t.shield);
+      grid.appendChild(b);
+    });
+  }
+  pratinjauTandaiMood(document.body.dataset.pvPakai ? document.body.dataset.waktu : "auto");
+  pratinjauRinganUI();
+  pratinjauBar(true);
+}
+function pratinjauTierBesar(shield) {
+  const box = $("pvTierBesar");
+  const info = getTierRank(shield);
+  const src = $("avatarSiswaMain") ? $("avatarSiswaMain").src : "assets/foto_siswa/avatar.webp";
+  box.innerHTML = `<div class="rpg-avatar-box ${info.frame}"><img src="${src}" alt="" /></div>
+    <span style="display:inline-block;background:${info.bg};color:${info.color};padding:3px 10px;border-radius:5px;font-size:11px;font-weight:700">${info.title}</span>`;
+  box.classList.add("tampak");
+}
+window.pratinjauBar = function (awal) {
+  const hp = Number($("pvHpGeser").value);
+  const sh = Number($("pvShGeser").value);
+  $("pvHpNilai").textContent = hp;
+  $("pvShNilai").textContent = `${sh} (${getTierRank(sh).title})`;
+  const hpPct = (hp / 200) * 100;
+  const shPct = (sh / 300) * 100;
+  const warna = hpPct >= 50 ? "#2ecc71" : hpPct >= 25 ? "#f39c12" : "#e74c3c";
+  const hpFill = $("pvHpFill");
+  const shFill = $("pvShFill");
+  hpFill.style.backgroundColor = warna;
+  hpFill.classList.toggle("low", hpPct < 25);
+  hpFill.style.width = hpPct + "%";
+  shFill.style.width = shPct + "%";
+  $("pvHpTeks").textContent = `${hp}/200`;
+  $("pvHpTeks").style.color = warna;
+  $("pvShTeks").textContent = `${sh} Pts`;
+  if (awal !== true && pvBarPrev) {
+    if (hp < pvBarPrev.hp) kilatBar(hpFill.parentElement, "flash-damage");
+    else if (hp > pvBarPrev.hp) kilatBar(hpFill.parentElement, "flash-heal");
+    if (sh !== pvBarPrev.sh) kilatBar(shFill.parentElement, "flash-shield");
+  }
+  pvBarPrev = { hp, sh };
+};
+function pratinjauRinganUI() {
+  const p = window.ambientRinganPilihan ? window.ambientRinganPilihan() : null;
+  const kunci = p === "1" ? "1" : p === "0" ? "0" : "auto";
+  document.querySelectorAll("#adminTabPratinjau .pv-btn[data-ringan]").forEach((b) => {
+    b.classList.toggle("aktif", b.dataset.ringan === kunci);
+  });
+  const aktif = window.ambientRinganAktif && window.ambientRinganAktif();
+  const info = $("pvRinganInfo");
+  if (info)
+    info.textContent = `Sekarang: ${aktif ? "Ringan 🍃" : "Penuh ✨"} (${kunci === "auto" ? "otomatis" : "dipaksa manual"}). Otomatis = HP lemah atau patah-patah beralih ke Ringan. Pilihan ini hanya tersimpan di browser ini.`;
+}
+window.pratinjauRingan = function (v) {
+  if (window.setAmbientRingan) window.setAmbientRingan(v === "auto" ? null : v === "1");
+  pratinjauRinganUI();
+};
+window.pratinjauPreset = function (hp, sh) {
+  $("pvHpGeser").value = hp;
+  $("pvShGeser").value = sh;
+  window.pratinjauBar();
 };
 
 let statistikChartInstance = null;
 
-window.renderTabelRekap = function () {
-  const filter = $("filterKelasRekap").value;
-  const tbody = $("tabelRekapBody");
-  const data =
-    filter === "SEMUA"
-      ? masterDataSiswa
-      : masterDataSiswa.filter((s) => s.kelas === filter);
+// ==========================================
+// REKAP ADMIN: ringkasan, cari, urut, saring
+// ==========================================
+const HP_KRITIS_BATAS = 50; // HP di bawah 25% dari 200
+const BK_BATAS_POIN = 40; // di atas ini masuk "Konseling BK" (lihat getStatusPembinaan)
+let rekapFilter = "semua"; // semua | online | hpkritis | pembinaan | pinbawaan
+let rekapOnlineIds = null; // Set NISN yang sedang online, null = belum dimuat
+let rekapCariTimer = null;
+let rekapOnlineT = 0;
 
-  tbody.innerHTML = data
-    .map((s) => {
-      const hp = s.hp !== undefined ? s.hp : 200;
-      let badge = `<span style="color:#2ecc71; font-weight:bold">${hp} HP</span>`;
-      if (s.shield > 0)
-        badge += ` <span style="color:#3498db; font-size:9px">+${s.shield} Shld</span>`;
-      const hukum = getStatusPembinaan(s.totalPelanggaran || 0);
-      return `<tr>
-      <td><strong>${escapeHtml(s.nama)}</strong></td>
+function rekapHp(s) {
+  return s.hp !== undefined ? s.hp : 200;
+}
+function rekapCocok(s, f) {
+  if (f === "online") return !!(rekapOnlineIds && rekapOnlineIds.has(String(s.nisn)));
+  if (f === "hpkritis") return rekapHp(s) < HP_KRITIS_BATAS;
+  if (f === "pembinaan") return (s.totalPelanggaran || 0) > BK_BATAS_POIN;
+  if (f === "pinbawaan") return !s.hasChangedPin;
+  return true;
+}
+
+function rekapDaftarTersaring() {
+  const kelas = $("filterKelasRekap").value;
+  const cari = ($("rekapCari").value || "").trim().toLowerCase();
+  const urut = $("urutRekap").value;
+  let data = masterDataSiswa.filter((s) => {
+    if (kelas !== "SEMUA" && s.kelas !== kelas) return false;
+    if (!rekapCocok(s, rekapFilter)) return false;
+    if (cari && !(String(s.nama).toLowerCase().includes(cari) || String(s.nisn).includes(cari)))
+      return false;
+    return true;
+  });
+  const nama = (a, b) => String(a.nama).localeCompare(String(b.nama));
+  if (urut === "pelanggaran")
+    data.sort((a, b) => (b.totalPelanggaran || 0) - (a.totalPelanggaran || 0) || nama(a, b));
+  else if (urut === "hp") data.sort((a, b) => rekapHp(a) - rekapHp(b) || nama(a, b));
+  else if (urut === "shield") data.sort((a, b) => (b.shield || 0) - (a.shield || 0) || nama(a, b));
+  else data.sort(nama);
+  return data;
+}
+
+function renderRingkasRekap() {
+  const kelas = $("filterKelasRekap").value;
+  const dasar = kelas === "SEMUA" ? masterDataSiswa : masterDataSiswa.filter((s) => s.kelas === kelas);
+  $("rkTotal").textContent = dasar.length;
+  $("rkOnline").textContent = rekapOnlineIds ? dasar.filter((s) => rekapCocok(s, "online")).length : "–";
+  $("rkKritis").textContent = dasar.filter((s) => rekapCocok(s, "hpkritis")).length;
+  $("rkBina").textContent = dasar.filter((s) => rekapCocok(s, "pembinaan")).length;
+  $("rkPin").textContent = dasar.filter((s) => rekapCocok(s, "pinbawaan")).length;
+  document.querySelectorAll("#rkRingkas .rk-kartu").forEach((k) => {
+    k.classList.toggle("aktif", k.dataset.f === rekapFilter);
+  });
+}
+
+window.saringRekap = function () {
+  renderRingkasRekap();
+  const data = rekapDaftarTersaring();
+  const tbody = $("tabelRekapBody");
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="rk-kosong">Tidak ada siswa yang cocok.</td></tr>`;
+  } else {
+    tbody.innerHTML = data
+      .map((s) => {
+        const hp = rekapHp(s);
+        const warnaHp = hp < HP_KRITIS_BATAS ? "#e74c3c" : "#2ecc71";
+        let badge = `<span style="color:${warnaHp}; font-weight:bold">${hp} HP</span>`;
+        if (s.shield > 0)
+          badge += ` <span style="color:#3498db; font-size:9px">+${s.shield} Shld</span>`;
+        const hukum = getStatusPembinaan(s.totalPelanggaran || 0);
+        const tanda =
+          (rekapCocok(s, "online") ? '<span class="rk-tanda" title="Online">🟢</span>' : "") +
+          (!s.hasChangedPin ? '<span class="rk-tanda" title="PIN masih bawaan">🔑</span>' : "");
+        return `<tr>
+      <td><strong>${escapeHtml(s.nama)}</strong>${tanda}<span class="rk-nisn">${escapeHtml(s.nisn)}</span></td>
       <td>${escapeHtml(s.kelas)}</td>
       <td>${badge}</td>
       <td>
         <span style="font-size: 9px; padding: 3px 6px; background: ${hukum.color}; color: #fff; border-radius: 4px; font-weight: bold;">${s.totalPelanggaran || 0} Pts</span>
       </td>
       </tr>`;
-    })
-    .join("");
+      })
+      .join("");
+  }
+  const kelas = $("filterKelasRekap").value;
+  const total = kelas === "SEMUA" ? masterDataSiswa.length : masterDataSiswa.filter((s) => s.kelas === kelas).length;
+  $("rekapJumlah").textContent = `Menampilkan ${data.length} dari ${total} siswa`;
+};
+
+window.rekapCariTunda = function () {
+  clearTimeout(rekapCariTimer);
+  rekapCariTimer = setTimeout(window.saringRekap, 150);
+};
+
+window.rekapFilterKartu = function (f) {
+  if (f === "online" && !rekapOnlineIds) return muatOnlineRekap(true);
+  rekapFilter = rekapFilter === f ? "semua" : f;
+  window.saringRekap();
+};
+
+window.rekapSalin = async function () {
+  const data = rekapDaftarTersaring();
+  if (!data.length) return window.customAlert("Tidak ada data untuk disalin.");
+  const labelFilter = { semua: "Semua", online: "Sedang online", hpkritis: "HP kritis", pembinaan: "Perlu konseling BK", pinbawaan: "PIN masih bawaan" }[rekapFilter];
+  const baris = data.map(
+    (s, i) => `${i + 1}. ${s.nama} (${s.kelas}) — ${s.totalPelanggaran || 0} Pts, HP ${rekapHp(s)}`,
+  );
+  const teks = `Daftar siswa — ${labelFilter} • ${$("filterKelasRekap").value === "SEMUA" ? "Semua kelas" : $("filterKelasRekap").value}\n${baris.join("\n")}`;
+  try {
+    await navigator.clipboard.writeText(teks);
+  } catch (e) {
+    const ta = document.createElement("textarea");
+    ta.value = teks;
+    ta.style.cssText = "position:fixed;opacity:0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); } catch (e2) { /* abaikan */ }
+    ta.remove();
+  }
+  window.customAlert(`${data.length} siswa disalin ke papan klip. Tinggal tempel di WhatsApp/dokumen.`);
+};
+
+async function muatOnlineRekap(setelahnyaFilter) {
+  // satu kali ambil (bukan listener) supaya hemat baca Firestore
+  if (rekapOnlineIds && Date.now() - rekapOnlineT < 60000 && !setelahnyaFilter) return;
+  try {
+    const { collection, query, where, getDocs } = window.fbFirestore;
+    const snap = await getDocs(
+      query(collection(window.db, "status"), where("lastActive", ">", Date.now() - ONLINE_THRESHOLD_MS)),
+    );
+    const ids = new Set();
+    snap.forEach((d) => {
+      const v = d.data();
+      if (v.state === undefined || v.state === "online") ids.add(String(d.id));
+    });
+    rekapOnlineIds = ids;
+    rekapOnlineT = Date.now();
+    if (setelahnyaFilter) rekapFilter = "online";
+    if ($("adminTabRekap") && !$("adminTabRekap").classList.contains("hidden")) window.saringRekap();
+  } catch (err) {
+    console.warn("Gagal memuat siswa online untuk rekap:", err);
+  }
+}
+
+window.renderTabelRekap = function () {
+  window.saringRekap();
+  muatOnlineRekap();
 
   if (typeof Chart === "undefined") {
     console.warn("Chart.js belum termuat, grafik dilewati.");
@@ -5060,26 +5374,14 @@ window.renderTabelRekap = function () {
     data: {
       labels,
       datasets: [
-        {
-          label: "Total Pelanggaran",
-          data: pelanggaranPerKelas,
-          backgroundColor: "#e74c3c",
-          borderRadius: 6,
-        },
-        {
-          label: "Total Prestasi",
-          data: prestasiPerKelas,
-          backgroundColor: "#2ecc71",
-          borderRadius: 6,
-        },
+        { label: "Total Pelanggaran", data: pelanggaranPerKelas, backgroundColor: "#e74c3c", borderRadius: 6 },
+        { label: "Total Prestasi", data: prestasiPerKelas, backgroundColor: "#2ecc71", borderRadius: 6 },
       ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { position: "top", labels: { font: { size: 10 } } },
-      },
+      plugins: { legend: { position: "top", labels: { font: { size: 10 } } } },
       scales: {
         y: { beginAtZero: true, ticks: { font: { size: 10 } } },
         x: { ticks: { font: { size: 10 } } },
@@ -6129,6 +6431,47 @@ function startAlumniView(nisn, siswa) {
   updateFabLaporanBug();
 }
 
+const LABEL_AKSI_ADMIN = {
+  RESET_DAILY_GLOBAL: "Reset poin harian (semua)",
+  RESET_DAILY_CLASS: "Reset poin harian (kelas)",
+  RESET_DAILY_INDIVIDUAL: "Reset poin harian (individu)",
+  RESET_FULL_GLOBAL: "Pemutihan penuh (semua)",
+  RESET_FULL_CLASS: "Pemutihan penuh (kelas)",
+  RESET_FULL_INDIVIDUAL: "Pemutihan penuh (individu)",
+  RESET_PIN_SISWA: "Reset PIN siswa",
+};
+window.muatRiwayatAdmin = async function () {
+  const box = $("adminRiwayatList");
+  if (!box) return;
+  box.innerHTML = '<div class="rk-kosong">Memuat...</div>';
+  try {
+    const { collection, query, orderBy, limit, getDocs } = window.fbFirestore;
+    const snap = await getDocs(
+      query(collection(window.db, "admin_logs"), orderBy("waktu", "desc"), limit(15)),
+    );
+    if (snap.empty) {
+      box.innerHTML = '<div class="rk-kosong">Belum ada tindakan tercatat.</div>';
+      return;
+    }
+    let html = "";
+    snap.forEach((d) => {
+      const x = d.data();
+      const siswa = x.nisn ? masterDataSiswa.find((s) => String(s.nisn) === String(x.nisn)) : null;
+      const target = siswa ? `${siswa.nama} (${siswa.kelas})` : x.scope || "";
+      const berat = String(x.aksi || "").startsWith("RESET_FULL");
+      html += `<div class="adm-riwayat-item${berat ? " merah" : ""}">
+        <b>${escapeHtml(LABEL_AKSI_ADMIN[x.aksi] || x.aksi || "-")}</b> — ${escapeHtml(target)}<br>
+        “${escapeHtml(x.catatan || "-")}”
+        <small>${escapeHtml(x.oleh || "-")} • ${escapeHtml(x.waktuStr || "")}</small>
+      </div>`;
+    });
+    box.innerHTML = html;
+  } catch (err) {
+    console.warn("Gagal memuat riwayat admin:", err);
+    box.innerHTML = '<div class="rk-kosong">Gagal memuat riwayat.</div>';
+  }
+};
+
 window.prosesActionAdminWithLoading = async function () {
   const act = $("adminActionType").value;
   const kelasTarget = $("adminKelasSelect").value;
@@ -6141,10 +6484,36 @@ window.prosesActionAdminWithLoading = async function () {
   if ((act.includes("INDIVIDUAL") || act === "RESET_PIN_SISWA") && !nisnTarget)
     return window.customAlert("Pilih siswa target terlebih dahulu!");
 
-  // Tindakan luas / merusak data wajib dikonfirmasi ulang
-  if (act.includes("GLOBAL") || act.includes("FULL")) {
+  // Tindakan luas / merusak data wajib dikonfirmasi ulang, dengan menyebut jumlah yang terdampak
+  const jumlahTarget = act.includes("GLOBAL")
+    ? masterDataSiswa.length
+    : act.includes("CLASS")
+      ? masterDataSiswa.filter((s) => s.kelas === kelasTarget).length
+      : 1;
+  const namaAksi = {
+    RESET_DAILY_GLOBAL: "Reset poin harian SEMUA siswa",
+    RESET_DAILY_CLASS: `Reset poin harian kelas ${kelasTarget}`,
+    RESET_DAILY_INDIVIDUAL: "Reset poin harian 1 siswa",
+    RESET_FULL_GLOBAL: "PEMUTIHAN PENUH SEMUA siswa",
+    RESET_FULL_CLASS: `PEMUTIHAN PENUH kelas ${kelasTarget}`,
+    RESET_FULL_INDIVIDUAL: "PEMUTIHAN PENUH 1 siswa",
+    RESET_PIN_SISWA: "Reset PIN 1 siswa ke 123456",
+  }[act] || act;
+  const butuhKetik = act.startsWith("RESET_FULL") || act === "RESET_DAILY_GLOBAL";
+  if (butuhKetik) {
+    const kata = act.startsWith("RESET_FULL") ? "PUTIHKAN" : "RESET";
+    const dampak = act.startsWith("RESET_FULL")
+      ? "HP, shield, poin prestasi/pelanggaran, dan seluruh riwayat akan dihapus"
+      : "poin harian akan dikembalikan ke 0";
+    const ok = await window.konfirmasiKetik(
+      `${namaAksi}\nDampak: ${jumlahTarget} siswa — ${dampak}.\nTIDAK DAPAT DIBATALKAN.\n\nKetik ${kata} untuk melanjutkan:`,
+      "⚠️ KONFIRMASI ADMIN",
+      kata,
+    );
+    if (!ok) return;
+  } else if (act.includes("GLOBAL") || act.includes("CLASS")) {
     const ok = await window.customConfirm(
-      "Tindakan ini berdampak luas dan TIDAK DAPAT DIBATALKAN.\nLanjutkan eksekusi?",
+      `${namaAksi}\nDampak: ${jumlahTarget} siswa.\nLanjutkan eksekusi?`,
       "⚠️ KONFIRMASI ADMIN",
     );
     if (!ok) return;
@@ -6221,6 +6590,7 @@ window.prosesActionAdminWithLoading = async function () {
       window.customAlert(pesanSukses);
       $("formAdminAction").reset();
       window.handleAdminActionTypeChange();
+      muatRiwayatAdmin();
     } catch (err) {
       done();
       console.error("Gagal menjalankan aksi Admin:", err);
