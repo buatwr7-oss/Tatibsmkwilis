@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0b1220" />
+<title>Duel Arena • Tic-Tac-Toe</title>
+<link rel="icon" href="logo.ico" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --gold: #f1c40f; --gold2: #d4ac0d; --bg: #0b1220; --card: #1a2536; --card2: #111823;
+    --line: #34495e; --txt: #e8eef7; --mut: #94a3b8; --hijau: #2ecc71; --merah: #e74c3c; --biru: #3498db;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Poppins", system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: radial-gradient(ellipse at 50% -10%, #1d3557 0%, #0b1220 60%) fixed;
+    color: var(--txt); display: flex; justify-content: center; overflow-x: hidden;
+  }
+  body::before { /* bintang */
+    content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .55;
+    background-image:
+      radial-gradient(1.5px 1.5px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 80% 10%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 55% 40%, #fff9, transparent), radial-gradient(1px 1px at 30% 70%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 90% 75%, #fff9, transparent), radial-gradient(1px 1px at 8% 90%, #fff, transparent);
+  }
+  .app { position: relative; width: 100%; max-width: 460px; min-height: 100dvh; padding: 14px 14px 22px; display: flex; flex-direction: column; gap: 12px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .judul { font-weight: 800; letter-spacing: .5px; color: var(--gold); font-size: 17px; text-shadow: 0 2px 10px #f1c40f55; }
+  .judul small { display: block; font-weight: 500; font-size: 10.5px; color: var(--mut); letter-spacing: 0; text-shadow: none; }
+  .btn-kecil { background: var(--card2); color: var(--mut); border: 1.5px solid var(--line); border-radius: 10px; padding: 7px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .panel { background: var(--card); border: 3px solid var(--gold); border-radius: 18px; padding: 16px; box-shadow: 0 8px 30px #0008, inset 0 0 40px #0004; }
+  .screen { display: none; flex-direction: column; gap: 12px; animation: masuk .35s ease; }
+  .screen.on { display: flex; }
+  @keyframes masuk { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  .btn { width: 100%; border: none; border-radius: 14px; padding: 14px; font-weight: 800; font-size: 15px; letter-spacing: .5px; cursor: pointer; color: #111823;
+    background: linear-gradient(135deg, #f1c40f, #d4ac0d); box-shadow: 0 4px 0 #8a6d03, 0 8px 18px #f1c40f33; transition: transform .1s, box-shadow .1s; }
+  .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #8a6d03; }
+  .btn.sekunder { background: var(--card2); color: var(--txt); border: 2px solid var(--line); box-shadow: 0 4px 0 #0006; }
+  .btn.bahaya { background: linear-gradient(135deg,#e74c3c,#c0392b); color:#fff; box-shadow: 0 4px 0 #7b241c; }
+  .btn:disabled { opacity: .5; }
+
+  /* kartu pemain */
+  .hero { text-align: center; }
+  .hero .emblem { font-size: 54px; filter: drop-shadow(0 4px 12px #f1c40f66); animation: melayang 3s ease-in-out infinite; }
+  @keyframes melayang { 50% { transform: translateY(-6px); } }
+  .hero h2 { margin-top: 6px; font-size: 20px; }
+  .hero p { color: var(--mut); font-size: 12px; margin-top: 4px; }
+  .badge { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-top: 6px; }
+  .aturan { display: grid; gap: 6px; font-size: 12px; color: var(--mut); text-align: left; background: var(--card2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+
+  /* mencari */
+  .radar { position: relative; width: 150px; height: 150px; margin: 6px auto; }
+  .radar i { position: absolute; inset: 0; border: 2px solid var(--gold); border-radius: 50%; opacity: 0; animation: gelombang 2.4s ease-out infinite; }
+  .radar i:nth-child(2) { animation-delay: .8s; } .radar i:nth-child(3) { animation-delay: 1.6s; }
+  @keyframes gelombang { 0% { transform: scale(.25); opacity: .9; } 100% { transform: scale(1.1); opacity: 0; } }
+  .radar b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 46px; animation: goyang 1.2s ease-in-out infinite; }
+  @keyframes goyang { 50% { transform: rotate(-12deg) scale(1.08); } }
+  .teks-tengah { text-align: center; }
+  .teks-tengah h3 { color: var(--gold); font-size: 16px; }
+  .teks-tengah p { color: var(--mut); font-size: 12px; margin-top: 4px; }
+  .titik::after { content: ""; animation: titik 1.4s steps(4) infinite; }
+  @keyframes titik { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+
+  /* VS */
+  .vs { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; text-align: center; }
+  .vs .pj { background: var(--card2); border: 2px solid var(--line); border-radius: 14px; padding: 12px 6px; }
+  .vs .pj.kiri { animation: dariKiri .6s ease both; } .vs .pj.kanan { animation: dariKanan .6s ease both; }
+  @keyframes dariKiri { from { transform: translateX(-60px); opacity: 0; } }
+  @keyframes dariKanan { from { transform: translateX(60px); opacity: 0; } }
+  .vs .tengah { font-weight: 800; font-size: 28px; color: var(--merah); text-shadow: 0 0 16px #e74c3c; animation: denyut .8s ease-in-out infinite; }
+  @keyframes denyut { 50% { transform: scale(1.25); } }
+
+  /* pertandingan */
+  .pemain { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: stretch; }
+  .pc { background: var(--card2); border: 2px solid var(--line); border-radius: 14px; padding: 8px; text-align: center; min-width: 0; transition: all .25s; }
+  .pc.aktif { border-color: var(--gold); box-shadow: 0 0 18px #f1c40f55; transform: translateY(-2px); }
+  .pc .nm { font-weight: 700; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pc .sisi { font-size: 22px; }
+  .pc .tag { font-size: 9.5px; color: var(--mut); }
+  .mid { display: grid; place-items: center; font-weight: 800; color: var(--merah); }
+  .status { text-align: center; font-weight: 700; font-size: 14px; min-height: 22px; }
+  .status.kamu { color: var(--gold); animation: denyut 1s ease-in-out infinite; }
+  .waktu { height: 10px; border-radius: 6px; background: #0007; border: 1.5px solid var(--line); overflow: hidden; }
+  .waktu div { height: 100%; width: 100%; background: linear-gradient(90deg, #2ecc71, #f1c40f); transition: width .25s linear; }
+  .waktu.kritis div { background: linear-gradient(90deg, #e74c3c, #ff7a59); }
+  .papan { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; background: linear-gradient(145deg, #223149, #141d2c); border: 3px solid var(--line); border-radius: 18px; }
+  .cell { aspect-ratio: 1; border-radius: 12px; border: 2px solid #3d5470; background: linear-gradient(145deg, #2b3d57, #1b283b); font-size: clamp(34px, 12vw, 52px); display: grid; place-items: center; cursor: pointer; color: inherit; transition: transform .1s, background .2s, opacity .3s; }
+  .cell:disabled { cursor: default; }
+  .papan.giliran-kamu .cell:not(.filled):not(:disabled):active { transform: scale(.92); background: #34506f; }
+  .papan.giliran-kamu .cell:not(.filled):hover { border-color: var(--gold); }
+  .cell.filled span { display: inline-block; animation: pasang .35s cubic-bezier(.3,1.8,.5,1); }
+  @keyframes pasang { from { transform: scale(0) rotate(-90deg); opacity: 0; } }
+  .cell.x.filled { background: linear-gradient(145deg, #4a2a2f, #2a1a1d); border-color: #c0504d; }
+  .cell.o.filled { background: linear-gradient(145deg, #223f66, #14263f); border-color: #3b82c4; }
+  .cell.win { border-color: var(--gold); box-shadow: 0 0 22px #f1c40f99; animation: kilau .7s ease-in-out infinite alternate; }
+  @keyframes kilau { to { transform: scale(1.06); box-shadow: 0 0 32px #f1c40f; } }
+  .cell.dim { opacity: .4; }
+
+  /* hasil */
+  .hasil { text-align: center; }
+  .hasil .ikon { font-size: 70px; animation: pasang .6s cubic-bezier(.3,1.8,.5,1); }
+  .hasil h2 { font-size: 30px; letter-spacing: 2px; margin-top: 4px; }
+  .hasil.menang h2 { color: var(--gold); text-shadow: 0 0 24px #f1c40f; }
+  .hasil.kalah h2 { color: var(--merah); text-shadow: 0 0 24px #e74c3c88; }
+  .hasil.seri h2 { color: var(--biru); }
+  .hasil p { color: var(--mut); font-size: 12.5px; margin: 6px 0 4px; }
+  .layar-hasil { position: fixed; inset: 0; background: #000a; display: none; align-items: center; justify-content: center; padding: 20px; z-index: 20; }
+  .layar-hasil.on { display: flex; animation: masuk .3s ease; }
+  .layar-hasil .panel { width: 100%; max-width: 380px; display: grid; gap: 10px; }
+  .konfeti { position: fixed; top: -12px; font-size: 20px; pointer-events: none; z-index: 30; animation: jatuh linear forwards; }
+  @keyframes jatuh { to { transform: translateY(105vh) rotate(540deg); opacity: .7; } }
+  .guncang { animation: guncang .4s; } @keyframes guncang { 25% { transform: translateX(-6px);} 75% { transform: translateX(6px);} }
+  .foot { text-align: center; font-size: 10.5px; color: var(--mut); margin-top: auto; }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="judul">⚔️ DUEL ARENA<small>Tic-Tac-Toe • Pedang vs Perisai</small></div>
+    <button class="btn-kecil" id="btnTutup">✕ Tutup</button>
+  </div>
+
+  <!-- BELUM LOGIN -->
+  <section class="screen" id="sNoLogin">
+    <div class="panel hero">
+      <div class="emblem">🔒</div>
+      <h2>Masuk dulu ya</h2>
+      <p>Game ini dibuka dari aplikasi Tatib setelah kamu login sebagai siswa.</p>
+      <button class="btn" style="margin-top:14px" onclick="location.href='index.html#siswa'">Buka Tatib</button>
+    </div>
+  </section>
+
+  <!-- GAME DITUTUP ADMIN -->
+  <section class="screen" id="sTutup">
+    <div class="panel hero">
+      <div class="emblem">🚧</div>
+      <h2>Arena sedang ditutup</h2>
+      <p id="pesanTutup">Game sedang tidak tersedia. Coba lagi nanti.</p>
+    </div>
+  </section>
+
+  <!-- LOBBY -->
+  <section class="screen" id="sLobby">
+    <div class="panel hero">
+      <div class="emblem">⚔️</div>
+      <h2 id="lbNama">...</h2>
+      <span class="badge" id="lbTier"></span>
+      <p style="margin-top:10px">Tantang siswa lain yang sedang online. Siapa cepat berpikir, dialah pemenangnya!</p>
+    </div>
+    <div class="aturan">
+      <div>⚔️ <b>Pedang</b> vs 🛡️ <b>Perisai</b> — pemain pertama dipilih acak</div>
+      <div>🎯 Susun <b>3 simbol sejajar</b> (lurus atau diagonal) untuk menang</div>
+      <div>⏱️ Tiap giliran <b>30 detik</b>, kalau habis kamu kalah</div>
+      <div>🎮 Hanya untuk seru-seruan — <b>tidak mengubah poin</b></div>
+    </div>
+    <button class="btn" id="btnCari">⚔️ CARI LAWAN</button>
+  </section>
+
+  <!-- MENCARI -->
+  <section class="screen" id="sCari">
+    <div class="panel">
+      <div class="radar"><i></i><i></i><i></i><b>🔍</b></div>
+      <div class="teks-tengah">
+        <h3>Mencari lawan<span class="titik"></span></h3>
+        <p id="cariInfo">Menunggu pemain lain yang online</p>
+        <p style="margin-top:8px;font-weight:700;color:var(--txt)" id="cariDetik">0 dtk</p>
+      </div>
+    </div>
+    <button class="btn sekunder" id="btnBatalCari">Batal</button>
+  </section>
+
+  <!-- TIDAK ADA LAWAN -->
+  <section class="screen" id="sKosong">
+    <div class="panel hero">
+      <div class="emblem">🏜️</div>
+      <h2>Belum ada lawan</h2>
+      <p>Tidak ada siswa lain yang sedang mencari lawan saat ini. Ajak temanmu buka game ini juga, lalu coba lagi!</p>
+    </div>
+    <button class="btn" id="btnCobaLagi">🔄 COBA LAGI</button>
+    <button class="btn sekunder" id="btnKeLobby">Kembali</button>
+  </section>
+
+  <!-- LAWAN DITEMUKAN -->
+  <section class="screen" id="sVs">
+    <div class="panel">
+      <div class="teks-tengah" style="margin-bottom:12px"><h3>⚡ LAWAN DITEMUKAN!</h3></div>
+      <div class="vs">
+        <div class="pj kiri"><div style="font-size:30px" id="vsSisiA"></div><div style="font-weight:700;font-size:13px" id="vsNamaA"></div><span class="badge" id="vsTierA"></span></div>
+        <div class="tengah">VS</div>
+        <div class="pj kanan"><div style="font-size:30px" id="vsSisiB"></div><div style="font-weight:700;font-size:13px" id="vsNamaB"></div><span class="badge" id="vsTierB"></span></div>
+      </div>
+      <p class="teks-tengah" style="margin-top:12px;color:var(--mut);font-size:12px" id="vsInfo"></p>
+    </div>
+  </section>
+
+  <!-- PERTANDINGAN -->
+  <section class="screen" id="sMain">
+    <div class="pemain">
+      <div class="pc" id="pcKamu"><div class="sisi" id="sisiKamu"></div><div class="nm" id="nmKamu"></div><div class="tag">KAMU</div></div>
+      <div class="mid">VS</div>
+      <div class="pc" id="pcLawan"><div class="sisi" id="sisiLawan"></div><div class="nm" id="nmLawan"></div><div class="tag">LAWAN</div></div>
+    </div>
+    <div class="status" id="statusGiliran">...</div>
+    <div class="waktu" id="waktuWrap"><div id="waktuBar"></div></div>
+    <div class="papan" id="papan"></div>
+    <button class="btn sekunder" id="btnMenyerah" style="padding:10px;font-size:13px">🏳️ Menyerah</button>
+  </section>
+
+  <div class="foot">Tatib SMK Wiraguna • Game ini tidak memengaruhi poin</div>
+</div>
+
+<div class="layar-hasil" id="layarHasil">
+  <div class="panel hasil" id="boxHasil">
+    <div class="ikon" id="hsIkon"></div>
+    <h2 id="hsJudul"></h2>
+    <p id="hsInfo"></p>
+    <button class="btn" id="btnLagi">⚔️ CARI LAWAN LAGI</button>
+    <button class="btn sekunder" id="btnLobby">Kembali ke Lobi</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, limit, runTransaction }
+  from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
+  authDomain: "tatib-smk-wiraguna.firebaseapp.com",
+  projectId: "tatib-smk-wiraguna",
+  storageBucket: "tatib-smk-wiraguna.firebasestorage.app",
+  messagingSenderId: "80347778161",
+  appId: "1:80347778161:web:cd92d4b9816b82a983d050",
+});
+const db = getFirestore(app);
+const $ = (id) => document.getElementById(id);
+
+// ---- konstanta ----
+const BATAS_CARI_MS = 45000;      // berhenti mencari bila tidak ada lawan
+const TIKET_SEGAR_MS = 20000;     // tiket antrean dianggap aktif jika denyut < 20 dtk
+const DENYUT_MS = 6000;
+const GILIRAN_MS = 30000;         // waktu per giliran
+const LAWAN_PUTUS_MS = 45000;     // lawan tidak ada denyut → dianggap pergi
+const LAWAN_ABSEN_MS = 15000;     // lawan tak pernah muncul di awal pertandingan
+const IKON = { x: "⚔️", o: "🛡️" };
+const GARIS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+// ---- identitas (dari sesi login Tatib di browser yang sama) ----
+function tier(shield) {
+  const s = Number(shield) || 0;
+  const T = [[290,"🌌 MYTHIC LEGEND","#fff","linear-gradient(135deg,#ff0844,#ffb199)"],[251,"👑 MASTER CHAMPION","#fff","linear-gradient(135deg,#b224ef,#7579ff)"],
+    [211,"💠 DIAMOND VANGUARD","#fff","linear-gradient(135deg,#00c6ff,#0072ff)"],[171,"💎 PLATINUM GUARDIAN","#fff","linear-gradient(135deg,#11998e,#38ef7d)"],
+    [131,"🥇 GOLD PALADIN","#1a2536","linear-gradient(135deg,#f7971e,#ffd200)"],[91,"🥈 SILVER WARRIOR","#1a2536","linear-gradient(135deg,#e0eafc,#cfdef3)"],
+    [51,"🥉 BRONZE KNIGHT","#fff","linear-gradient(135deg,#d38312,#a83279)"],[11,"🛡️ IRON SQUIRE","#fff","linear-gradient(135deg,#485563,#29323c)"]];
+  for (const t of T) if (s >= t[0]) return { tier: t[1], col: t[2], bg: t[3] };
+  return { tier: "🔰 NOVICE", col: "#fff", bg: "linear-gradient(135deg,#7f8c8d,#95a5a6)" };
+}
+function namaSingkat(n) {
+  const w = String(n || "Pemain").trim().toLowerCase().split(/\s+/).slice(0, 2).join(" ");
+  return w.replace(/(^|\s)\S/g, (c) => c.toUpperCase()).slice(0, 22) || "Pemain";
+}
+function badge(el, p) { el.textContent = p.tier; el.style.background = p.bg; el.style.color = p.col; }
+function sesiValid() {
+  try {
+    const id = localStorage.getItem("activeUser");
+    const exp = Number(localStorage.getItem("activeUserExpiry") || 0);
+    return id && (!exp || exp > Date.now()) ? String(id) : "";
+  } catch { return ""; }
+}
+
+// ---- status ----
+let nisn = "", me = null;
+let fase = "init";      // init | lobby | cari | vs | main | hasil
+let tiket = { unsub: null, unsubQ: null, hb: null, tick: null, mulai: 0, antre: [], memasang: false };
+let M = null, mRef = null, side = "", unsubM = null, hbM = null, tickM = null;
+let lastN = -1, giliranMulaiLokal = 0, lawanHbTerakhir = null, lawanTerlihat = Date.now(), lawanBerubah = 0, mulaiMatchLokal = 0;
+let hasilTampil = false, vsTimer = null, mencatatAkhir = false;
+const myTicketRef = () => doc(db, "matchmaking", nisn);
+
+function show(id) {
+  document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("on", s.id === id));
+}
+
+// ======================= LOBI =======================
+async function mulai() {
+  nisn = sesiValid();
+  if (!nisn) { show("sNoLogin"); return; }
+  try {
+    const g = await getDoc(doc(db, "app_meta", "game"));
+    if (g.exists() && (g.data().aktif === false || g.data().aktif === "false")) {
+      $("pesanTutup").textContent = g.data().pesan || "Game sedang tidak tersedia. Coba lagi nanti.";
+      show("sTutup"); return;
+    }
+  } catch (e) { /* gagal baca: tetap buka */ }
+  try {
+    const s = await getDoc(doc(db, "siswa", nisn));
+    if (!s.exists()) { show("sNoLogin"); return; }
+    const d = s.data();
+    const t = tier(d.shield);
+    me = { nisn, nama: namaSingkat(d.panggilan || d.nama), tier: t.tier, bg: t.bg, col: t.col };
+  } catch (e) {
+    me = { nisn, nama: "Pemain", ...tier(0) };
+  }
+  $("lbNama").textContent = me.nama; badge($("lbTier"), me);
+  bersihkanLama();
+  // lanjutkan pertandingan bila halaman dimuat ulang
+  try {
+    const mid = sessionStorage.getItem("duelMatchId");
+    if (mid) {
+      const s = await getDoc(doc(db, "matches", mid));
+      if (s.exists() && s.data().status === "playing" && (s.data().x.nisn === nisn || s.data().o.nisn === nisn)) {
+        return masukMatch(mid, true);
+      }
+      sessionStorage.removeItem("duelMatchId");
+    }
+  } catch (e) {}
+  fase = "lobby"; show("sLobby");
+}
+
+// hapus sisa pertandingan/tiket lama (best effort)
+async function bersihkanLama() {
+  try {
+    const now = Date.now();
+    const a = await getDocs(query(collection(db, "matches"), where("status", "==", "done"), limit(25)));
+    a.forEach((d) => { if ((d.data().ended || 0) < now - 300000) deleteDoc(d.ref).catch(() => {}); });
+    const b = await getDocs(query(collection(db, "matchmaking"), limit(40)));
+    b.forEach((d) => { if ((d.data().ts || 0) < now - 600000) deleteDoc(d.ref).catch(() => {}); });
+  } catch (e) {}
+}
+
+// ======================= MATCHMAKING =======================
+async function cari() {
+  if (fase !== "lobby" && fase !== "kosong") return;
+  fase = "cari"; show("sCari");
+  tiket.mulai = Date.now(); tiket.antre = []; tiket.memasang = false;
+  $("cariDetik").textContent = "0 dtk"; $("cariInfo").textContent = "Menunggu pemain lain yang online";
+  try {
+    await setDoc(myTicketRef(), { nisn, nama: me.nama, tier: me.tier, ts: Date.now(), matchId: null });
+  } catch (e) {
+    console.error(e); fase = "lobby"; show("sLobby"); alert("Gagal masuk antrean. Periksa koneksi lalu coba lagi."); return;
+  }
+  tiket.hb = setInterval(() => updateDoc(myTicketRef(), { ts: Date.now() }).catch(() => {}), DENYUT_MS);
+  tiket.unsub = onSnapshot(myTicketRef(), (s) => {
+    const d = s.data();
+    if (fase === "cari" && d && d.matchId) masukMatch(d.matchId, false);
+  });
+  tiket.unsubQ = onSnapshot(collection(db, "matchmaking"), (s) => { tiket.antre = s.docs.map((x) => x.data()); cobaPasangkan(); });
+  tiket.tick = setInterval(() => {
+    if (fase !== "cari") return;
+    const dt = Date.now() - tiket.mulai;
+    $("cariDetik").textContent = Math.floor(dt / 1000) + " dtk";
+    const n = aktifLain().length;
+    $("cariInfo").textContent = n ? `${n} pemain lain sedang mencari…` : "Menunggu pemain lain yang online";
+    cobaPasangkan();
+    if (dt > BATAS_CARI_MS) { hentikanCari(true); fase = "kosong"; show("sKosong"); }
+  }, 1000);
+}
+function aktifLain() {
+  const now = Date.now();
+  return tiket.antre.filter((t) => t && t.nisn !== nisn && !t.matchId && now - (t.ts || 0) < TIKET_SEGAR_MS);
+}
+async function cobaPasangkan() {
+  if (fase !== "cari" || tiket.memasang) return;
+  // hanya pemain ber-NISN lebih kecil yang memulai, supaya tidak saling berebut
+  const cand = aktifLain().filter((t) => String(nisn) < String(t.nisn)).sort((a, b) => a.ts - b.ts)[0];
+  if (!cand) return;
+  tiket.memasang = true;
+  try {
+    const myRef = myTicketRef(), thRef = doc(db, "matchmaking", String(cand.nisn));
+    const mid = `${Date.now().toString(36)}_${nisn}_${cand.nisn}`;
+    const meIsX = Math.random() < 0.5;
+    const A = { nisn, nama: me.nama, tier: me.tier, bg: me.bg, col: me.col };
+    const B = { nisn: String(cand.nisn), nama: cand.nama, tier: cand.tier, bg: warnaDariTier(cand.tier).bg, col: warnaDariTier(cand.tier).col };
+    const now = Date.now();
+    await runTransaction(db, async (tx) => {
+      const a = await tx.get(myRef), b = await tx.get(thRef);
+      if (!a.exists() || !b.exists()) throw new Error("hilang");
+      if (a.data().matchId || b.data().matchId) throw new Error("sibuk");
+      if (Date.now() - (b.data().ts || 0) > TIKET_SEGAR_MS + 3000) throw new Error("basi");
+      tx.set(doc(db, "matches", mid), {
+        x: meIsX ? A : B, o: meIsX ? B : A, board: ".........", turn: "x", n: 0, status: "playing", winner: "", reason: "",
+        created: now, turnTs: now, hbX: now, hbO: now, ended: 0,
+      });
+      tx.update(myRef, { matchId: mid });
+      tx.update(thRef, { matchId: mid });
+    });
+  } catch (e) {
+    /* kalah berebut / lawan sudah pergi: coba lagi pada tick berikutnya */
+  } finally { tiket.memasang = false; }
+}
+function warnaDariTier(nama) {
+  const map = { MYTHIC: 290, MASTER: 251, DIAMOND: 211, PLATINUM: 171, GOLD: 131, SILVER: 91, BRONZE: 51, IRON: 11 };
+  for (const k in map) if (String(nama).includes(k)) return tier(map[k]);
+  return tier(0);
+}
+function hentikanCari(hapusTiket) {
+  clearInterval(tiket.hb); clearInterval(tiket.tick);
+  if (tiket.unsub) tiket.unsub(); if (tiket.unsubQ) tiket.unsubQ();
+  tiket.hb = tiket.tick = tiket.unsub = tiket.unsubQ = null;
+  if (hapusTiket) deleteDoc(myTicketRef()).catch(() => {});
+}
+
+// ======================= PERTANDINGAN =======================
+function masukMatch(mid, lanjutan) {
+  if (fase === "vs" || fase === "main") return;
+  hentikanCari(false);
+  deleteDoc(myTicketRef()).catch(() => {});
+  try { sessionStorage.setItem("duelMatchId", mid); } catch (e) {}
+  mRef = doc(db, "matches", mid);
+  M = null; side = ""; lastN = -1; hasilTampil = false; lawanHbTerakhir = null; lawanBerubah = 0;
+  lawanTerlihat = Date.now(); mulaiMatchLokal = Date.now(); mencatatAkhir = false;
+  fase = lanjutan ? "main" : "vs";
+  if (lanjutan) show("sMain");
+  unsubM = onSnapshot(mRef, (s) => {
+    if (!s.exists()) { if (fase === "main" && !hasilTampil) tampilHasil({ status: "done", winner: "none", reason: "batal" }); return; }
+    const m = s.data();
+    if (!side) {
+      side = m.x.nisn === nisn ? "x" : m.o.nisn === nisn ? "o" : "";
+      if (!side) return;
+      siapkanLayar(m);
+      if (fase === "vs") tampilVs(m);
+    }
+    M = m; render(m);
+  });
+  hbM = setInterval(kirimDenyut, DENYUT_MS); kirimDenyut();
+  tickM = setInterval(jagaPertandingan, 500);
+}
+function siapkanLayar(m) {
+  const kamu = m[side], lawan = m[side === "x" ? "o" : "x"];
+  $("sisiKamu").textContent = IKON[side]; $("sisiLawan").textContent = IKON[side === "x" ? "o" : "x"];
+  $("nmKamu").textContent = kamu.nama; $("nmLawan").textContent = lawan.nama;
+  const p = $("papan"); p.innerHTML = "";
+  for (let i = 0; i < 9; i++) {
+    const b = document.createElement("button"); b.className = "cell"; b.dataset.i = i; b.disabled = true;
+    b.onclick = () => langkah(i); p.appendChild(b);
+  }
+}
+function tampilVs(m) {
+  const kamu = m[side], lawan = m[side === "x" ? "o" : "x"];
+  $("vsSisiA").textContent = IKON[side]; $("vsNamaA").textContent = kamu.nama; badge($("vsTierA"), kamu);
+  $("vsSisiB").textContent = IKON[side === "x" ? "o" : "x"]; $("vsNamaB").textContent = lawan.nama; badge($("vsTierB"), lawan);
+  $("vsInfo").textContent = side === "x" ? "Kamu jalan duluan!" : "Lawan jalan duluan, bersiaplah.";
+  show("sVs");
+  vsTimer = setTimeout(() => { if (fase === "vs") { fase = "main"; show("sMain"); if (M) render(M); } }, 2600);
+}
+function garisMenang(b) {
+  for (const g of GARIS) if (b[g[0]] !== "." && b[g[0]] === b[g[1]] && b[g[1]] === b[g[2]]) return g;
+  return null;
+}
+function render(m) {
+  if (m.n !== lastN) {
+    lastN = m.n; giliranMulaiLokal = Date.now();
+    if (m.n > 0 && m.turn === side && m.status === "playing") try { navigator.vibrate && navigator.vibrate(40); } catch (e) {}
+  }
+  const lawanHb = side === "x" ? m.hbO : m.hbX;
+  if (lawanHb !== lawanHbTerakhir) { if (lawanHbTerakhir !== null) lawanBerubah++; lawanHbTerakhir = lawanHb; lawanTerlihat = Date.now(); }
+  if (fase === "vs" || fase === "init") { if (m.status === "done") { fase = "main"; show("sMain"); } else return; }
+  const giliranKamu = m.status === "playing" && m.turn === side;
+  const wl = m.status === "done" ? garisMenang(m.board) : null;
+  document.querySelectorAll(".cell").forEach((c, i) => {
+    const v = m.board[i];
+    c.className = "cell" + (v !== "." ? " filled " + v : "") + (wl && wl.includes(i) ? " win" : wl ? " dim" : "");
+    c.innerHTML = v !== "." ? `<span>${IKON[v]}</span>` : "";
+    c.disabled = !(giliranKamu && v === ".");
+  });
+  $("papan").classList.toggle("giliran-kamu", giliranKamu);
+  $("pcKamu").classList.toggle("aktif", giliranKamu);
+  $("pcLawan").classList.toggle("aktif", m.status === "playing" && !giliranKamu);
+  const st = $("statusGiliran");
+  st.className = "status" + (giliranKamu ? " kamu" : "");
+  st.textContent = m.status === "done" ? "Pertandingan selesai" : giliranKamu ? "⚔️ Giliranmu! Pilih kotak" : "⏳ Giliran lawan…";
+  $("btnMenyerah").style.display = m.status === "playing" ? "" : "none";
+  if (m.status === "done") tampilHasil(m);
+}
+function jagaPertandingan() {
+  if (!M || fase !== "main" || M.status !== "playing") return;
+  const sisa = GILIRAN_MS - (Date.now() - giliranMulaiLokal);
+  $("waktuBar").style.width = Math.max(0, Math.min(100, (sisa / GILIRAN_MS) * 100)) + "%";
+  $("waktuWrap").classList.toggle("kritis", sisa < 8000);
+  const lawanSide = side === "x" ? "o" : "x";
+  if (sisa < -1500) return akhiri(M.turn === side ? lawanSide : side, "waktu");
+  if (M.n === 0 && lawanBerubah === 0 && Date.now() - mulaiMatchLokal > LAWAN_ABSEN_MS + 2600) return akhiri("none", "batal");
+  if (lawanBerubah > 0 && Date.now() - lawanTerlihat > LAWAN_PUTUS_MS) return akhiri(side, "putus");
+}
+function kirimDenyut() {
+  if (!mRef || !side) return;
+  if (M && M.status !== "playing") return;
+  updateDoc(mRef, { [side === "x" ? "hbX" : "hbO"]: Date.now() }).catch(() => {});
+}
+async function langkah(i) {
+  if (!M || M.status !== "playing" || M.turn !== side || M.board[i] !== ".") return;
+  const b = M.board.slice(0, i) + side + M.board.slice(i + 1);
+  const menang = garisMenang(b);
+  const upd = { board: b, n: M.n + 1, turn: side === "x" ? "o" : "x", turnTs: Date.now() };
+  if (menang) Object.assign(upd, { status: "done", winner: side, reason: "menang", ended: Date.now() });
+  else if (M.n + 1 === 9) Object.assign(upd, { status: "done", winner: "draw", reason: "seri", ended: Date.now() });
+  M = { ...M, ...upd };          // tampilkan langsung tanpa menunggu server
+  render(M);
+  try { await updateDoc(mRef, upd); } catch (e) { console.warn("langkah ditolak", e); }
+}
+async function akhiri(winner, reason) {
+  if (mencatatAkhir || !M || M.status !== "playing") return;
+  mencatatAkhir = true;
+  const nSaatIni = M.n;
+  try {
+    await runTransaction(db, async (tx) => {
+      const s = await tx.get(mRef); const m = s.data();
+      if (!m || m.status !== "playing" || m.n !== nSaatIni) throw new Error("sudah berubah");
+      tx.update(mRef, { status: "done", winner, reason, ended: Date.now() });
+    });
+  } catch (e) { mencatatAkhir = false; }
+}
+window.__menyerah = () => { if (confirm("Menyerah dan mengaku kalah?")) akhiri(side === "x" ? "o" : "x", "menyerah"); };
+
+function tampilHasil(m) {
+  if (hasilTampil) return; hasilTampil = true; fase = "hasil";
+  clearInterval(hbM); clearInterval(tickM);
+  try { sessionStorage.removeItem("duelMatchId"); } catch (e) {}
+  const box = $("boxHasil");
+  let jenis = "seri";
+  if (m.winner === side) jenis = "menang"; else if (m.winner === "x" || m.winner === "o") jenis = "kalah";
+  const batal = m.reason === "batal" || m.winner === "none";
+  const info = {
+    menang: { putus: "Lawan terputus, kemenangan jadi milikmu!", waktu: "Lawan kehabisan waktu!", menyerah: "Lawan menyerah!", menang: "Tiga simbol sejajar — mantap!" },
+    kalah: { waktu: "Waktu giliranmu habis.", menyerah: "Kamu menyerah.", menang: "Lawan lebih cepat kali ini. Coba lagi!", putus: "Koneksimu terputus." },
+  };
+  box.className = "panel hasil " + (batal ? "seri" : jenis);
+  if (batal) { $("hsIkon").textContent = "👻"; $("hsJudul").textContent = "DIBATALKAN"; $("hsInfo").textContent = "Lawan tidak hadir di pertandingan. Cari lawan lain, yuk!"; }
+  else if (jenis === "menang") { $("hsIkon").textContent = "🏆"; $("hsJudul").textContent = "VICTORY!"; $("hsInfo").textContent = info.menang[m.reason] || ""; konfeti(); }
+  else if (jenis === "kalah") { $("hsIkon").textContent = "💀"; $("hsJudul").textContent = "DEFEAT"; $("hsInfo").textContent = info.kalah[m.reason] || ""; $("papan").classList.add("guncang"); }
+  else { $("hsIkon").textContent = "🤝"; $("hsJudul").textContent = "SERI!"; $("hsInfo").textContent = "Kekuatan kalian seimbang."; }
+  setTimeout(() => $("layarHasil").classList.add("on"), jenis === "menang" || jenis === "kalah" ? 1100 : 600);
+}
+function konfeti() {
+  const em = ["✨", "⭐", "🎉", "🪙", "⚔️"];
+  for (let i = 0; i < 26; i++) {
+    const e = document.createElement("div"); e.className = "konfeti"; e.textContent = em[i % em.length];
+    e.style.left = Math.random() * 100 + "vw"; e.style.animationDuration = 1.8 + Math.random() * 1.8 + "s"; e.style.animationDelay = Math.random() * 0.6 + "s";
+    document.body.appendChild(e); setTimeout(() => e.remove(), 4500);
+  }
+}
+function keluarMatch() {
+  clearInterval(hbM); clearInterval(tickM); clearTimeout(vsTimer);
+  if (unsubM) unsubM(); unsubM = null;
+  try { sessionStorage.removeItem("duelMatchId"); } catch (e) {}
+  $("layarHasil").classList.remove("on");
+  $("papan").classList.remove("guncang");
+  M = null; side = "";
+}
+
+// ======================= TOMBOL =======================
+$("btnCari").onclick = cari;
+$("btnCobaLagi").onclick = () => { fase = "kosong"; cari(); };
+$("btnKeLobby").onclick = () => { fase = "lobby"; show("sLobby"); };
+$("btnBatalCari").onclick = () => { hentikanCari(true); fase = "lobby"; show("sLobby"); };
+$("btnLagi").onclick = () => { keluarMatch(); fase = "lobby"; cari(); };
+$("btnLobby").onclick = () => { keluarMatch(); fase = "lobby"; show("sLobby"); };
+$("btnMenyerah").onclick = () => window.__menyerah();
+$("btnTutup").onclick = () => { if (fase === "main" && M && M.status === "playing" && !confirm("Pertandingan sedang berlangsung. Tutup berarti kamu kalah. Lanjut tutup?")) return; window.close(); setTimeout(() => { location.href = "index.html#siswa"; }, 150); };
+function pergi() {
+  if (fase === "cari") deleteDoc(myTicketRef()).catch(() => {});
+}
+addEventListener("pagehide", pergi);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) kirimDenyut(); });
+
+mulai();
+</script>
+</body>
+</html>

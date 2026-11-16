@@ -26,6 +26,7 @@ import {
   writeBatch,
   getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=3.11.0";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
@@ -99,6 +100,155 @@ function escapeHtml(text) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+// ==========================================
+// SAPAAN SESUAI WAKTU & AFIRMASI HARIAN
+// (daftar kalimat afirmasi ada di afirmasi.js)
+// ==========================================
+// Nama pembuka yang terlalu umum — dilewati, sapaan memakai kata berikutnya.
+// Contoh: "Muhammad Fauzi" -> "Fauzi", "Siti Aminah" -> "Aminah".
+const NAMA_UMUM_DILEWATI = new Set([
+  "ahmad",
+  "achmad",
+  "akhmad",
+  "ahmat",
+  "muhammad",
+  "muhamad",
+  "muhamat",
+  "mohammad",
+  "mohamad",
+  "mochamad",
+  "muchamad",
+  "mhd",
+  "muh",
+  "moh",
+  "moch",
+  "m",
+  "siti",
+  "sity",
+  "st",
+  "nur",
+]);
+// Gelar di depan nama (Drs., Hj., Dr., dst.) tidak dipakai sebagai nama panggilan.
+const GELAR_DEPAN = /^(drs?a?|hj?|ir|prof|kh|ust|ustadz|ustadzah)$/i;
+
+function kapitalAwal(kata) {
+  return String(kata)
+    .toLowerCase()
+    .replace(/(^|-)([a-z])/g, (_, p, c) => p + c.toUpperCase());
+}
+
+// "BAGAS PRATAMA" -> "Bagas" • "Muhammad Fauzi" -> "Fauzi" • "Ade Rahayu, S.Pd" -> "Ade"
+function namaPanggilan(namaLengkap) {
+  const tanpaGelarBelakang = String(namaLengkap || "").split(",")[0];
+  const kata = tanpaGelarBelakang
+    .replace(/\./g, " ")
+    .split(/\s+/)
+    .filter((k) => k && !GELAR_DEPAN.test(k));
+  if (!kata.length) return "";
+  let i = 0;
+  while (i < kata.length - 1 && NAMA_UMUM_DILEWATI.has(kata[i].toLowerCase())) {
+    i++;
+  }
+  return kapitalAwal(kata[i]);
+}
+
+// Guru: "Bu Ade" / "Pak Ade" (dari field `jk` L/P di teachers/{email});
+// kalau `jk` kosong, cukup nama tanpa Pak/Bu. Field opsional `panggilan`
+// di dokumen guru, kalau diisi, dipakai menggantikan nama otomatis.
+function sapaGuru(u) {
+  const jk = String((u && u.jk) || "")
+    .trim()
+    .toUpperCase()
+    .charAt(0);
+  const gelar = jk === "L" ? "Pak " : jk === "P" ? "Bu " : "";
+  return gelar + ((u && u.panggilan) || namaPanggilan(u && u.nama));
+}
+
+function infoWaktuSapaan(d = new Date()) {
+  const j = d.getHours();
+  if (j >= 4 && j < 11) return { teks: "Selamat pagi", ikon: "☀️" };
+  if (j >= 11 && j < 15) return { teks: "Selamat siang", ikon: "🌤️" };
+  if (j >= 15 && j < 18) return { teks: "Selamat sore", ikon: "🌇" };
+  return { teks: "Selamat malam", ikon: "🌙" };
+}
+
+// Satu kalimat per hari (berganti tiap tanggal, sama untuk semua pengguna).
+function afirmasiHariIni(daftar) {
+  if (!daftar || !daftar.length) return "";
+  const d = new Date();
+  const hari = Math.floor(
+    Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000,
+  );
+  return daftar[hari % daftar.length];
+}
+
+// Menulis sapaan ke elemen & memperbaruinya otomatis (tiap menit / saat
+// aplikasi dibuka lagi) supaya "pagi" bisa berubah jadi "siang" tanpa refresh.
+const sapaanAktif = new Map();
+function pasangSapaan(kunci, idJudul, idAfirmasi, buatNama, daftarAfirmasi) {
+  const terapkan = () => {
+    const w = infoWaktuSapaan();
+    const nama = buatNama();
+    const elJudul = $(idJudul);
+    const elAfirmasi = $(idAfirmasi);
+    if (elJudul) {
+      // \u00A0 = spasi tak terputus, supaya ikon tidak turun sendirian ke baris baru
+      elJudul.textContent = nama
+        ? `Hai ${nama}, ${w.teks}\u00A0${w.ikon}`
+        : `${w.teks}\u00A0${w.ikon}`;
+    }
+    if (elAfirmasi) elAfirmasi.textContent = afirmasiHariIni(daftarAfirmasi);
+  };
+  sapaanAktif.set(kunci, terapkan);
+  terapkan();
+}
+setInterval(() => sapaanAktif.forEach((f) => f()), 60000);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) sapaanAktif.forEach((f) => f());
+});
+
+// Sapaan hanya untuk guru & kepala sekolah (Super Admin tetap memakai header biasa).
+// ==========================================
+// LATAR MENYESUAIKAN WAKTU (pagi / siang / sore / malam)
+// Gaya langit ada di style.css: body[data-waktu="..."]
+// ==========================================
+const WARNA_TEMA_BROWSER = {
+  pagi: "#a8dcff",
+  siang: "#2e8bf0",
+  sore: "#ff7a45",
+  malam: "#050b1f",
+};
+function jenisLatar(d = new Date()) {
+  const j = d.getHours();
+  if (j >= 4 && j < 11) return "pagi";
+  if (j >= 11 && j < 15) return "siang";
+  if (j >= 15 && j < 18) return "sore";
+  return "malam";
+}
+function terapkanLatarWaktu() {
+  const k = jenisLatar();
+  if (document.body.dataset.waktu === k) return;
+  document.body.dataset.waktu = k;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", WARNA_TEMA_BROWSER[k]);
+}
+terapkanLatarWaktu();
+setInterval(terapkanLatarWaktu, 60000);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) terapkanLatarWaktu();
+});
+
+function pasangSapaanStaf(user) {
+  if (user.role === "Super Admin") return;
+  pasangSapaan(
+    "staf",
+    "sapaanGuruJudul",
+    "sapaanGuruAfirmasi",
+    () => sapaGuru(user),
+    AFIRMASI_GURU,
+  );
 }
 
 // Tanggal & jam sesuai zona waktu perangkat (bukan UTC)
@@ -364,16 +514,32 @@ window.handleAvatarClick = function () {
 let heartbeatInterval = null;
 let presenceNisn = "";
 
+// Waktu terakhir pengguna menyentuh / mengetik di aplikasi. Dikirim bersama
+// heartbeat supaya perangkat lain tahu apakah pemilik akun sedang di layar.
+let interaksiTerakhir = Date.now();
+["pointerdown", "keydown", "touchstart", "scroll"].forEach((ev) =>
+  window.addEventListener(
+    ev,
+    () => {
+      interaksiTerakhir = Date.now();
+    },
+    { passive: true, capture: true },
+  ),
+);
+let presenceTanpaInteraksi = false; // jadi true bila rules belum menerima lastInteract
+
 async function updatePresence(state) {
   if (!presenceNisn) return;
   try {
     const { doc, setDoc } = window.fbFirestore;
-    await setDoc(
-      doc(window.db, "status", presenceNisn),
-      { state, lastActive: Date.now() },
-      { merge: true },
-    );
+    const data = { state, lastActive: Date.now() };
+    if (!presenceTanpaInteraksi) data.lastInteract = interaksiTerakhir;
+    await setDoc(doc(window.db, "status", presenceNisn), data, { merge: true });
   } catch (e) {
+    if (!presenceTanpaInteraksi && e && e.code === "permission-denied") {
+      presenceTanpaInteraksi = true; // rules lama: kirim ulang tanpa lastInteract
+      return updatePresence(state);
+    }
     console.error("Gagal update status online:", e);
   }
 }
@@ -407,6 +573,445 @@ function stopOnlineStatusEngine(setOffline = true) {
   if (setOffline && presenceNisn) updatePresence("offline");
   presenceNisn = "";
 }
+
+// ==========================================
+// SATU PERANGKAT AKTIF PER AKUN SISWA (dengan izin pemilik)
+// ==========================================
+// Aturan:
+//  - Pemilik tidak sedang memakai akun (offline / tidak menyentuh layar > 5 menit)
+//    -> login baru langsung diterima, pemilik diberi tahu nanti.
+//  - Pemilik sedang aktif memakai akun -> login baru HARUS menunggu persetujuan
+//    pemilik (pop-up Izinkan / Tolak, batas 60 detik). Pemilik tidak dikeluarkan
+//    sebelum dia menekan Izinkan.
+//  - Login dari perangkat yang sama (deviceId sama) tidak pernah ditanya.
+// Semua disimpan di dokumen status/{nisn}. Ini fitur kenyamanan, bukan pengaman
+// mutlak (siswa tidak memakai Firebase Auth); kalau pengecekan gagal, login tetap jalan.
+const SESI_KEY = "activeSessionId";
+const DEVICE_KEY = "deviceId";
+const PEMILIK_HADIR_MS = 5 * 60 * 1000;
+const IZIN_TIMEOUT_MS = 60 * 1000;
+let sesiIdAktif = "";
+let sesiUnsub = null;
+let izinReqAktif = null;
+
+function buatSesiId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+}
+
+function deviceIdLokal() {
+  let id = localStorage.getItem(DEVICE_KEY);
+  if (!id) {
+    id = buatSesiId();
+    localStorage.setItem(DEVICE_KEY, id);
+  }
+  return id;
+}
+
+// Contoh: "Android • Chrome"
+function labelPerangkat() {
+  const ua = navigator.userAgent || "";
+  const os = /Android/i.test(ua)
+    ? "Android"
+    : /iPhone|iPad|iPod/i.test(ua)
+      ? "iPhone/iPad"
+      : /Windows/i.test(ua)
+        ? "Windows"
+        : /Mac OS/i.test(ua)
+          ? "Mac"
+          : /Linux/i.test(ua)
+            ? "Linux"
+            : "Perangkat lain";
+  const br = /Edg\//i.test(ua)
+    ? "Edge"
+    : /OPR\//i.test(ua)
+      ? "Opera"
+      : /Firefox/i.test(ua)
+        ? "Firefox"
+        : /Chrome/i.test(ua)
+          ? "Chrome"
+          : /Safari/i.test(ua)
+            ? "Safari"
+            : "Browser";
+  return `${os} • ${br}`;
+}
+
+function jamLokal(ts) {
+  const d = new Date(ts);
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+// ---- sisi perangkat BARU: minta izin pemilik ----
+// Hasil: "allowed" | "denied" | "timeout" | "batal" | "error"
+function mintaIzinPemilik(nisn) {
+  return new Promise((resolve) => {
+    const { doc, setDoc, onSnapshot } = window.fbFirestore;
+    const ref = doc(window.db, "status", nisn);
+    const reqId = buatSesiId();
+    const modal = $("modalMenungguIzin");
+    const elDetik = $("menungguIzinDetik");
+    let selesai = false;
+    let unsub = null;
+    let timer = null;
+    let tick = null;
+    const mulai = Date.now();
+
+    const akhiri = async (hasil, bersihkan) => {
+      if (selesai) return;
+      selesai = true;
+      if (unsub) unsub();
+      clearTimeout(timer);
+      clearInterval(tick);
+      if (modal) modal.classList.add("hidden");
+      window.batalMenungguIzin = null;
+      if (bersihkan) {
+        try {
+          await setDoc(ref, { req: null }, { merge: true });
+        } catch (e) {
+          /* abaikan */
+        }
+      }
+      resolve(hasil);
+    };
+
+    window.batalMenungguIzin = () => akhiri("batal", true);
+
+    setDoc(
+      ref,
+      {
+        req: {
+          id: reqId,
+          ts: mulai,
+          device: labelPerangkat(),
+          status: "pending",
+        },
+      },
+      { merge: true },
+    )
+      .then(() => {
+        if (selesai) return;
+        if (modal) modal.classList.remove("hidden");
+        const perbaruiDetik = () => {
+          const sisa = Math.max(
+            0,
+            Math.ceil((IZIN_TIMEOUT_MS - (Date.now() - mulai)) / 1000),
+          );
+          if (elDetik) elDetik.textContent = String(sisa);
+        };
+        perbaruiDetik();
+        tick = setInterval(perbaruiDetik, 1000);
+
+        unsub = onSnapshot(
+          ref,
+          (snap) => {
+            const r = snap.exists() ? snap.data().req : null;
+            if (!r || r.id !== reqId) return;
+            if (r.status === "allowed") akhiri("allowed", false);
+            else if (r.status === "denied") akhiri("denied", true);
+          },
+          () => akhiri("error", true),
+        );
+
+        timer = setTimeout(async () => {
+          // pemilik tidak menjawab: tinggalkan catatan supaya dia tahu nanti
+          try {
+            await setDoc(
+              ref,
+              {
+                alert: {
+                  ts: Date.now(),
+                  device: labelPerangkat(),
+                  hasil: "tidak direspons",
+                  sid: reqId,
+                },
+              },
+              { merge: true },
+            );
+          } catch (e) {
+            /* abaikan */
+          }
+          akhiri("timeout", true);
+        }, IZIN_TIMEOUT_MS);
+      })
+      .catch((e) => {
+        console.warn("Permintaan izin tidak terkirim:", e);
+        akhiri("error", false);
+      });
+  });
+}
+
+// baru=true  : login baru (bisa diminta izin pemilik)
+// baru=false : memulihkan sesi (refresh / buka lagi)
+// Hasil: "ok" | "diambil" | "denied" | "timeout" | "batal"
+async function klaimSesiSiswa(nisn, baru) {
+  try {
+    const { doc, getDoc, setDoc } = window.fbFirestore;
+    const ref = doc(window.db, "status", nisn);
+    const snap = await getDoc(ref);
+    const d = snap.exists() ? snap.data() : {};
+    const devId = deviceIdLokal();
+    const now = Date.now();
+
+    if (!baru) {
+      let id = localStorage.getItem(SESI_KEY) || "";
+      if (id && d.sessionId && d.sessionId !== id) return "diambil";
+      if (!id) id = buatSesiId();
+      await setDoc(
+        ref,
+        {
+          state: "online",
+          lastActive: Date.now(),
+          sessionId: id,
+          deviceId: devId,
+          lastInteract: interaksiTerakhir,
+        },
+        { merge: true },
+      );
+      localStorage.setItem(SESI_KEY, id);
+      sesiIdAktif = id;
+      return "ok";
+    }
+
+    const adaSesiLain = !!d.sessionId && d.deviceId !== devId;
+    const aktif =
+      adaSesiLain &&
+      d.state === "online" &&
+      now - (d.lastActive || 0) < ONLINE_THRESHOLD_MS;
+    const hadir = aktif && now - (d.lastInteract || 0) < PEMILIK_HADIR_MS;
+
+    if (hadir) {
+      const izin = await mintaIzinPemilik(nisn);
+      if (izin !== "allowed" && izin !== "error") return izin;
+    }
+
+    const id = buatSesiId();
+    const data = {
+      state: "online",
+      lastActive: Date.now(),
+      sessionId: id,
+      deviceId: devId,
+      lastInteract: interaksiTerakhir,
+      req: null,
+    };
+    if (adaSesiLain && !hadir) {
+      data.alert = {
+        ts: Date.now(),
+        device: labelPerangkat(),
+        hasil: "diambil alih",
+        sid: id,
+      };
+    }
+    await setDoc(ref, data, { merge: true });
+    localStorage.setItem(SESI_KEY, id);
+    sesiIdAktif = id;
+    return "ok";
+  } catch (e) {
+    console.warn("Kunci satu-perangkat tidak aktif:", e);
+    sesiIdAktif = "";
+    return "ok";
+  }
+}
+
+function pesanLoginDitolak(hasil) {
+  if (hasil === "denied") {
+    window.customAlert(
+      "⛔ Pemilik akun menolak permintaan masuk. Kalau kamu pemilik akun, keluar dulu dari perangkat yang lain, lalu coba lagi.",
+    );
+  } else if (hasil === "timeout") {
+    window.customAlert(
+      "⌛ Akun ini sedang dipakai di perangkat lain dan pemilik belum menjawab. Kalau kamu pemilik akun, keluar dulu dari perangkat lain lalu coba lagi.",
+    );
+  }
+}
+
+// ---- sisi perangkat PEMILIK ----
+function stopPantauSesi() {
+  if (sesiUnsub) sesiUnsub();
+  sesiUnsub = null;
+}
+
+function sembunyikanIzinLogin() {
+  izinReqAktif = null;
+  const m = $("modalIzinLogin");
+  if (m) m.classList.add("hidden");
+}
+
+function tampilkanIzinLogin(r) {
+  izinReqAktif = r;
+  $("izinLoginPerangkat").textContent = r.device || "perangkat lain";
+  $("izinLoginWaktu").textContent = jamLokal(r.ts || Date.now());
+  $("modalIzinLogin").classList.remove("hidden");
+}
+
+window.jawabIzinLogin = async function (boleh) {
+  const r = izinReqAktif;
+  const nisn = getMyNisn();
+  sembunyikanIzinLogin();
+  if (!r || !nisn) return;
+  try {
+    const { doc, setDoc } = window.fbFirestore;
+    await setDoc(
+      doc(window.db, "status", nisn),
+      { req: { ...r, status: boleh ? "allowed" : "denied" } },
+      { merge: true },
+    );
+  } catch (e) {
+    console.error("Gagal mengirim jawaban izin:", e);
+  }
+  if (!boleh) {
+    window.customAlert(
+      "✅ Permintaan masuk sudah ditolak. Kalau kamu curiga PIN-mu diketahui orang lain, segera ganti PIN di tab Profil.",
+    );
+  }
+};
+
+function pantauSesiSiswa(nisn) {
+  stopPantauSesi();
+  if (!sesiIdAktif) return;
+  const { doc, onSnapshot } = window.fbFirestore;
+  sesiUnsub = onSnapshot(
+    doc(window.db, "status", nisn),
+    (snap) => {
+      const d = snap.exists() ? snap.data() : {};
+      if (d.sessionId && sesiIdAktif && d.sessionId !== sesiIdAktif) {
+        keluarKarenaSesiLain();
+        return;
+      }
+      const r = d.req;
+      if (
+        r &&
+        r.status === "pending" &&
+        Date.now() - (r.ts || 0) < IZIN_TIMEOUT_MS + 10000
+      ) {
+        if (!izinReqAktif || izinReqAktif.id !== r.id) tampilkanIzinLogin(r);
+      } else if (izinReqAktif) {
+        sembunyikanIzinLogin();
+      }
+    },
+    (e) => console.warn("Gagal memantau sesi:", e),
+  );
+}
+
+function keluarKarenaSesiLain() {
+  stopPantauSesi();
+  // jangan menandai "offline": akun ini sedang aktif di perangkat yang baru
+  stopOnlineStatusEngine(false);
+  cleanupStudentSession();
+  localStorage.removeItem("activeUser");
+  localStorage.removeItem("activeUserExpiry");
+  showScreen("menu");
+  window.customAlert(
+    "🔒 Akunmu dibuka di perangkat lain, jadi kamu otomatis keluar dari perangkat ini. Kalau itu bukan kamu, segera login lagi lalu ganti PIN.",
+  );
+}
+
+// Catatan "ada yang masuk / mencoba masuk" yang ditinggalkan saat pemilik tidak di layar.
+// Ditampilkan sekali ke pemilik, tidak ke orang yang membuat catatan itu.
+async function cekPeringatanLogin(nisn) {
+  try {
+    const { doc, getDoc, setDoc } = window.fbFirestore;
+    const ref = doc(window.db, "status", nisn);
+    const snap = await getDoc(ref);
+    const al = snap.exists() ? snap.data().alert : null;
+    if (!al || al.sid === sesiIdAktif) return;
+    await setDoc(ref, { alert: null }, { merge: true });
+    window.customAlert(
+      `⚠️ Akunmu ${al.hasil === "tidak direspons" ? "dicoba dibuka" : "dibuka"} dari ${al.device} pada pukul ${jamLokal(al.ts)} (${al.hasil}). Kalau itu kamu, abaikan pesan ini. Kalau bukan, segera ganti PIN di tab Profil.`,
+    );
+  } catch (e) {
+    console.warn("Gagal memeriksa peringatan login:", e);
+  }
+}
+
+// Saat keluar manual: lepaskan kunci sesi supaya login berikutnya tidak dianggap "perangkat lain"
+async function lepasSesiServer(nisn) {
+  if (!nisn || !sesiIdAktif) return;
+  try {
+    const { doc, getDoc, setDoc } = window.fbFirestore;
+    const ref = doc(window.db, "status", nisn);
+    const snap = await getDoc(ref);
+    if (snap.exists() && snap.data().sessionId === sesiIdAktif) {
+      await setDoc(
+        ref,
+        { sessionId: "", state: "offline", lastActive: Date.now() },
+        { merge: true },
+      );
+    }
+  } catch (e) {
+    console.warn("Gagal melepas sesi:", e);
+  }
+}
+
+// ==========================================
+// PENGINGAT GANTI PIN BAWAAN (123456) SAAT LOGIN
+// Bisa ditutup; muncul lagi setiap login selama PIN belum diganti.
+// ==========================================
+function perluGantiPinBawaan(siswa) {
+  const serverPin = siswa.pin !== undefined ? String(siswa.pin) : "123456";
+  return !siswa.hasChangedPin && serverPin === "123456";
+}
+
+function cekWajibGantiPin(siswa) {
+  const modal = $("modalWajibGantiPin");
+  if (!modal) return;
+  if (perluGantiPinBawaan(siswa)) {
+    $("wajibPinBaru").value = "";
+    $("wajibPinUlang").value = "";
+    $("wajibPinError").style.display = "none";
+    modal.classList.remove("hidden");
+  } else {
+    modal.classList.add("hidden");
+  }
+}
+
+window.tutupWajibPin = function () {
+  const modal = $("modalWajibGantiPin");
+  if (modal) modal.classList.add("hidden");
+};
+
+let pinWajibBusy = false;
+window.simpanPinWajib = async function () {
+  if (pinWajibBusy) return;
+  const nisn = getMyNisn();
+  if (!nisn) return;
+  const baru = $("wajibPinBaru").value.trim();
+  const ulang = $("wajibPinUlang").value.trim();
+  const err = $("wajibPinError");
+  const tampilError = (t) => {
+    err.textContent = t;
+    err.style.display = "block";
+  };
+
+  if (!/^\d{4,6}$/.test(baru))
+    return tampilError("PIN baru harus berupa 4 sampai 6 angka.");
+  if (baru === "123456")
+    return tampilError("PIN baru tidak boleh sama dengan PIN bawaan (123456).");
+  if (baru !== ulang)
+    return tampilError("Pengulangan PIN tidak sama. Coba ketik lagi.");
+
+  pinWajibBusy = true;
+  const btn = $("btnSimpanPinWajib");
+  if (btn) btn.disabled = true;
+  try {
+    const { doc, updateDoc } = window.fbFirestore;
+    await updateDoc(doc(window.db, "siswa", nisn), {
+      pin: baru,
+      hasChangedPin: true,
+    });
+    $("modalWajibGantiPin").classList.add("hidden");
+    const kartuPin = $("cardGantiPin");
+    if (kartuPin) kartuPin.style.display = "none";
+    $("wajibPinBaru").value = "";
+    $("wajibPinUlang").value = "";
+    err.style.display = "none";
+    window.customAlert("✅ PIN berhasil diganti. Ingat PIN barumu, ya!");
+  } catch (e) {
+    console.error("Gagal menyimpan PIN wajib:", e);
+    tampilError("Gagal menyimpan PIN. Periksa koneksi internet kamu.");
+  } finally {
+    pinWajibBusy = false;
+    if (btn) btn.disabled = false;
+  }
+};
 
 function formatLastActive(timestamp) {
   if (!timestamp) return "Offline";
@@ -488,6 +1093,15 @@ function cleanupStudentSession() {
     globalChatActiveListener = null;
   }
   stopGlobalOnlineListener();
+  stopPantauSesi();
+  barPrev = null; // login berikutnya: bar terisi dari kosong lagi
+  sembunyikanIzinLogin();
+  const modalMenunggu = $("modalMenungguIzin");
+  if (modalMenunggu) modalMenunggu.classList.add("hidden");
+  sesiIdAktif = "";
+  localStorage.removeItem(SESI_KEY);
+  const modalPin = $("modalWajibGantiPin");
+  if (modalPin) modalPin.classList.add("hidden");
   stopOnlineStatusEngine(true);
 
   currentNisnSiswa = "";
@@ -553,57 +1167,218 @@ function initStudentRealtimeListener(nisn) {
   }
 }
 
+// ==========================================
+// BINGKAI FOTO SESUAI TIER (gaya ada di style.css: .tier-*)
+// ==========================================
+const KELAS_BINGKAI_TIER = [
+  "tier-novice",
+  "tier-iron",
+  "tier-bronze",
+  "tier-silver",
+  "tier-gold",
+  "tier-platinum",
+  "tier-diamond",
+  "tier-master",
+  "tier-mythic",
+];
+function terapkanBingkaiTier(elGambar, kelasBingkai) {
+  const kotak = elGambar && elGambar.parentElement;
+  if (!kotak) return;
+  KELAS_BINGKAI_TIER.forEach((k) => kotak.classList.remove(k));
+  if (kelasBingkai) kotak.classList.add(kelasBingkai);
+}
+
+// ==========================================
+// BAR HP / SHIELD BERANIMASI
+// ==========================================
+let barPrev = null; // nilai sebelumnya, supaya kita tahu naik atau turun
+function kurangiGerak() {
+  return !!(
+    window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
+function animasiAngka(el, dari, ke, format, instan) {
+  if (!el) return;
+  if (el._anim) cancelAnimationFrame(el._anim);
+  if (instan || dari === ke) {
+    el.textContent = format(ke);
+    return;
+  }
+  const durasi = 900;
+  const mulai = performance.now();
+  const langkah = (t) => {
+    const p = Math.min(1, (t - mulai) / durasi);
+    const e = 1 - Math.pow(1 - p, 3); // melambat di akhir
+    el.textContent = format(Math.round(dari + (ke - dari) * e));
+    if (p < 1) el._anim = requestAnimationFrame(langkah);
+  };
+  el._anim = requestAnimationFrame(langkah);
+}
+
+function kilatBar(elOuter, kelas) {
+  if (!elOuter) return;
+  elOuter.classList.remove("flash-damage", "flash-heal", "flash-shield");
+  void elOuter.offsetWidth; // ulang animasi
+  elOuter.classList.add(kelas);
+  setTimeout(() => elOuter.classList.remove(kelas), 900);
+}
+
+function perbaruiBarRpg(hp, shield) {
+  const hpFill = $("barHpFill");
+  const shFill = $("barShieldFill");
+  if (!hpFill || !shFill) return;
+  const hpOuter = hpFill.parentElement;
+  const shOuter = shFill.parentElement;
+  const hpPct = Math.max(0, Math.min(100, (hp / 200) * 100));
+  const shPct = Math.max(0, Math.min(100, (shield / 300) * 100));
+
+  // "jejak kerusakan": pita kuning pucat yang menyusul turun di belakang bar HP
+  let jejak = hpOuter.querySelector(".rpg-hp-trail");
+  if (!jejak) {
+    jejak = document.createElement("div");
+    jejak.className = "rpg-hp-trail";
+    hpOuter.insertBefore(jejak, hpFill);
+  }
+
+  const warna = hpPct >= 50 ? "#2ecc71" : hpPct >= 25 ? "#f39c12" : "#e74c3c";
+  hpFill.style.backgroundColor = warna;
+  hpFill.classList.toggle("low", hpPct < 25);
+  $("txtHpPercent").style.color = warna;
+
+  const pertama = barPrev === null;
+  const diam = kurangiGerak();
+  const terapkanLebar = () => {
+    hpFill.style.width = `${hpPct}%`;
+    jejak.style.width = `${hpPct}%`;
+    shFill.style.width = `${shPct}%`;
+  };
+
+  if (pertama) {
+    // tampil pertama kali: bar terisi dari kosong
+    [hpFill, jejak, shFill].forEach((e) => {
+      e.style.transition = "none";
+      e.style.width = "0%";
+    });
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        [hpFill, jejak, shFill].forEach((e) => (e.style.transition = ""));
+        terapkanLebar();
+      }),
+    );
+  } else {
+    terapkanLebar();
+  }
+
+  animasiAngka(
+    $("txtHpPercent"),
+    pertama ? 0 : barPrev.hp,
+    hp,
+    (v) => `${v}/200`,
+    false,
+  );
+  animasiAngka(
+    $("txtShieldPercent"),
+    pertama ? 0 : barPrev.shield,
+    shield,
+    (v) => `${v} Pts`,
+    false,
+  );
+
+  if (!pertama && !diam) {
+    if (hp < barPrev.hp) kilatBar(hpOuter, "flash-damage");
+    else if (hp > barPrev.hp) kilatBar(hpOuter, "flash-heal");
+    if (shield !== barPrev.shield) kilatBar(shOuter, "flash-shield");
+  }
+  barPrev = { hp, shield };
+}
+
+// Animasi isi bar dari kosong -> nilai sekarang, diputar ulang saat tab Profil
+// benar-benar terlihat (bukan saat masih tertutup layar loading / tab lain).
+function putarUlangBar() {
+  if (!barPrev) return;
+  const { hp, shield } = barPrev;
+  barPrev = null; // perlakukan seperti "tampil pertama kali"
+  perbaruiBarRpg(hp, shield);
+}
+function putarUlangBarSetelahTampil() {
+  let coba = 0;
+  const cek = () => {
+    const pre = $("gamePreloader");
+    const profil = $("siswaTabProfil");
+    const tampak =
+      profil &&
+      profil.offsetParent !== null &&
+      (!pre || pre.classList.contains("hidden"));
+    if (tampak) {
+      putarUlangBar();
+      return;
+    }
+    if (++coba < 30) setTimeout(cek, 150);
+  };
+  setTimeout(cek, 60);
+}
+
 function getTierRank(shield) {
   if (shield >= 290)
     return {
       title: "🌌 MYTHIC LEGEND",
+      frame: "tier-mythic",
       color: "#ffffff",
       bg: "linear-gradient(135deg, #ff0844, #ffb199)",
     };
   if (shield >= 251)
     return {
       title: "👑 MASTER CHAMPION",
+      frame: "tier-master",
       color: "#ffffff",
       bg: "linear-gradient(135deg, #b224ef, #7579ff)",
     };
   if (shield >= 211)
     return {
       title: "💠 DIAMOND VANGUARD",
+      frame: "tier-diamond",
       color: "#ffffff",
       bg: "linear-gradient(135deg, #00c6ff, #0072ff)",
     };
   if (shield >= 171)
     return {
       title: "💎 PLATINUM GUARDIAN",
+      frame: "tier-platinum",
       color: "#ffffff",
       bg: "linear-gradient(135deg, #11998e, #38ef7d)",
     };
   if (shield >= 131)
     return {
       title: "🥇 GOLD PALADIN",
+      frame: "tier-gold",
       color: "#1a2536",
       bg: "linear-gradient(135deg, #f7971e, #ffd200)",
     };
   if (shield >= 91)
     return {
       title: "🥈 SILVER WARRIOR",
+      frame: "tier-silver",
       color: "#1a2536",
       bg: "linear-gradient(135deg, #e0eafc, #cfdef3)",
     };
   if (shield >= 51)
     return {
       title: "🥉 BRONZE KNIGHT",
+      frame: "tier-bronze",
       color: "#ffffff",
       bg: "linear-gradient(135deg, #d38312, #a83279)",
     };
   if (shield >= 11)
     return {
       title: "🛡️ IRON SQUIRE",
+      frame: "tier-iron",
       color: "#ffffff",
       bg: "linear-gradient(135deg, #485563, #29323c)",
     };
   return {
     title: "🔰 NOVICE",
+    frame: "tier-novice",
     color: "#ffffff",
     bg: "linear-gradient(135deg, #7f8c8d, #95a5a6)",
   };
@@ -682,25 +1457,24 @@ function tampilkanProfilSiswa(siswa, nisn) {
     <span style="display: inline-block; background: ${rankInfo.bg}; color: ${rankInfo.color}; padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 700; margin-top: 1px;">
       ${rankInfo.title}
     </span>`;
+  terapkanBingkaiTier(avatarImg, rankInfo.frame);
+  terapkanBingkaiTier($("miniAvatar"), rankInfo.frame);
 
   const hpValue = siswa.hp !== undefined ? siswa.hp : 200;
-  $("barHpFill").style.width =
-    `${Math.max(0, Math.min(100, (hpValue / 200) * 100))}%`;
-  $("txtHpPercent").innerText = `${Math.max(0, hpValue)}/200`;
-
-  $("txtShieldPercent").innerText = `${shieldValue} Pts`;
-  $("barShieldFill").style.width =
-    `${Math.max(0, Math.min(100, (shieldValue / 300) * 100))}%`;
+  perbaruiBarRpg(Math.max(0, hpValue), Math.max(0, shieldValue));
 
   $("txtDailyScoreTextOnly").innerText = `⭐ ${siswa.dailyScore || 0} Pts`;
 
   // Header mini (tampil di semua tab)
   const miniAv = $("miniAvatar");
   if (miniAv) miniAv.src = avatarFor(siswa);
-  $("miniNama").textContent = siswa.nama || "-";
-  $("miniKelas").textContent = siswa.kelas || "-";
-  $("miniHp").textContent = `❤️ ${Math.max(0, hpValue)}`;
-  $("miniDaily").textContent = `⭐ ${siswa.dailyScore || 0}`;
+  pasangSapaan(
+    "siswa",
+    "miniSapaan",
+    "miniAfirmasi",
+    () => siswa.panggilan || namaPanggilan(siswa.nama),
+    AFIRMASI_SISWA,
+  );
 
   const statusHukum = getStatusPembinaan(siswa.totalPelanggaran || 0);
   $("txtStatusKondisi").innerText = `STATUS: ${statusHukum.title}`;
@@ -711,21 +1485,13 @@ function tampilkanProfilSiswa(siswa, nisn) {
 
   $("historyListSiswa").innerHTML = renderRiwayatHtml(siswa.riwayat);
 
-  // Kartu ganti PIN: tampil hanya jika PIN masih default
-  const serverPin = siswa.pin !== undefined ? String(siswa.pin) : "123456";
+  // Kartu ganti PIN hanya tampil selama PIN masih bawaan; hilang setelah diganti
   const cardGantiPin = $("cardGantiPin");
-  if (cardGantiPin) {
-    if (siswa.hasChangedPin || serverPin !== "123456") {
-      cardGantiPin.style.display = "none";
-    } else if (cardGantiPin.style.display === "none") {
-      cardGantiPin.style.display = "block";
-      $("oldPinInput").value = "";
-      $("newPinInput").value = "";
-    }
-  }
+  if (cardGantiPin)
+    cardGantiPin.style.display = perluGantiPinBawaan(siswa) ? "block" : "none";
 }
 
-function startStudentSession(nisn, siswa) {
+function startStudentSession(nisn, siswa, opsi) {
   localStorage.setItem("activeUser", nisn);
   localStorage.setItem(
     "activeUserExpiry",
@@ -737,14 +1503,15 @@ function startStudentSession(nisn, siswa) {
 
   initStudentRealtimeListener(nisn);
   initOnlineStatusEngine(nisn);
+  pantauSesiSiswa(nisn);
 
   $("boxInputNisnSiswa").classList.add("hidden");
   $("hasilPoinSiswa").classList.remove("hidden");
 
-  const cardGantiPin = $("cardGantiPin");
-  if (cardGantiPin) cardGantiPin.style.display = "block";
-
   tampilkanProfilSiswa(siswa, nisn);
+  // Pengingat ganti PIN hanya saat login (bukan saat sesi dipulihkan / refresh)
+  if (opsi && opsi.tampilPopupPin) cekWajibGantiPin(siswa);
+  cekPeringatanLogin(nisn);
   window.initGlobalChat(siswa);
   loadPeriodeAktifLabel();
   setSiswaAppMode(true);
@@ -788,7 +1555,12 @@ window.loginSiswaWithPin = async function () {
       if (siswa.statusAkun === "lulus") {
         startAlumniView(nisnInput, siswa);
       } else {
-        startStudentSession(nisnInput, siswa);
+        const hasilSesi = await klaimSesiSiswa(nisnInput, true);
+        if (hasilSesi !== "ok") {
+          pesanLoginDitolak(hasilSesi);
+          return;
+        }
+        startStudentSession(nisnInput, siswa, { tampilPopupPin: true });
       }
     } catch (err) {
       done();
@@ -810,8 +1582,17 @@ async function autoLoginSiswa(nisnInput) {
         if (siswa.dailyScore === undefined) siswa.dailyScore = 0;
         if (siswa.statusAkun === "lulus") {
           startAlumniView(nisnInput, siswa);
-        } else {
+        } else if ((await klaimSesiSiswa(nisnInput, false)) === "ok") {
           startStudentSession(nisnInput, siswa);
+        } else {
+          // sesi sudah diambil alih perangkat lain
+          localStorage.removeItem("activeUser");
+          localStorage.removeItem("activeUserExpiry");
+          localStorage.removeItem(SESI_KEY);
+          showScreen("siswa");
+          window.customAlert(
+            "🔒 Akunmu sedang dibuka di perangkat lain. Silakan login lagi untuk memakai di sini.",
+          );
         }
       } else {
         localStorage.removeItem("activeUser");
@@ -866,14 +1647,12 @@ window.gantiPinSiswa = async function () {
       await updateDoc(docRef, { pin: newPin, hasChangedPin: true });
 
       done();
-      window.customAlert(
-        "✅ PIN berhasil diubah! Kotak ganti PIN disembunyikan untuk keamanan.",
-      );
+      window.customAlert("✅ PIN berhasil diubah! Ingat PIN barumu, ya.");
 
-      const cardGantiPin = $("cardGantiPin");
-      if (cardGantiPin) cardGantiPin.style.display = "none";
       $("oldPinInput").value = "";
       $("newPinInput").value = "";
+      const kartuPin = $("cardGantiPin");
+      if (kartuPin) kartuPin.style.display = "none";
     } catch (err) {
       done();
       console.error("Gagal mengganti PIN:", err);
@@ -1025,7 +1804,7 @@ function getChatRoomId(nisn1, nisn2) {
 // ==========================================
 // NAVIGASI TAB SISWA (PROFIL / TEMAN / CHAT / GLOBAL)
 // ==========================================
-const SISWA_TABS = ["profil", "teman", "chat", "global"];
+const SISWA_TABS = ["profil", "teman", "chat", "global", "game"];
 let siswaActiveTab = "profil";
 let friendState = {}; // nisn -> { online, statusText, unread, last }
 let friendRenderQueued = false;
@@ -1090,6 +1869,39 @@ window.switchSiswaTab = function (tab) {
     startGlobalOnlineListener();
     scrollToBottom("globalChatContainer");
   }
+
+  if (tab === "game") cekGameDibuka();
+  if (tab === "profil") putarUlangBarSetelahTampil();
+};
+
+// ==========================================
+// TAB GAME: daftar game (dibuka di tab baru)
+// Saklar admin: Firestore app_meta/game  { aktif: false, pesan: "..." }
+// ==========================================
+let gameDibuka = true;
+async function cekGameDibuka() {
+  try {
+    const { doc, getDoc } = window.fbFirestore;
+    const s = await getDoc(doc(window.db, "app_meta", "game"));
+    const d = s.exists() ? s.data() : {};
+    gameDibuka = !(d.aktif === false || d.aktif === "false");
+    const info = $("gameTutupInfo");
+    if (info) {
+      info.classList.toggle("hidden", gameDibuka);
+      if (!gameDibuka) info.textContent = "🚧 " + (d.pesan || "Game sedang ditutup sementara.");
+    }
+    const daftar = $("gameDaftar");
+    if (daftar) daftar.classList.toggle("game-terkunci", !gameDibuka);
+  } catch (e) {
+    gameDibuka = true; // gagal baca: jangan kunci
+  }
+}
+window.bukaGame = function (nama) {
+  if (!gameDibuka) return window.customAlert("🚧 Game sedang ditutup sementara.");
+  const DAFTAR = { tictactoe: "game-tictactoe.html" };
+  if (!DAFTAR[nama]) return;
+  const w = window.open(DAFTAR[nama] + "?v=3.11.0", "_blank", "noopener");
+  if (!w) window.customAlert("Pop-up diblokir browser. Izinkan pop-up untuk situs ini, lalu coba lagi.");
 };
 
 // ==========================================
@@ -2230,11 +3042,12 @@ window.kembaliKeMenu = function () {
 
 window.keluarSiswa = async function () {
   const ok = await window.customConfirm(
-    "Yakin ingin keluar dari akun ini?",
+    "Yakin ingin keluar dari halaman ini?",
     "🚪 KONFIRMASI KELUAR",
   );
   if (!ok) return;
 
+  await lepasSesiServer(getMyNisn());
   cleanupStudentSession();
   localStorage.removeItem("activeUser");
   localStorage.removeItem("activeUserExpiry");
@@ -2253,7 +3066,13 @@ function cleanupAdminListeners() {
   currentAdminSelectedRoomId = "";
 }
 
-window.logout = function () {
+window.logout = async function () {
+  const ok = await window.customConfirm(
+    "Yakin ingin keluar dari halaman ini?",
+    "🚪 KONFIRMASI KELUAR",
+  );
+  if (!ok) return;
+
   cleanupAdminListeners();
   localStorage.removeItem("loggedInUser");
   currentUser = null;
@@ -2635,6 +3454,7 @@ function prosesMasukUser(user, doneCallback) {
       setTimeout(() => {
         if (doneCallback) doneCallback();
         $("txtNamaAdmin").innerText = user.nama;
+        pasangSapaanStaf(user);
         showScreen("admin");
         window.switchAdminTab("rekap");
         cekBadgeLaporanBugAwal();
@@ -2643,6 +3463,7 @@ function prosesMasukUser(user, doneCallback) {
   } else {
     $("txtNamaGuru").innerText = user.nama;
     $("txtRoleGuru").innerText = "Jabatan: " + labelJabatan(user);
+    pasangSapaanStaf(user);
     loadMasterSiswaFromCloud(() => {
       if (doneCallback) doneCallback();
       showScreen("entry");
@@ -2984,21 +3805,23 @@ function formatTanggalSingkat(d) {
   return m ? `${m[2]}/${m[1]}` : "-";
 }
 
-let monGuruBusy = false;
-window.renderMonitoringGuru = async function () {
-  const tabel = $("monGuruTabel");
-  const info = $("monGuruInfo");
-  if (!tabel || !info) return;
-  if (!isKepalaSekolah(currentUser)) {
-    tabel.innerHTML = `<div class="guru-riwayat-kosong">Fitur ini hanya untuk kepala sekolah.</div>`;
-    return;
-  }
-  if (monGuruBusy) return;
-  monGuruBusy = true;
-  info.textContent = "";
-  tabel.innerHTML = `<div class="guru-riwayat-kosong">Memuat data guru...</div>`;
+// Data statistik guru dipakai bersama oleh tab Monitoring Guru & profil kepala
+// sekolah, jadi disimpan sebentar (2 menit) supaya tidak membaca Firestore berulang.
+let statGuruCache = null; // { t, hasil, teacherTerbaca }
+let statGuruPromise = null;
+const STAT_GURU_TTL_MS = 2 * 60 * 1000;
 
-  try {
+async function ambilStatistikGuru(paksa = false) {
+  if (
+    !paksa &&
+    statGuruCache &&
+    Date.now() - statGuruCache.t < STAT_GURU_TTL_MS
+  ) {
+    return statGuruCache;
+  }
+  if (statGuruPromise) return statGuruPromise; // permintaan yang sama sedang berjalan
+
+  statGuruPromise = (async () => {
     const { collection, getDocs, query, where } = window.fbFirestore;
     const [siswaSnap, teacherSnap, tugasSnap] = await Promise.all([
       getDocs(collection(window.db, "siswa")),
@@ -3026,10 +3849,37 @@ window.renderMonitoringGuru = async function () {
     const tugasList = [];
     if (tugasSnap) tugasSnap.forEach((d) => tugasList.push(d.data()));
 
-    const hasil = hitungStatistikGuru(siswaList, teacherList, tugasList);
+    statGuruCache = {
+      t: Date.now(),
+      hasil: hitungStatistikGuru(siswaList, teacherList, tugasList),
+      teacherTerbaca: !!teacherList,
+    };
+    return statGuruCache;
+  })();
+
+  try {
+    return await statGuruPromise;
+  } finally {
+    statGuruPromise = null;
+  }
+}
+
+window.renderMonitoringGuru = async function (paksa = false) {
+  const tabel = $("monGuruTabel");
+  const info = $("monGuruInfo");
+  if (!tabel || !info) return;
+  if (!isKepalaSekolah(currentUser)) {
+    tabel.innerHTML = `<div class="guru-riwayat-kosong">Fitur ini hanya untuk kepala sekolah.</div>`;
+    return;
+  }
+  info.textContent = "";
+  tabel.innerHTML = `<div class="guru-riwayat-kosong">Memuat data guru...</div>`;
+
+  try {
+    const { hasil, teacherTerbaca } = await ambilStatistikGuru(paksa === true);
     info.textContent =
       `${hasil.length} guru • data semester ini` +
-      (teacherList
+      (teacherTerbaca
         ? ""
         : " • (daftar guru tidak terbaca, hanya guru yang pernah input)");
 
@@ -3069,8 +3919,45 @@ window.renderMonitoringGuru = async function () {
   } catch (e) {
     console.warn("Gagal memuat monitoring guru:", e);
     tabel.innerHTML = `<div class="guru-riwayat-kosong">Gagal memuat data. Periksa koneksi internet.</div>`;
-  } finally {
-    monGuruBusy = false;
+  }
+};
+
+// ---- Ringkasan Sekolah (profil Kepala Sekolah): jumlah guru & jumlah siswa ----
+let jumlahGuruCache = null; // { t, n }
+
+// Hanya membaca koleksi `teachers` (ringan). Super Admin & kepala sekolah tidak dihitung.
+async function ambilJumlahGuru() {
+  if (jumlahGuruCache && Date.now() - jumlahGuruCache.t < STAT_GURU_TTL_MS) {
+    return jumlahGuruCache.n;
+  }
+  const { collection, getDocs } = window.fbFirestore;
+  const snap = await getDocs(collection(window.db, "teachers"));
+  let n = 0;
+  snap.forEach((d) => {
+    const t = d.data();
+    if (/super\s*admin/i.test(t.role || "") || isKepalaSekolah(t)) return;
+    n++;
+  });
+  jumlahGuruCache = { t: Date.now(), n };
+  return n;
+}
+
+window.renderRingkasanKepsek = async function () {
+  if (!isKepalaSekolah(currentUser)) return;
+
+  // Siswa aktif (yang sudah lulus tidak dihitung) — data sudah ada di memori
+  const jumlahSiswa = (masterDataSiswa || []).filter(
+    (s) => s.statusAkun !== "lulus" && s.kelas,
+  ).length;
+  $("kepsekTotalSiswa").textContent = jumlahSiswa;
+
+  const elGuru = $("kepsekTotalGuru");
+  elGuru.textContent = "...";
+  try {
+    elGuru.textContent = await ambilJumlahGuru();
+  } catch (e) {
+    console.warn("Gagal menghitung jumlah guru:", e);
+    elGuru.textContent = "-";
   }
 };
 
@@ -3131,9 +4018,14 @@ window.loadProfilGuru = async function () {
   const kepsekProfil = isKepalaSekolah(currentUser);
   const rowStat = $("rowStatGuruProfil");
   const boxRiwayat = $("boxRiwayatGuruProfil");
+  const boxRingkasan = $("boxRingkasanKepsek");
   if (rowStat) rowStat.classList.toggle("hidden", kepsekProfil);
   if (boxRiwayat) boxRiwayat.classList.toggle("hidden", kepsekProfil);
-  if (kepsekProfil) return;
+  if (boxRingkasan) boxRingkasan.classList.toggle("hidden", !kepsekProfil);
+  if (kepsekProfil) {
+    window.renderRingkasanKepsek();
+    return;
+  }
 
   renderRiwayatInputGuru(namaGuru);
 };
@@ -5900,12 +6792,14 @@ async function initApp() {
         currentRole = userObj.role;
         if (userObj.role === "Super Admin") {
           $("txtNamaAdmin").innerText = userObj.nama;
+          pasangSapaanStaf(userObj);
           showScreen("admin");
           window.switchAdminTab("rekap");
           cekBadgeLaporanBugAwal();
         } else {
           $("txtNamaGuru").innerText = userObj.nama;
           $("txtRoleGuru").innerText = "Jabatan: " + labelJabatan(userObj);
+          pasangSapaanStaf(userObj);
           showScreen("entry");
           initFormEntry();
           window.switchTeacherTab("profil");

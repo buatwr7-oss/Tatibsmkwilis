@@ -9,7 +9,7 @@
     <title>Tatib SMK Wiraguna 🛡️</title>
 
     <!-- CSS UTAMA -->
-    <link rel="stylesheet" href="style.css?v=3.8.0" />
+    <link rel="stylesheet" href="style.css?v=3.11.0" />
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
@@ -230,12 +230,8 @@
             />
           </div>
           <div class="mini-info">
-            <div id="miniNama" class="mini-nama">-</div>
-            <div class="mini-chips">
-              <span id="miniKelas" class="mini-kelas">-</span>
-              <span id="miniHp" class="mini-chip mini-hp">❤️ 200</span>
-              <span id="miniDaily" class="mini-chip mini-star">⭐ 0</span>
-            </div>
+            <div id="miniSapaan" class="sapaan-judul sapaan-gelap">Halo!</div>
+            <div id="miniAfirmasi" class="sapaan-afirmasi sapaan-gelap"></div>
           </div>
           <button
             type="button"
@@ -282,6 +278,14 @@
           >
             <span class="tab-ico">🌍</span><span class="tab-lbl">Global</span>
             <span id="tabBadgeGlobal" class="tab-badge hidden">0</span>
+          </button>
+          <button
+            type="button"
+            class="siswa-tab-btn"
+            data-tab="game"
+            onclick="switchSiswaTab('game')"
+          >
+            <span class="tab-ico">🎮</span><span class="tab-lbl">Game</span>
           </button>
         </nav>
 
@@ -556,6 +560,39 @@
               <button type="button" id="btnKirimGlobalChat">Kirim</button>
             </div>
           </section>
+
+          <!-- ============ TAB 5: GAME ============ -->
+          <section id="siswaTabGame" class="siswa-panel hidden">
+            <div class="game-head">
+              <div class="game-head-ico">🎮</div>
+              <div>
+                <div class="game-head-judul">Arena Game</div>
+                <div class="game-head-sub">Tantang siswa lain yang sedang online. Hanya untuk seru-seruan, tidak mengubah poin.</div>
+              </div>
+            </div>
+            <div id="gameTutupInfo" class="game-tutup hidden">🚧 Game sedang ditutup sementara.</div>
+            <div id="gameDaftar" class="game-daftar">
+              <div class="game-kartu">
+                <div class="game-banner gb-ttt"><span>⚔️</span><span class="gb-vs">VS</span><span>🛡️</span></div>
+                <div class="game-isi">
+                  <div class="game-nama">Duel Arena: Tic-Tac-Toe</div>
+                  <div class="game-ket">Pedang vs Perisai. Susun 3 simbol sejajar untuk menang.</div>
+                  <div class="game-tag-row"><span class="game-tag">👥 1 vs 1</span><span class="game-tag">🌐 Online</span><span class="game-tag">⏱️ ±2 menit</span></div>
+                  <button type="button" class="game-main" onclick="bukaGame('tictactoe')">▶ MAIN SEKARANG</button>
+                </div>
+              </div>
+              <div class="game-kartu game-segera">
+                <div class="game-banner gb-soon"><span>❓</span></div>
+                <div class="game-isi">
+                  <div class="game-nama">Game berikutnya</div>
+                  <div class="game-ket">Segera hadir…</div>
+                  <button type="button" class="game-main" disabled>🔒 SEGERA</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+
         </div>
       </div>
 
@@ -649,9 +686,14 @@
     <!-- HALAMAN ENTRY GURU -->
     <div id="entryCard" class="card hidden" style="max-width: 520px">
       <div class="header-app">
-        <div class="user-info">
-          <h3 id="txtNamaGuru">Nama Guru</h3>
-          <p id="txtRoleGuru">Role Guru</p>
+        <div class="user-info sapaan-wrap">
+          <div id="sapaanGuruJudul" class="sapaan-judul sapaan-terang">
+            Halo!
+          </div>
+          <div id="sapaanGuruAfirmasi" class="sapaan-afirmasi sapaan-terang"></div>
+          <!-- Nama & jabatan disembunyikan (masih dipakai fitur lain, mis. laporan cetak) -->
+          <span id="txtNamaGuru" class="hidden">Nama Guru</span>
+          <span id="txtRoleGuru" class="hidden">Role Guru</span>
         </div>
         <button class="btn-logout" onclick="logout()">Keluar</button>
       </div>
@@ -663,7 +705,7 @@
           onclick="switchTeacherTab('profil')"
           style="background: #1e3c72; font-size: 11px; padding: 8px; flex: 1"
         >
-          👤<br />Profil
+          👤 Profil
         </button>
         <button
           id="navBtnInputPoin"
@@ -679,7 +721,7 @@
           class="btn-outline"
           style="font-size: 11px; padding: 8px; flex: 1"
         >
-          📢<br />Tugas
+          📢<br />Pemberian Tugas
         </button>
         <button
           id="navBtnMonitoring"
@@ -695,7 +737,7 @@
           class="btn-outline"
           style="font-size: 11px; padding: 8px; flex: 1; display: none"
         >
-          👨‍🏫 Monitoring Guru
+          👨‍🏫<br />Monitoring Guru
         </button>
       </div>
 
@@ -892,6 +934,32 @@
           </div>
         </div>
 
+        <!-- RINGKASAN SEKOLAH (khusus kepala sekolah) -->
+        <div id="boxRingkasanKepsek" class="hidden">
+          <div style="display: flex; gap: 8px; margin-top: 10px">
+            <div class="rpg-card-container guru-stat-box">
+              <div
+                id="kepsekTotalGuru"
+                class="guru-stat-num"
+                style="color: #f1c40f"
+              >
+                -
+              </div>
+              <div class="guru-stat-lbl">JUMLAH GURU</div>
+            </div>
+            <div class="rpg-card-container guru-stat-box">
+              <div
+                id="kepsekTotalSiswa"
+                class="guru-stat-num"
+                style="color: #2ecc71"
+              >
+                -
+              </div>
+              <div class="guru-stat-lbl">JUMLAH SISWA</div>
+            </div>
+          </div>
+        </div>
+
         <div
           id="boxRiwayatGuruProfil"
           class="rpg-card-container"
@@ -1078,7 +1146,7 @@
             type="button"
             id="btnMuatUlangMonGuru"
             class="monitor-refresh"
-            onclick="renderMonitoringGuru()"
+            onclick="renderMonitoringGuru(true)"
           >
             🔄 Muat Ulang Data
           </button>
@@ -2187,7 +2255,7 @@
           📁 Pilih Berkas Foto
         </button>
 
-        <div
+        <!-- <div
           style="
             background: #f8fafc;
             border: 1.5px solid #cbd5e1;
@@ -2204,7 +2272,7 @@
             >⚠️ KETENTUAN:</strong
           >
           Gunakan foto diri yang pantas dan profesional sebagai tenaga pendidik.
-        </div>
+        </div> -->
 
         <div style="display: flex; gap: 8px">
           <button
@@ -2285,7 +2353,7 @@
           📁 Pilih Berkas Foto
         </button>
 
-        <div
+        <!-- <div
           style="
             background: #f8fafc;
             border: 1.5px solid #cbd5e1;
@@ -2305,7 +2373,7 @@
           foto ini dengan lapisan gelap transparan, jadi tetap terbaca apapun
           fotonya — tapi pilih foto yang bagian pentingnya tidak persis di area
           kiri-atas supaya tidak tertutup teks.
-        </div>
+        </div> -->
 
         <div style="display: flex; gap: 8px">
           <button
@@ -2438,6 +2506,104 @@
     </div>
 
     <!-- MODAL ERROR / NISN TIDAK DITEMUKAN -->
+    <!-- PENGINGAT GANTI PIN BAWAAN (muncul saat login dengan PIN 123456; bisa ditutup) -->
+    <div id="modalWajibGantiPin" class="modal-overlay hidden">
+      <div class="modal-box">
+        <h4>🔐 Ganti PIN-mu, Yuk!</h4>
+        <p class="modal-detail">
+          PIN kamu masih PIN bawaan (123456), jadi mudah ditebak teman. Buat PIN
+          baru (4–6 angka) supaya akunmu aman. Kamu boleh menutup ini dulu, tapi
+          pengingat ini muncul lagi setiap login sampai PIN diganti.
+        </p>
+        <div class="input-box">
+          <label>PIN BARU</label>
+          <input
+            type="password"
+            id="wajibPinBaru"
+            inputmode="numeric"
+            maxlength="6"
+            placeholder="4 sampai 6 angka"
+            autocomplete="off"
+          />
+        </div>
+        <div class="input-box">
+          <label>ULANGI PIN BARU</label>
+          <input
+            type="password"
+            id="wajibPinUlang"
+            inputmode="numeric"
+            maxlength="6"
+            placeholder="Ketik ulang PIN baru"
+            autocomplete="off"
+          />
+        </div>
+        <div
+          id="wajibPinError"
+          style="
+            display: none;
+            color: #e74c3c;
+            font-size: 11.5px;
+            font-weight: 600;
+            margin-bottom: 6px;
+          "
+        ></div>
+        <button type="button" id="btnSimpanPinWajib" onclick="simpanPinWajib()">
+          Simpan PIN Baru 🔑
+        </button>
+        <button type="button" class="btn-outline" onclick="tutupWajibPin()">
+          Nanti saja
+        </button>
+      </div>
+    </div>
+
+    <!-- PERANGKAT BARU: menunggu izin pemilik akun -->
+    <div id="modalMenungguIzin" class="modal-overlay hidden" style="z-index: 10001">
+      <div class="modal-box" style="text-align: center">
+        <h4>⏳ Akun Sedang Dipakai</h4>
+        <p class="modal-detail">
+          Akun ini sedang aktif di perangkat lain. Permintaan masuk sudah
+          dikirim ke pemilik akun — tunggu persetujuannya ya.
+        </p>
+        <div
+          style="font-size: 28px; font-weight: 800; color: #1e3c72; margin-bottom: 4px"
+        >
+          <span id="menungguIzinDetik">60</span>
+          <span style="font-size: 13px; font-weight: 600">detik</span>
+        </div>
+        <button
+          type="button"
+          class="btn-outline"
+          onclick="window.batalMenungguIzin && window.batalMenungguIzin()"
+        >
+          Batal
+        </button>
+      </div>
+    </div>
+
+    <!-- PERANGKAT PEMILIK: ada yang mencoba masuk -->
+    <div id="modalIzinLogin" class="modal-overlay hidden" style="z-index: 10001">
+      <div class="modal-box" style="text-align: center">
+        <h4>🔔 Ada yang Mencoba Masuk ke Akunmu</h4>
+        <p class="modal-detail">
+          <strong id="izinLoginPerangkat">-</strong> mencoba masuk ke akunmu
+          pukul <strong id="izinLoginWaktu">-</strong>.<br /><br />
+          Kalau itu <strong>kamu</strong>, tekan Izinkan (kamu akan keluar dari
+          perangkat ini). Kalau <strong>bukan kamu</strong>, tekan Tolak lalu
+          segera ganti PIN.
+        </p>
+        <button
+          type="button"
+          style="background: #27ae60"
+          onclick="jawabIzinLogin(true)"
+        >
+          ✅ Izinkan
+        </button>
+        <button type="button" class="btn-danger" onclick="jawabIzinLogin(false)">
+          ⛔ Tolak
+        </button>
+      </div>
+    </div>
+
     <div id="modalErrorSiswa" class="hidden modal-error-overlay-box">
       <div class="modal-error-inner-box">
         <div style="font-size: 38px; margin-bottom: 8px">⚠️</div>
@@ -2552,19 +2718,19 @@
       🛠️ MODE MAINTENANCE AKTIF — siswa & guru tidak bisa masuk
     </div>
 
-    <div class="app-version-badge">Tatib v3.8.0 • Beta</div>
+    <div class="app-version-badge">Tatib v3.11.0 • Beta</div>
 
     <!-- JAVASCRIPT UTAMA & FIREBASE MODULE -->
     <script>
       // Daftarkan service worker (syarat PWA agar bisa di-install)
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
-          navigator.serviceWorker.register("sw.js?v=3.8.0").catch(function (e) {
+          navigator.serviceWorker.register("sw.js?v=3.11.0").catch(function (e) {
             console.warn("Service worker gagal didaftarkan:", e);
           });
         });
       }
     </script>
-    <script src="app.js?v=3.8.0" type="module"></script>
+    <script src="app.js?v=3.11.0" type="module"></script>
   </body>
 </html>
