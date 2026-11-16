@@ -9,7 +9,8 @@
     <title>Tatib SMK Wiraguna 🛡️</title>
 
     <!-- CSS UTAMA -->
-    <link rel="stylesheet" href="style.css?v=3.11.1" />
+    <link rel="stylesheet" href="style.css?v=3.14.1" />
+    <link rel="stylesheet" href="ambient.css?v=3.14.1" />
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
@@ -35,6 +36,114 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   </head>
   <body>
+    <!-- LATAR SUASANA ALAM (pagi/siang/sore/malam) — diatur ambient.js & app.js -->
+  <div id="ambient-background" data-mood="pagi" style="position: fixed; inset: 0; z-index: -1; pointer-events: none;" aria-hidden="true">
+    <!-- Definisi Gradasi Transparan SVG untuk Awan -->
+    <svg width="0" height="0" style="position: absolute;" aria-hidden="true">
+      <defs>
+        <linearGradient id="ambientCloudGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color: var(--cloud-start); transition: stop-color 1.75s ease;" />
+          <stop offset="100%" style="stop-color: var(--cloud-end); transition: stop-color 1.75s ease;" />
+        </linearGradient>
+      </defs>
+    </svg>
+
+    <!-- 4 Lapisan Langit Bertumpuk -->
+    <div class="ambient-sky-layer sky-pagi is-active" data-sky="pagi"></div>
+    <div class="ambient-sky-layer sky-siang" data-sky="siang"></div>
+    <div class="ambient-sky-layer sky-sore" data-sky="sore"></div>
+    <div class="ambient-sky-layer sky-malam" data-sky="malam"></div>
+
+    <!-- Overlay Cahaya Suasana -->
+    <div class="ambient-atmosphere-glow glow-pagi"></div>
+    <div class="ambient-atmosphere-glow glow-siang"></div>
+    <div class="ambient-atmosphere-glow glow-sore"></div>
+    <div class="ambient-atmosphere-glow glow-malam"></div>
+
+    <!-- Bintang & Bintang Jatuh (Malam) -->
+    <div class="ambient-stars-layer" id="ambient-stars-container"></div>
+    <div id="ambient-shooting-container"></div>
+
+    <!-- Benda Langit -->
+    <div class="celestial-body sun-pagi"></div>
+
+    <div class="sun-siang-wrap">
+      <div class="sun-siang-rays"></div>
+      <div class="sun-siang-core"></div>
+    </div>
+
+    <div class="celestial-body sun-sore"></div>
+    <div class="celestial-body moon-malam"></div>
+
+    <!-- Lapisan Awan Melayang -->
+    <div class="ambient-clouds-layer">
+      <!-- Awan 1 -->
+      <div class="ambient-cloud" style="top: 12%; width: 220px; animation-duration: 78s; animation-delay: -18s;">
+        <svg viewBox="0 0 240 85" fill="none">
+          <path class="cloud-body" d="M48 72H195C216 72 232 57 232 39C232 22 218 8 200 8C196 8 192 9 188 10C179 -1 163 -4 149 2C138 -3 124 -2 114 6C101 -1 84 2 76 14C72 13 68 12 64 12C43 12 26 27 26 45C26 60 36 72 48 72Z" />
+          <path class="cloud-shade" d="M35 66H212C205 70 198 72 190 72H48C42 72 38 70 35 66Z" />
+        </svg>
+      </div>
+      <!-- Awan 2 -->
+      <div class="ambient-cloud" style="top: 24%; width: 165px; animation-duration: 95s; animation-delay: -52s;">
+        <svg viewBox="0 0 240 85" fill="none">
+          <path class="cloud-body" d="M48 72H195C216 72 232 57 232 39C232 22 218 8 200 8C196 8 192 9 188 10C179 -1 163 -4 149 2C138 -3 124 -2 114 6C101 -1 84 2 76 14C72 13 68 12 64 12C43 12 26 27 26 45C26 60 36 72 48 72Z" />
+        </svg>
+      </div>
+      <!-- Awan 3 -->
+      <div class="ambient-cloud" style="top: 18%; width: 270px; animation-duration: 112s; animation-delay: -75s;">
+        <svg viewBox="0 0 280 95" fill="none">
+          <path class="cloud-body" d="M54 82H232C256 82 274 65 274 44C274 25 258 9 238 9C233 9 228 10 223 12C212 -1 193 -4 176 3C163 -3 146 -1 134 8C119 0 99 3 89 17C84 15 79 14 73 14C48 14 28 32 28 53C28 69 39 82 54 82Z" />
+          <path class="cloud-shade" d="M38 74H252C245 79 238 82 228 82H54C47 82 42 79 38 74Z" />
+        </svg>
+      </div>
+      <!-- Awan 4 (Kecil di kejauhan) -->
+      <div class="ambient-cloud" style="top: 33%; width: 135px; animation-duration: 68s; animation-delay: -9s;">
+        <svg viewBox="0 0 240 85" fill="none">
+          <path class="cloud-body" d="M48 72H195C216 72 232 57 232 39C232 22 218 8 200 8C196 8 192 9 188 10C179 -1 163 -4 149 2C138 -3 124 -2 114 6C101 -1 84 2 76 14C72 13 68 12 64 12C43 12 26 27 26 45C26 60 36 72 48 72Z" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Siluet Burung Pagi -->
+    <div class="ambient-birds-layer">
+      <div class="bird-flock" style="top: 22%; animation-duration: 42s; animation-delay: -6s;">
+        <svg class="bird-svg" width="76" height="28" viewBox="0 0 76 28" fill="none">
+          <path d="M2 16C8 10 14 10 18 15C22 10 28 10 34 16" stroke="#2c4a63" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M36 9C40 4 45 4 48 8C51 4 56 4 60 9" stroke="#2c4a63" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M52 21C56 17 60 17 63 20C66 17 70 17 74 21" stroke="#2c4a63" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Partikel Debu Emas Sore -->
+    <div class="ambient-particles-layer" id="ambient-particles-container"></div>
+
+    <!-- Kunang-kunang Malam -->
+    <div class="ambient-fireflies-layer" id="ambient-fireflies-container"></div>
+
+    <!-- Kabut Lembut Pagi -->
+    <div class="ambient-mist-layer">
+      <div class="mist-band" style="bottom: 18px; animation-duration: 16s;"></div>
+      <div class="mist-band" style="bottom: -10px; animation-duration: 22s; animation-direction: alternate-reverse;"></div>
+    </div>
+
+    <!-- Siluet Pegunungan Berlapis di Cakrawala Bawah -->
+    <div class="ambient-horizon-hills">
+      <svg viewBox="0 0 1440 220" preserveAspectRatio="none">
+        <!-- Bukit Jauh -->
+        <path class="hill-layer-far" d="M0,125 C220,75 410,145 660,105 C910,65 1160,130 1440,88 L1440,220 L0,220 Z" />
+        <!-- Bukit Tengah -->
+        <path class="hill-layer-mid" d="M0,152 C280,115 520,178 820,136 C1080,100 1280,155 1440,132 L1440,220 L0,220 Z" />
+        <!-- Bukit Depan -->
+        <path class="hill-layer-near" d="M0,178 C340,148 640,198 980,166 C1190,146 1330,176 1440,164 L1440,220 L0,220 Z" />
+      </svg>
+    </div>
+
+    <!-- Vignette & Kabut Bawah Transparan agar Menyatu Halus dengan Halaman Web -->
+    <div class="ambient-vignette-layer"></div>
+  </div>
+
     <!-- PRELOADER -->
     <div id="gamePreloader" class="game-preloader hidden">
       <div class="loading-box-game">
@@ -739,6 +848,14 @@
         >
           👨‍🏫<br />Monitoring Guru
         </button>
+        <button
+          id="navBtnOnline"
+          onclick="switchTeacherTab('online')"
+          class="btn-outline"
+          style="font-size: 11px; padding: 8px; flex: 1"
+        >
+          🟢<br />Online
+        </button>
       </div>
 
       <!-- TAB BARU: PROFIL GURU -->
@@ -1129,6 +1246,29 @@
           >
             🔄 Muat Ulang Data
           </button>
+        </div>
+      </div>
+
+      <!-- TAB: ONLINE SEKARANG (semua guru: siswa aktif; kepala sekolah: + guru aktif) -->
+      <div id="teacherTabOnline" class="admin-tab-content hidden">
+        <div class="rpg-card-container">
+          <div class="guru-riwayat-title">🟢 Online Sekarang</div>
+          <div class="global-online-head" style="margin: 6px 0 4px">
+            <span class="online-pulse"></span>
+            <span id="onlineSiswaCount">0 siswa online</span>
+          </div>
+          <div id="onlineSiswaList"></div>
+          <div id="onlineGuruWrap" class="hidden" style="margin-top: 14px">
+            <div class="global-online-head" style="margin-bottom: 4px">
+              <span class="online-pulse"></span>
+              <span id="onlineGuruCount">0 guru online</span>
+            </div>
+            <div id="onlineGuruList"></div>
+          </div>
+          <div class="monitor-legend">
+            Online = sedang membuka aplikasi dan aktif (bukan bukti kehadiran di
+            sekolah). Daftar diperbarui otomatis.
+          </div>
         </div>
       </div>
 
@@ -2718,19 +2858,20 @@
       🛠️ MODE MAINTENANCE AKTIF — siswa & guru tidak bisa masuk
     </div>
 
-    <div class="app-version-badge">Tatib v3.11.1 • Beta</div>
+    <div class="app-version-badge">Tatib v3.14.1 • Beta</div>
 
     <!-- JAVASCRIPT UTAMA & FIREBASE MODULE -->
     <script>
       // Daftarkan service worker (syarat PWA agar bisa di-install)
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
-          navigator.serviceWorker.register("sw.js?v=3.11.1").catch(function (e) {
+          navigator.serviceWorker.register("sw.js?v=3.14.1").catch(function (e) {
             console.warn("Service worker gagal didaftarkan:", e);
           });
         });
       }
     </script>
-    <script src="app.js?v=3.11.1" type="module"></script>
+    <script src="ambient.js?v=3.14.1"></script>
+    <script src="app.js?v=3.14.1" type="module"></script>
   </body>
 </html>

@@ -26,7 +26,7 @@ import {
   writeBatch,
   getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=3.11.1";
+import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=3.14.1";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
@@ -174,14 +174,102 @@ function infoWaktuSapaan(d = new Date()) {
   return { teks: "Selamat malam", ikon: "🌙" };
 }
 
-// Satu kalimat per hari (berganti tiap tanggal, sama untuk semua pengguna).
-function afirmasiHariIni(daftar) {
+// Sehari DUA kalimat: pagi (00.00-11.59) = kalimat pertama, siang-malam
+// (12.00-23.59) = kalimat kedua. Sama untuk semua pengguna pada waktu yang sama.
+function slotAfirmasi() {
+  return new Date().getHours() < 12 ? 0 : 1;
+}
+function afirmasiSlot(daftar, slot) {
   if (!daftar || !daftar.length) return "";
   const d = new Date();
   const hari = Math.floor(
     Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000,
   );
-  return daftar[hari % daftar.length];
+  return daftar[(hari * 2 + slot) % daftar.length];
+}
+
+// Menampilkan kalimat dengan efek "balok berputar" (naik / turun).
+// Gaya animasinya ada di style.css (.afm-teks).
+function setAfirmasiTeks(el, teks, arah) {
+  if (!el) return;
+  const lama = el.querySelector(".afm-teks:not(.keluar)");
+  if (lama && lama.dataset.t === teks) return;
+  const baru = document.createElement("span");
+  baru.className = "afm-teks";
+  baru.dataset.t = teks;
+  baru.textContent = teks;
+  const diam =
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Kalau perangkat memakai pengaturan "kurangi gerakan" (di Windows: Pengaturan
+  // > Aksesibilitas > Efek visual > Efek animasi MATI), gulungan 3D diganti
+  // pudar halus supaya tetap ada animasi yang nyaman.
+  arah = diam ? "pudar" : arah === "turun" ? "turun" : "naik";
+  // Bersihkan kelas animasi setelah selesai (animationend baru terpicu ketika
+  // elemen benar-benar tampil, jadi animasi pembuka tidak "terbuang" saat
+  // header masih tersembunyi).
+  const bereskan = (node, hapus) => {
+    node.addEventListener(
+      "animationend",
+      () => (hapus ? node.remove() : node.classList.remove("masuk", "naik", "turun")),
+      { once: true },
+    );
+  };
+  if (!lama) {
+    // tampil pertama kali: kalimat "menggulung" masuk dari bawah
+    baru.classList.add("masuk", arah);
+    bereskan(baru, false);
+    el.replaceChildren(baru);
+    return;
+  }
+  el.querySelectorAll(".afm-teks.keluar").forEach((x) => x.remove());
+  lama.classList.add("keluar", arah);
+  baru.classList.add("masuk", arah);
+  bereskan(lama, true);
+  bereskan(baru, false);
+  el.appendChild(baru);
+}
+
+// Status per elemen: slot asli (menurut jam) dan slot yang sedang ditampilkan
+// (bisa dibalik dengan mengetuk tulisannya).
+const AFM_GANTI_MS = 60000; // ganti kalimat otomatis tiap 1 menit
+const afmStatus = new Map();
+function perbaruiAfirmasi(idAfirmasi, daftar) {
+  const el = $(idAfirmasi);
+  if (!el) return;
+  let st = afmStatus.get(idAfirmasi);
+  if (!st) {
+    st = { asli: -1, tampil: 0 };
+    afmStatus.set(idAfirmasi, st);
+    el.classList.add("afm-bisa-ketuk");
+    const balik = () => {
+      const s = afmStatus.get(idAfirmasi);
+      s.tampil = s.tampil === 0 ? 1 : 0;
+      setAfirmasiTeks(el, afirmasiSlot(s.daftar, s.tampil), "naik");
+    };
+    // Mengetuk = ganti kalimat; selain itu berganti sendiri tiap AFM_GANTI_MS
+    // antara dua kalimat hari ini (hanya saat tab terlihat & header tampil).
+    el.addEventListener("click", () => {
+      balik();
+      clearInterval(st.timer);
+      st.timer = setInterval(otomatis, AFM_GANTI_MS);
+    });
+    const otomatis = () => {
+      if (document.hidden || !el.getClientRects().length) return;
+      balik();
+    };
+    st.timer = setInterval(otomatis, AFM_GANTI_MS);
+  }
+  st.daftar = daftar;
+  const slot = slotAfirmasi();
+  if (st.asli !== slot) {
+    const pertama = st.asli === -1;
+    st.asli = slot;
+    st.tampil = slot;
+    setAfirmasiTeks(el, afirmasiSlot(daftar, slot), pertama ? "naik" : "naik");
+  } else {
+    setAfirmasiTeks(el, afirmasiSlot(daftar, st.tampil), "naik");
+  }
 }
 
 // Menulis sapaan ke elemen & memperbaruinya otomatis (tiap menit / saat
@@ -199,7 +287,7 @@ function pasangSapaan(kunci, idJudul, idAfirmasi, buatNama, daftarAfirmasi) {
         ? `Hai ${nama}, ${w.teks}\u00A0${w.ikon}`
         : `${w.teks}\u00A0${w.ikon}`;
     }
-    if (elAfirmasi) elAfirmasi.textContent = afirmasiHariIni(daftarAfirmasi);
+    if (elAfirmasi) perbaruiAfirmasi(idAfirmasi, daftarAfirmasi);
   };
   sapaanAktif.set(kunci, terapkan);
   terapkan();
@@ -231,6 +319,7 @@ function terapkanLatarWaktu() {
   const k = jenisLatar();
   if (document.body.dataset.waktu === k) return;
   document.body.dataset.waktu = k;
+  if (window.setAmbientMood) window.setAmbientMood(k); // latar suasana alam (ambient.js)
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute("content", WARNA_TEMA_BROWSER[k]);
 }
@@ -1902,7 +1991,7 @@ window.bukaGame = function (nama) {
   if (!DAFTAR[nama]) return;
   // Catatan: jangan pakai fitur "noopener" di sini — window.open lalu selalu
   // mengembalikan null sehingga terbaca seolah pop-up diblokir.
-  const w = window.open(DAFTAR[nama] + "?v=3.11.1", "_blank");
+  const w = window.open(DAFTAR[nama] + "?v=3.14.1", "_blank");
   if (w) {
     try {
       w.opener = null;
@@ -3084,6 +3173,8 @@ window.logout = async function () {
   if (!ok) return;
 
   cleanupAdminListeners();
+  berhentiDaftarOnline();
+  stopPresenceGuru(true);
   localStorage.removeItem("loggedInUser");
   currentUser = null;
   currentRole = "";
@@ -3474,6 +3565,7 @@ function prosesMasukUser(user, doneCallback) {
     $("txtNamaGuru").innerText = user.nama;
     $("txtRoleGuru").innerText = "Jabatan: " + labelJabatan(user);
     pasangSapaanStaf(user);
+    mulaiPresenceGuru(user);
     loadMasterSiswaFromCloud(() => {
       if (doneCallback) doneCallback();
       showScreen("entry");
@@ -3566,6 +3658,180 @@ function terapkanFiturWaliKelas() {
   window.handleWaliKelasPilihKelas();
 }
 
+// ==========================================
+// ONLINE SEKARANG (tab untuk semua guru, bukan Super Admin)
+// - Semua guru (wali kelas & guru mapel): melihat siswa yang sedang aktif,
+//   mirip daftar online di Global Chat siswa.
+// - Kepala sekolah: ditambah daftar guru yang sedang aktif.
+// Guru mengirim "tanda aktif" ke dokumen teachers/{email} miliknya sendiri
+// (diizinkan rules yang sudah ada) tiap 2 menit selama halaman terlihat.
+// ==========================================
+const PRESENCE_GURU_MS = 120000;
+const ONLINE_GURU_THRESHOLD_MS = 300000;
+let presenceGuruEmail = "";
+let presenceGuruTimer = null;
+
+async function kirimPresenceGuru(state) {
+  if (!presenceGuruEmail) return;
+  try {
+    const { doc, setDoc } = window.fbFirestore;
+    await setDoc(
+      doc(window.db, "teachers", presenceGuruEmail),
+      { state, lastActive: Date.now() },
+      { merge: true },
+    );
+  } catch (e) {
+    console.warn("Gagal mengirim tanda aktif guru:", e);
+  }
+}
+const onVisibilityGuru = () => {
+  if (presenceGuruEmail && document.visibilityState === "visible") {
+    kirimPresenceGuru("online");
+  }
+};
+const onPageHideGuru = () => kirimPresenceGuru("offline");
+
+function stopPresenceGuru(kirimOffline) {
+  if (presenceGuruTimer) clearInterval(presenceGuruTimer);
+  presenceGuruTimer = null;
+  document.removeEventListener("visibilitychange", onVisibilityGuru);
+  window.removeEventListener("pagehide", onPageHideGuru);
+  if (kirimOffline && presenceGuruEmail) kirimPresenceGuru("offline");
+  presenceGuruEmail = "";
+}
+function mulaiPresenceGuru(user) {
+  stopPresenceGuru(false);
+  if (!user || !user.email || user.role === "Super Admin") return;
+  presenceGuruEmail = String(user.email).toLowerCase();
+  kirimPresenceGuru("online");
+  presenceGuruTimer = setInterval(() => {
+    if (document.visibilityState === "visible") kirimPresenceGuru("online");
+  }, PRESENCE_GURU_MS);
+  document.addEventListener("visibilitychange", onVisibilityGuru);
+  window.addEventListener("pagehide", onPageHideGuru);
+}
+
+let onlineSiswaDocs = {};
+let onlineGuruDocs = {};
+let onlineUnsubs = [];
+let onlineTimer = null;
+
+function berhentiDaftarOnline() {
+  onlineUnsubs.forEach((f) => {
+    try {
+      f();
+    } catch (e) {}
+  });
+  onlineUnsubs = [];
+  if (onlineTimer) clearInterval(onlineTimer);
+  onlineTimer = null;
+}
+
+function mulaiDaftarOnline() {
+  berhentiDaftarOnline();
+  const { collection, query, where, onSnapshot } = window.fbFirestore;
+  try {
+    onlineUnsubs.push(
+      onSnapshot(
+        query(
+          collection(window.db, "status"),
+          where("lastActive", ">", Date.now() - ONLINE_THRESHOLD_MS),
+        ),
+        (snap) => {
+          onlineSiswaDocs = {};
+          snap.forEach((d) => (onlineSiswaDocs[d.id] = d.data()));
+          renderDaftarOnline();
+        },
+        (err) => console.error("Gagal memuat siswa online:", err),
+      ),
+    );
+    if (isKepalaSekolah(currentUser)) {
+      onlineUnsubs.push(
+        onSnapshot(
+          query(
+            collection(window.db, "teachers"),
+            where("lastActive", ">", Date.now() - ONLINE_GURU_THRESHOLD_MS),
+          ),
+          (snap) => {
+            onlineGuruDocs = {};
+            snap.forEach((d) => (onlineGuruDocs[d.id] = d.data()));
+            renderDaftarOnline();
+          },
+          (err) => console.error("Gagal memuat guru online:", err),
+        ),
+      );
+    }
+  } catch (e) {
+    console.error("Gagal memulai daftar online:", e);
+  }
+  // Yang berhenti mengirim tanda aktif otomatis hilang dari daftar
+  onlineTimer = setInterval(renderDaftarOnline, 30000);
+  renderDaftarOnline();
+}
+
+function renderDaftarOnline() {
+  const listSiswa = $("onlineSiswaList");
+  if (!listSiswa) return;
+  const now = Date.now();
+
+  // --- Siswa (semua guru) ---
+  const siswaOnline = Object.entries(onlineSiswaDocs)
+    .filter(
+      ([, d]) => d.state === "online" && now - (d.lastActive || 0) < ONLINE_THRESHOLD_MS,
+    )
+    .map(([nisn]) => (masterDataSiswa || []).find((s) => s.nisn === nisn))
+    .filter((s) => s && s.statusAkun !== "lulus");
+  $("onlineSiswaCount").textContent = `${siswaOnline.length} siswa online`;
+
+  if (siswaOnline.length === 0) {
+    listSiswa.innerHTML = `<div class="guru-riwayat-kosong">Belum ada siswa yang sedang aktif.</div>`;
+  } else {
+    const perKelas = {};
+    siswaOnline.forEach((s) => {
+      (perKelas[s.kelas || "-"] = perKelas[s.kelas || "-"] || []).push(s);
+    });
+    listSiswa.innerHTML = Object.keys(perKelas)
+      .sort()
+      .map((k) => {
+        const chips = perKelas[k]
+          .sort((x, y) => String(x.nama).localeCompare(String(y.nama)))
+          .map(
+            (s) =>
+              `<span class="online-chip"><img src="${escapeHtml(avatarFor(s))}" alt="" onerror="${AVATAR_ONERROR}"><span class="nm">${escapeHtml(s.nama)}</span></span>`,
+          )
+          .join("");
+        return `<div class="online-grup"><div class="online-grup-judul">${escapeHtml(k)} <b>${perKelas[k].length}</b></div><div class="online-wrap">${chips}</div></div>`;
+      })
+      .join("");
+  }
+
+  // --- Guru (khusus kepala sekolah) ---
+  const wrapGuru = $("onlineGuruWrap");
+  if (!wrapGuru) return;
+  const kepsek = isKepalaSekolah(currentUser);
+  wrapGuru.classList.toggle("hidden", !kepsek);
+  if (!kepsek) return;
+  const meEmail = String((currentUser && currentUser.email) || "").toLowerCase();
+  const guruOnline = Object.entries(onlineGuruDocs)
+    .filter(
+      ([id, d]) =>
+        id !== meEmail &&
+        d.state === "online" &&
+        now - (d.lastActive || 0) < ONLINE_GURU_THRESHOLD_MS,
+    )
+    .map(([, d]) => d)
+    .sort((x, y) => String(x.nama).localeCompare(String(y.nama)));
+  $("onlineGuruCount").textContent = `${guruOnline.length} guru online`;
+  $("onlineGuruList").innerHTML = guruOnline.length
+    ? `<div class="online-wrap">${guruOnline
+        .map(
+          (g) =>
+            `<span class="online-chip guru"><img src="${escapeHtml(avatarForGuru(g))}" alt="" onerror="${AVATAR_ONERROR}"><span class="nm">${escapeHtml(g.nama || "-")}<small>${escapeHtml(labelJabatan(g))}</small></span></span>`,
+        )
+        .join("")}</div>`
+    : `<div class="guru-riwayat-kosong">Belum ada guru lain yang sedang aktif.</div>`;
+}
+
 window.switchTeacherTab = function (tab) {
   terapkanFiturWaliKelas();
   const tabProfil = $("teacherTabProfil");
@@ -3578,6 +3844,14 @@ window.switchTeacherTab = function (tab) {
   const btnMonitoring = $("navBtnMonitoring");
   const tabMonGuru = $("teacherTabMonitoringGuru");
   const btnMonGuru = $("navBtnMonitoringGuru");
+  const tabOnline = $("teacherTabOnline");
+  const btnOnline = $("navBtnOnline");
+  if (tabOnline) tabOnline.classList.add("hidden");
+  if (btnOnline) {
+    btnOnline.style.background = "transparent";
+    btnOnline.className = "btn-outline";
+  }
+  if (tab !== "online") berhentiDaftarOnline();
 
   tabProfil.classList.add("hidden");
   tabPoin.classList.add("hidden");
@@ -3633,6 +3907,11 @@ window.switchTeacherTab = function (tab) {
     btnMonGuru.style.background = "#1e3c72";
     btnMonGuru.className = "";
     window.renderMonitoringGuru();
+  } else if (tab === "online" && tabOnline) {
+    tabOnline.classList.remove("hidden");
+    btnOnline.style.background = "#1e3c72";
+    btnOnline.className = "";
+    mulaiDaftarOnline();
   }
 };
 
@@ -6810,6 +7089,7 @@ async function initApp() {
           $("txtNamaGuru").innerText = userObj.nama;
           $("txtRoleGuru").innerText = "Jabatan: " + labelJabatan(userObj);
           pasangSapaanStaf(userObj);
+          mulaiPresenceGuru(userObj);
           showScreen("entry");
           initFormEntry();
           window.switchTeacherTab("profil");

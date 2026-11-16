@@ -1,0 +1,554 @@
+/* Latar suasana alam Tatib — pagi / siang / sore / malam (v3.14.0) */
+    /* Reset & Variabel Suasana (Responsif HP & Laptop) */
+    #ambient-background {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 100dvh;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+      user-select: none;
+      opacity: var(--ambient-opacity, 1);
+      transition: opacity 0.35s ease;
+      --ambient-opacity: 1;
+      --transition-speed: 1.75s;
+      --transition-ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+      /* Default Variabel Warna Semi-Transparan (Pagi) */
+      --cloud-start: rgba(255, 250, 243, 0.88);
+      --cloud-end: rgba(255, 226, 204, 0.18);
+      --cloud-shadow: rgba(245, 214, 198, 0.42);
+      --cloud-opacity: 0.82;
+      --hill-far: rgba(132, 173, 199, 0.52);
+      --hill-mid: rgba(97, 140, 168, 0.68);
+      --hill-near: rgba(66, 108, 135, 0.84);
+    }
+
+    /* Penyesuaian Variabel Transparan Berdasarkan Suasana Aktif */
+    #ambient-background[data-mood="pagi"] {
+      --cloud-start: rgba(255, 250, 243, 0.88);
+      --cloud-end: rgba(255, 226, 204, 0.18);
+      --cloud-shadow: rgba(245, 214, 198, 0.42);
+      --cloud-opacity: 0.82;
+      --hill-far: rgba(132, 173, 199, 0.52);
+      --hill-mid: rgba(97, 140, 168, 0.68);
+      --hill-near: rgba(66, 108, 135, 0.84);
+    }
+
+    #ambient-background[data-mood="siang"] {
+      --cloud-start: rgba(255, 255, 255, 0.92);
+      --cloud-end: rgba(219, 234, 254, 0.22);
+      --cloud-shadow: rgba(207, 232, 252, 0.48);
+      --cloud-opacity: 0.9;
+      --hill-far: rgba(82, 153, 194, 0.48);
+      --hill-mid: rgba(53, 124, 166, 0.65);
+      --hill-near: rgba(31, 95, 133, 0.82);
+    }
+
+    #ambient-background[data-mood="sore"] {
+      --cloud-start: rgba(255, 192, 133, 0.82);
+      --cloud-end: rgba(186, 74, 96, 0.16);
+      --cloud-shadow: rgba(140, 59, 82, 0.45);
+      --cloud-opacity: 0.84;
+      --hill-far: rgba(102, 41, 64, 0.56);
+      --hill-mid: rgba(64, 23, 43, 0.74);
+      --hill-near: rgba(33, 11, 24, 0.88);
+    }
+
+    #ambient-background[data-mood="malam"] {
+      --cloud-start: rgba(38, 60, 112, 0.42);
+      --cloud-end: rgba(12, 21, 46, 0.05);
+      --cloud-shadow: rgba(12, 21, 46, 0.35);
+      --cloud-opacity: 0.26;
+      --hill-far: rgba(14, 25, 51, 0.62);
+      --hill-mid: rgba(8, 16, 36, 0.78);
+      --hill-near: rgba(4, 8, 20, 0.92);
+    }
+
+    /* 4 Lapisan Gradien Langit Bertumpuk (Multi-Layer Transparent Gradients) */
+    .ambient-sky-layer {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity var(--transition-speed) var(--transition-ease);
+      will-change: opacity;
+    }
+
+    .ambient-sky-layer.is-active {
+      opacity: 1;
+    }
+
+    /* 1. Langit Pagi: Pastel Fajar + Light Leak Emas & Merah Muda Transparan */
+    .sky-pagi {
+      background:
+        radial-gradient(circle at 18% 82%, rgba(255, 224, 178, 0.82) 0%, rgba(255, 196, 163, 0.36) 36%, transparent 68%),
+        radial-gradient(ellipse at 76% 24%, rgba(255, 214, 224, 0.42) 0%, rgba(255, 236, 210, 0.14) 45%, transparent 72%),
+        linear-gradient(180deg, rgba(88, 153, 212, 0.92) 0%, rgba(139, 198, 236, 0.86) 35%, rgba(203, 231, 248, 0.82) 65%, rgba(252, 227, 205, 0.88) 87%, rgba(255, 209, 199, 0.92) 100%);
+    }
+
+    /* 2. Langit Siang: Biru Cerah Hangat + Pendaran Sinar Krem Transparan */
+    .sky-siang {
+      background:
+        radial-gradient(circle at 80% 15%, rgba(255, 252, 224, 0.72) 0%, rgba(255, 236, 179, 0.28) 40%, transparent 72%),
+        radial-gradient(ellipse at 25% 40%, rgba(186, 230, 253, 0.35) 0%, transparent 62%),
+        linear-gradient(180deg, rgba(13, 110, 253, 0.92) 0%, rgba(38, 147, 245, 0.88) 38%, rgba(100, 181, 246, 0.84) 70%, rgba(179, 229, 252, 0.86) 91%, rgba(225, 245, 254, 0.9) 100%);
+    }
+
+    /* 3. Langit Sore: Ungu Senja ke Jingga Nostalgia + Light-Wash Magenta Transparan */
+    .sky-sore {
+      background:
+        radial-gradient(circle at 74% 82%, rgba(255, 198, 102, 0.88) 0%, rgba(235, 108, 76, 0.46) 38%, transparent 70%),
+        radial-gradient(ellipse at 22% 35%, rgba(192, 68, 116, 0.38) 0%, rgba(120, 40, 88, 0.14) 48%, transparent 75%),
+        linear-gradient(180deg, rgba(26, 27, 61, 0.94) 0%, rgba(72, 35, 87, 0.9) 24%, rgba(153, 59, 82, 0.88) 48%, rgba(222, 105, 78, 0.88) 72%, rgba(244, 162, 97, 0.9) 89%, rgba(255, 209, 102, 0.94) 100%);
+    }
+
+    /* 4. Langit Malam: Biru Malam Pekat + Nebula Biru-Ungu Transparan */
+    .sky-malam {
+      background:
+        radial-gradient(ellipse at 24% 20%, rgba(79, 118, 196, 0.28) 0%, rgba(56, 82, 158, 0.08) 45%, transparent 68%),
+        radial-gradient(ellipse at 76% 58%, rgba(109, 68, 168, 0.22) 0%, rgba(45, 58, 122, 0.08) 46%, transparent 70%),
+        linear-gradient(180deg, rgba(2, 4, 10, 0.96) 0%, rgba(7, 13, 31, 0.94) 38%, rgba(13, 25, 54, 0.92) 72%, rgba(21, 37, 75, 0.94) 100%);
+    }
+
+    /* Overlay Cahaya Atmosfer & Kabut Cakrawala Transparan */
+    .ambient-atmosphere-glow {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity var(--transition-speed) var(--transition-ease);
+      pointer-events: none;
+    }
+
+    #ambient-background[data-mood="pagi"] .glow-pagi,
+    #ambient-background[data-mood="siang"] .glow-siang,
+    #ambient-background[data-mood="sore"] .glow-sore,
+    #ambient-background[data-mood="malam"] .glow-malam {
+      opacity: 1;
+    }
+
+    .glow-pagi {
+      background:
+        radial-gradient(circle at 18% 82%, rgba(255, 244, 214, 0.42), transparent 56%),
+        linear-gradient(0deg, rgba(255, 237, 213, 0.28) 0%, transparent 45%);
+    }
+
+    .glow-siang {
+      background:
+        linear-gradient(135deg, rgba(255, 251, 235, 0.26) 0%, rgba(224, 242, 254, 0.1) 45%, transparent 72%),
+        linear-gradient(0deg, rgba(255, 255, 255, 0.22) 0%, transparent 38%);
+    }
+
+    .glow-sore {
+      background:
+        linear-gradient(0deg, rgba(255, 158, 74, 0.3) 0%, rgba(176, 62, 92, 0.14) 48%, transparent 82%),
+        radial-gradient(circle at 75% 78%, rgba(255, 224, 130, 0.25), transparent 52%);
+    }
+
+    .glow-malam {
+      background:
+        radial-gradient(circle at 19% 14%, rgba(191, 219, 254, 0.18), transparent 48%),
+        linear-gradient(0deg, rgba(15, 23, 42, 0.35) 0%, transparent 50%);
+    }
+
+    /* Gradasi Kabut / Vignette Transparan di Tepi & Bawah Layar agar Menyatu dengan Web Utama */
+    .ambient-vignette-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 45%, transparent 58%, rgba(6, 12, 26, 0.18) 100%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, transparent 18%, transparent 74%, rgba(8, 15, 32, 0.26) 100%);
+    }
+
+    /* --- BENDA LANGIT (MATAHARI & BULAN) --- */
+    .celestial-body {
+      position: absolute;
+      border-radius: 50%;
+      transition:
+        transform var(--transition-speed) var(--transition-ease),
+        opacity var(--transition-speed) var(--transition-ease);
+      will-change: transform, opacity;
+    }
+
+    /* Matahari Pagi */
+    .sun-pagi {
+      width: clamp(86px, 12vw, 155px);
+      height: clamp(86px, 12vw, 155px);
+      left: 14%;
+      bottom: 14%;
+      background: radial-gradient(circle, rgba(255, 253, 240, 0.96) 15%, rgba(255, 226, 168, 0.82) 55%, rgba(255, 196, 140, 0) 100%);
+      box-shadow: 0 0 70px 26px rgba(255, 224, 163, 0.55);
+      opacity: 0;
+      transform: translateY(70px) scale(0.85);
+    }
+
+    #ambient-background[data-mood="pagi"] .sun-pagi {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Matahari Siang & Sinar Berputar */
+    .sun-siang-wrap {
+      position: absolute;
+      right: 14%;
+      top: 10%;
+      width: clamp(102px, 14vw, 180px);
+      height: clamp(102px, 14vw, 180px);
+      opacity: 0;
+      transform: translateY(-45px) scale(0.8);
+      transition:
+        transform var(--transition-speed) var(--transition-ease),
+        opacity var(--transition-speed) var(--transition-ease);
+    }
+
+    #ambient-background[data-mood="siang"] .sun-siang-wrap {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .sun-siang-rays {
+      position: absolute;
+      inset: -38%;
+      border-radius: 50%;
+      background: repeating-conic-gradient(
+        from 0deg,
+        rgba(255, 251, 224, 0.26) 0deg 10deg,
+        transparent 10deg 24deg
+      );
+      mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 25%, transparent 72%);
+      -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 25%, transparent 72%);
+      animation: ambientSpinRays 46s linear infinite;
+    }
+
+    .sun-siang-core {
+      position: absolute;
+      inset: 14%;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffffff 22%, rgba(255, 245, 192, 0.9) 62%, rgba(255, 232, 150, 0) 100%);
+      box-shadow: 0 0 85px 32px rgba(255, 247, 198, 0.65);
+    }
+
+    /* Matahari Sore Besar */
+    .sun-sore {
+      width: clamp(122px, 18vw, 235px);
+      height: clamp(122px, 18vw, 235px);
+      right: 16%;
+      bottom: 10%;
+      background: radial-gradient(circle, rgba(255, 244, 198, 0.96) 12%, rgba(255, 184, 92, 0.85) 52%, rgba(235, 94, 68, 0) 100%);
+      box-shadow: 0 0 95px 35px rgba(255, 166, 77, 0.58);
+      opacity: 0;
+      transform: translateY(85px) scale(0.88);
+    }
+
+    #ambient-background[data-mood="sore"] .sun-sore {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Bulan Malam Bercahaya */
+    .moon-malam {
+      width: clamp(64px, 8.5vw, 112px);
+      height: clamp(64px, 8.5vw, 112px);
+      left: 16%;
+      top: 12%;
+      background: radial-gradient(circle at 35% 35%, #ffffff 0%, #e2e8f0 55%, #cbd5e1 100%);
+      box-shadow:
+        0 0 42px 12px rgba(219, 234, 254, 0.36),
+        0 0 95px 32px rgba(147, 197, 253, 0.18),
+        inset -12px -10px 18px rgba(148, 163, 184, 0.45);
+      opacity: 0;
+      transform: translateY(-45px) scale(0.82);
+    }
+
+    #ambient-background[data-mood="malam"] .moon-malam {
+      opacity: 0.96;
+      transform: translateY(0) scale(1);
+    }
+
+    /* --- BINTANG & BINTANG JATUH (MALAM) --- */
+    .ambient-stars-layer {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity var(--transition-speed) var(--transition-ease);
+    }
+
+    #ambient-background[data-mood="malam"] .ambient-stars-layer {
+      opacity: 1;
+    }
+
+    .ambient-star {
+      position: absolute;
+      border-radius: 50%;
+      background: #ffffff;
+      animation: ambientTwinkle var(--twinkle-dur, 3.5s) ease-in-out infinite var(--twinkle-delay, 0s);
+    }
+
+    .shooting-star {
+      position: absolute;
+      width: 120px;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.95), rgba(191, 219, 254, 0.4), transparent);
+      border-radius: 999px;
+      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8));
+      animation: ambientShoot 1.35s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+    }
+
+    /* --- AWAN BERGERAK LEMBUT DENGAN GRADASI TRANSPARAN --- */
+    .ambient-clouds-layer {
+      position: absolute;
+      inset: 0;
+      opacity: var(--cloud-opacity);
+      transition: opacity var(--transition-speed) var(--transition-ease);
+    }
+
+    .ambient-cloud {
+      position: absolute;
+      will-change: transform;
+      animation: ambientDriftCloud linear infinite;
+    }
+
+    .ambient-cloud svg path.cloud-body {
+      fill: url(#ambientCloudGrad);
+    }
+
+    .ambient-cloud svg path.cloud-shade {
+      fill: var(--cloud-shadow);
+      opacity: 0.48;
+      transition: fill var(--transition-speed) var(--transition-ease);
+    }
+
+    /* --- KABUT PAGI LEMBUT --- */
+    .ambient-mist-layer {
+      position: absolute;
+      inset: auto 0 6% 0;
+      height: 26%;
+      opacity: 0;
+      transition: opacity var(--transition-speed) var(--transition-ease);
+    }
+
+    #ambient-background[data-mood="pagi"] .ambient-mist-layer {
+      opacity: 0.72;
+    }
+
+    .mist-band {
+      position: absolute;
+      width: 140%;
+      left: -20%;
+      height: 90px;
+      background: radial-gradient(ellipse at center, rgba(255, 252, 245, 0.62) 0%, rgba(255, 245, 235, 0.18) 55%, transparent 78%);
+      filter: blur(12px);
+      animation: ambientMistFloat 18s ease-in-out infinite alternate;
+    }
+
+    /* --- SILUET BURUNG PAGI --- */
+    .ambient-birds-layer {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 1.4s var(--transition-ease);
+    }
+
+    #ambient-background[data-mood="pagi"] .ambient-birds-layer {
+      opacity: 0.65;
+    }
+
+    .bird-flock {
+      position: absolute;
+      animation: ambientFlyBirds 38s linear infinite;
+    }
+
+    .bird-svg {
+      animation: ambientFlapWing 1.1s ease-in-out infinite alternate;
+    }
+
+    /* --- PARTIKEL EMAS SORE & KUNANG-KUNANG MALAM --- */
+    .ambient-particles-layer,
+    .ambient-fireflies-layer {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity var(--transition-speed) var(--transition-ease);
+    }
+
+    #ambient-background[data-mood="sore"] .ambient-particles-layer {
+      opacity: 0.85;
+    }
+
+    #ambient-background[data-mood="malam"] .ambient-fireflies-layer {
+      opacity: 0.9;
+    }
+
+    .golden-mote {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 232, 163, 0.95) 0%, rgba(255, 183, 77, 0.25) 70%, transparent 100%);
+      animation: ambientFloatUp var(--float-dur, 12s) ease-in-out infinite var(--float-delay, 0s);
+    }
+
+    .firefly-dot {
+      position: absolute;
+      border-radius: 50%;
+      background: #eaff7b;
+      box-shadow: 0 0 10px 3px rgba(218, 255, 94, 0.75), 0 0 20px 6px rgba(255, 215, 80, 0.35);
+      animation:
+        ambientFireflyMove var(--ff-dur, 10s) ease-in-out infinite alternate var(--ff-delay, 0s),
+        ambientFireflyPulse var(--pulse-dur, 2.8s) ease-in-out infinite alternate;
+    }
+
+    /* --- SILUET PERBUKITAN DI CAKRAWALA BAWAH --- */
+    .ambient-horizon-hills {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -2px;
+      width: 100%;
+      height: clamp(110px, 19vh, 230px);
+      pointer-events: none;
+    }
+
+    .ambient-horizon-hills svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .hill-layer-far {
+      fill: var(--hill-far);
+      transition: fill var(--transition-speed) var(--transition-ease);
+    }
+
+    .hill-layer-mid {
+      fill: var(--hill-mid);
+      transition: fill var(--transition-speed) var(--transition-ease);
+    }
+
+    .hill-layer-near {
+      fill: var(--hill-near);
+      transition: fill var(--transition-speed) var(--transition-ease);
+    }
+
+    /* Penyesuaian Proporsi Langit Khusus Layar HP (Mobile Portrait) */
+    @media (max-width: 640px) {
+      .sun-pagi {
+        left: 10%;
+        bottom: 18%;
+      }
+      .sun-siang-wrap {
+        right: 10%;
+        top: 16%;
+      }
+      .sun-sore {
+        right: 10%;
+        bottom: 16%;
+      }
+      .moon-malam {
+        left: 12%;
+        top: 17%;
+      }
+      .ambient-horizon-hills {
+        height: clamp(95px, 15vh, 150px);
+      }
+      .ambient-cloud {
+        transform-origin: left center;
+        scale: 0.72;
+      }
+    }
+
+    /* --- KEYFRAMES ANIMASI --- */
+    @keyframes ambientSpinRays {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes ambientTwinkle {
+      0%, 100% { opacity: 0.22; transform: scale(0.85); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    @keyframes ambientShoot {
+      0% {
+        opacity: 0;
+        transform: translate3d(0, 0, 0) rotate(-32deg) scaleX(0.5);
+      }
+      15% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(-420px, 265px, 0) rotate(-32deg) scaleX(1.15);
+      }
+    }
+
+    @keyframes ambientDriftCloud {
+      from { transform: translateX(-35vw); }
+      to { transform: translateX(125vw); }
+    }
+
+    @keyframes ambientMistFloat {
+      0% { transform: translateX(-4%) scaleY(0.95); }
+      100% { transform: translateX(4%) scaleY(1.08); }
+    }
+
+    @keyframes ambientFlyBirds {
+      from { transform: translate(-18vw, 10px); }
+      to { transform: translate(115vw, -35px); }
+    }
+
+    @keyframes ambientFlapWing {
+      0% { transform: scaleY(1); }
+      100% { transform: scaleY(0.55); }
+    }
+
+    @keyframes ambientFloatUp {
+      0%, 100% { transform: translate3d(0, 0, 0); opacity: 0.2; }
+      50% { transform: translate3d(18px, -38px, 0); opacity: 0.9; }
+    }
+
+    @keyframes ambientFireflyMove {
+      0% { transform: translate3d(0, 0, 0); }
+      33% { transform: translate3d(22px, -18px, 0); }
+      66% { transform: translate3d(-16px, -28px, 0); }
+      100% { transform: translate3d(12px, -8px, 0); }
+    }
+
+    @keyframes ambientFireflyPulse {
+      0% { opacity: 0.18; transform: scale(0.75); }
+      100% { opacity: 1; transform: scale(1.25); }
+    }
+
+    /* Penghormatan Pengaturan Reduce Motion Pengguna */
+    @media (prefers-reduced-motion: reduce) {
+      .ambient-cloud,
+      .bird-flock,
+      .sun-siang-rays,
+      .firefly-dot,
+      .golden-mote {
+        animation: none !important;
+      }
+    }
+
+/* ============================================================
+   INTEGRASI KE TATIB (v3.14.0)
+   - menggantikan latar lama body[data-waktu] (langit sederhana)
+   - mood diatur app.js lewat window.setAmbientMood(pagi|siang|sore|malam)
+   ============================================================ */
+#ambient-background.no-trans,
+#ambient-background.no-trans * {
+  transition: none !important;
+}
+/* warna dasar di bawah lapisan langit (supaya tidak ada kilat putih saat memuat) */
+body[data-waktu="pagi"] { background: #8bc6ec !important; }
+body[data-waktu="siang"] { background: #2693f5 !important; }
+body[data-waktu="sore"] { background: #723557 !important; }
+body[data-waktu="malam"] { background: #070d1f !important; }
+body[data-waktu] { animation: none !important; }
+/* matikan langit lama (matahari/awan/bintang versi sebelumnya) */
+body[data-waktu]::before,
+body[data-waktu]::after { display: none !important; }
+/* serbuk cahaya lama diganti partikel milik latar baru */
+.particles-container { display: none !important; }
+/* hemat baterai: jeda animasi latar saat tab tidak terlihat */
+html.tab-tersembunyi #ambient-background * { animation-play-state: paused !important; }
