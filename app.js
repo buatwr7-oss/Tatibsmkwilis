@@ -26,7 +26,7 @@ import {
   writeBatch,
   getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=3.16.0";
+import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=3.16.1";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
@@ -559,6 +559,7 @@ let isMultiMode = true;
 let currentNisnSiswa = ""; // NISN siswa yang sedang login
 let masterDataSiswa = [];
 let masterDataTugas = [];
+let masterLoadError = null; // galat terakhir saat memuat data siswa (null = sukses)
 
 function getMyNisn() {
   return currentNisnSiswa || localStorage.getItem("activeUser") || "";
@@ -2061,7 +2062,7 @@ window.bukaGame = function (nama) {
   if (!DAFTAR[nama]) return;
   // Catatan: jangan pakai fitur "noopener" di sini — window.open lalu selalu
   // mengembalikan null sehingga terbaca seolah pop-up diblokir.
-  const w = window.open(DAFTAR[nama] + "?v=3.16.0", "_blank");
+  const w = window.open(DAFTAR[nama] + "?v=3.16.1", "_blank");
   if (w) {
     try {
       w.opener = null;
@@ -2722,6 +2723,7 @@ async function loadMasterSiswaFromCloud(callback, force = false) {
       list.push(sData);
     });
     masterDataSiswa = list;
+    masterLoadError = null;
     try {
       sessionStorage.setItem(
         CACHE_KEY,
@@ -2732,6 +2734,7 @@ async function loadMasterSiswaFromCloud(callback, force = false) {
     }
   } catch (err) {
     console.error("Gagal memuat data siswa:", err);
+    masterLoadError = { code: (err && err.code) || "", pesan: (err && err.message) || String(err) };
   }
   if (callback) callback();
 }
@@ -5256,7 +5259,42 @@ function renderRingkasRekap() {
   });
 }
 
+function penjelasanGalatMuat(g) {
+  const kode = g.code || "";
+  if (/resource-exhausted|quota/i.test(kode + g.pesan))
+    return "Kuota BACA Firestore hari ini habis (batas paket gratis 50.000 baca/hari). Pulih otomatis setelah reset harian (sekitar pukul 14.00 WIB), atau upgrade ke paket Blaze.";
+  if (/permission-denied/i.test(kode + g.pesan))
+    return "Aturan Firestore menolak pembacaan data siswa. Periksa firestore.rules yang terakhir dipublish.";
+  if (/unavailable|network|offline|failed to fetch/i.test(kode + g.pesan))
+    return "Tidak bisa terhubung ke Firestore. Periksa koneksi internet atau jaringan sekolah.";
+  return `Gagal memuat data siswa (${kode || "galat tidak dikenal"}).`;
+}
+
+function renderGalatRekap() {
+  const box = $("rekapGalat");
+  if (!box) return;
+  if (masterLoadError) {
+    box.classList.remove("hidden");
+    box.innerHTML = `<b>⚠️ Data siswa tidak berhasil dimuat</b><br>${escapeHtml(penjelasanGalatMuat(masterLoadError))}
+      <button type="button" class="pv-btn" style="margin-top:8px;width:100%" onclick="rekapCobaLagi()">🔄 Coba lagi</button>`;
+  } else if (!masterDataSiswa.length) {
+    box.classList.remove("hidden");
+    box.innerHTML = `<b>Belum ada data siswa.</b> Koleksi <code>siswa</code> kosong.
+      <button type="button" class="pv-btn" style="margin-top:8px;width:100%" onclick="rekapCobaLagi()">🔄 Muat ulang</button>`;
+  } else {
+    box.classList.add("hidden");
+  }
+}
+
+window.rekapCobaLagi = async function () {
+  const box = $("rekapGalat");
+  if (box) box.innerHTML = "Memuat ulang...";
+  await refreshMasterSiswa();
+  window.renderTabelRekap();
+};
+
 window.saringRekap = function () {
+  renderGalatRekap();
   renderRingkasRekap();
   const data = rekapDaftarTersaring();
   const tbody = $("tabelRekapBody");
@@ -5349,10 +5387,16 @@ window.renderTabelRekap = function () {
   window.saringRekap();
   muatOnlineRekap();
 
+  const catatanGrafik = $("rekapGrafikCatatan");
   if (typeof Chart === "undefined") {
     console.warn("Chart.js belum termuat, grafik dilewati.");
+    if (catatanGrafik) {
+      catatanGrafik.textContent = "Grafik tidak termuat (pustaka Chart.js dari jsDelivr gagal diunduh). Data tabel tetap berfungsi.";
+      catatanGrafik.classList.remove("hidden");
+    }
     return;
   }
+  if (catatanGrafik) catatanGrafik.classList.add("hidden");
 
   const ctx = $("statistikChart").getContext("2d");
   const labels = ["10 SMK", "11 SMK", "12 SMK"];

@@ -9,8 +9,8 @@
     <title>Tatib SMK Wiraguna 🛡️</title>
 
     <!-- CSS UTAMA -->
-    <link rel="stylesheet" href="style.css?v=3.14.1" />
-    <link rel="stylesheet" href="ambient.css?v=3.14.1" />
+    <link rel="stylesheet" href="style.css?v=3.16.1" />
+    <link rel="stylesheet" href="ambient.css?v=3.16.1" />
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
@@ -1503,44 +1503,70 @@
           🐞 Laporan
           <span id="navBtnLaporanBadge" class="admin-nav-badge hidden">0</span>
         </button>
+        <button
+          id="navBtnPratinjau"
+          onclick="switchAdminTab('pratinjau')"
+          class="btn-outline"
+        >
+          🎨 Pratinjau
+        </button>
       </div>
 
       <!-- TAB 1: REKAPITULASI -->
       <div id="adminTabRekap" class="admin-tab-content">
-        <div class="admin-rekap-filter-row">
-          <h4 style="font-size: 12px; color: #1e3c72; margin: 0">
-            Data Terbaru Siswa
-          </h4>
-          <select
-            id="filterKelasRekap"
-            onchange="renderTabelRekap()"
-            class="admin-filter-select"
-          >
+        <div id="rekapGalat" class="rk-galat hidden"></div>
+        <!-- Ringkasan: ketuk kartu untuk menyaring tabel -->
+        <div id="rkRingkas" class="rk-ringkas">
+          <button type="button" class="rk-kartu" data-f="semua" onclick="rekapFilterKartu('semua')">
+            <span class="rk-angka" id="rkTotal">0</span><span class="rk-label">Total Siswa</span>
+          </button>
+          <button type="button" class="rk-kartu rk-hijau" data-f="online" onclick="rekapFilterKartu('online')">
+            <span class="rk-angka" id="rkOnline">–</span><span class="rk-label">🟢 Online</span>
+          </button>
+          <button type="button" class="rk-kartu rk-merah" data-f="hpkritis" onclick="rekapFilterKartu('hpkritis')">
+            <span class="rk-angka" id="rkKritis">0</span><span class="rk-label">❤️ HP Kritis</span>
+          </button>
+          <button type="button" class="rk-kartu rk-oranye" data-f="pembinaan" onclick="rekapFilterKartu('pembinaan')">
+            <span class="rk-angka" id="rkBina">0</span><span class="rk-label">⚖️ Perlu BK</span>
+          </button>
+          <button type="button" class="rk-kartu rk-biru" data-f="pinbawaan" onclick="rekapFilterKartu('pinbawaan')">
+            <span class="rk-angka" id="rkPin">0</span><span class="rk-label">🔑 PIN Bawaan</span>
+          </button>
+        </div>
+
+        <div class="admin-chart-box">
+          <canvas id="statistikChart" style="max-height: 160px; width: 100%"></canvas>
+          <div id="rekapGrafikCatatan" class="rk-kosong hidden"></div>
+        </div>
+
+        <div class="rk-kontrol">
+          <input id="rekapCari" type="search" placeholder="🔍 Cari nama atau NISN..." oninput="rekapCariTunda()" autocomplete="off" />
+          <select id="filterKelasRekap" onchange="saringRekap()" class="admin-filter-select">
             <option value="SEMUA">Semua Kelas</option>
             <option value="10 SMK">10 SMK</option>
             <option value="11 SMK">11 SMK</option>
             <option value="12 SMK">12 SMK</option>
           </select>
+          <select id="urutRekap" onchange="saringRekap()" class="admin-filter-select">
+            <option value="nama">A–Z</option>
+            <option value="pelanggaran">Pelanggaran ↓</option>
+            <option value="hp">HP terendah</option>
+            <option value="shield">Shield ↓</option>
+          </select>
+        </div>
+        <div class="rk-info">
+          <span id="rekapJumlah">–</span>
+          <button type="button" class="pv-btn rk-salin" onclick="rekapSalin()">📋 Salin daftar</button>
         </div>
 
-        <div class="admin-chart-box">
-          <canvas
-            id="statistikChart"
-            style="max-height: 160px; width: 100%"
-          ></canvas>
-        </div>
-
-        <div
-          class="rekap-container"
-          style="max-height: 380px; overflow-y: auto"
-        >
+        <div class="rekap-container rk-scroll">
           <table class="rekap-table">
             <thead>
               <tr>
                 <th>Nama Siswa</th>
                 <th>Kelas</th>
                 <th>HP/Shield</th>
-                <th>Total Pelanggaran</th>
+                <th>Pelanggaran</th>
               </tr>
             </thead>
             <tbody id="tabelRekapBody"></tbody>
@@ -1619,6 +1645,13 @@
             Eksekusi Keputusan Admin
           </button>
         </form>
+
+        <div class="pv-card" style="margin-top: 14px">
+          <h4 class="pv-judul">📜 Riwayat Tindakan Admin</h4>
+          <p class="pv-ket">15 tindakan terakhir (siapa, apa, kapan). Berguna kalau ada guru yang bertanya kenapa poin siswanya berubah.</p>
+          <div id="adminRiwayatList" class="adm-riwayat"></div>
+          <button type="button" class="pv-btn" style="width: 100%; margin-top: 8px" onclick="muatRiwayatAdmin()">🔄 Muat ulang</button>
+        </div>
       </div>
 
       <!-- TAB BARU: MANAJEMEN AKADEMIK (ARSIP SEMESTER / KENAIKAN KELAS / KELULUSAN) -->
@@ -2118,6 +2151,69 @@
       </div>
 
       <!-- TAB BARU: LAPORAN BUG & MASUKAN -->
+      <!-- TAB PRATINJAU: uji tampilan tanpa menyentuh data (hanya Super Admin) -->
+      <div id="adminTabPratinjau" class="admin-tab-content hidden">
+        <div class="pv-card">
+          <h4 class="pv-judul">🌄 Suasana Latar</h4>
+          <p class="pv-ket">Ganti latar sekarang juga. Kembali otomatis saat kamu pindah tab.</p>
+          <div class="pv-row">
+            <button type="button" class="pv-btn" data-mood="pagi" onclick="pratinjauMood('pagi')">🌅 Pagi</button>
+            <button type="button" class="pv-btn" data-mood="siang" onclick="pratinjauMood('siang')">☀️ Siang</button>
+            <button type="button" class="pv-btn" data-mood="sore" onclick="pratinjauMood('sore')">🌇 Sore</button>
+            <button type="button" class="pv-btn" data-mood="malam" onclick="pratinjauMood('malam')">🌙 Malam</button>
+            <button type="button" class="pv-btn pv-btn-auto" data-mood="auto" onclick="pratinjauMood('auto')">🔄 Otomatis</button>
+          </div>
+        </div>
+
+        <div class="pv-card">
+          <h4 class="pv-judul">🔋 Mode Hemat Latar</h4>
+          <p class="pv-ket" id="pvRinganInfo">–</p>
+          <div class="pv-row">
+            <button type="button" class="pv-btn" data-ringan="auto" onclick="pratinjauRingan('auto')">⚙️ Otomatis</button>
+            <button type="button" class="pv-btn" data-ringan="1" onclick="pratinjauRingan('1')">🍃 Ringan</button>
+            <button type="button" class="pv-btn" data-ringan="0" onclick="pratinjauRingan('0')">✨ Penuh</button>
+          </div>
+        </div>
+
+        <div class="pv-card">
+          <h4 class="pv-judul">🖼️ Bingkai Tier</h4>
+          <p class="pv-ket">Semua bingkai dipasang pada foto. Ketuk satu untuk memperbesar.</p>
+          <div id="pvTierGrid" class="pv-tier-grid"></div>
+          <div id="pvTierBesar" class="pv-tier-besar"></div>
+        </div>
+
+        <div class="pv-card">
+          <h4 class="pv-judul">❤️ Uji Bar HP &amp; Shield</h4>
+          <p class="pv-ket">Geser untuk melihat animasi bar naik/turun dan tier yang ikut berubah. Tidak menulis ke database.</p>
+          <div class="rpg-bar-group">
+            <div class="rpg-bar-row">
+              <div class="rpg-bar-meta">
+                <span style="color:#2ecc71">❤️ HP</span>
+                <span id="pvHpTeks" style="color:#2ecc71">200/200</span>
+              </div>
+              <div class="rpg-bar-outer"><div id="pvHpFill" class="rpg-hp-fill" style="width:100%"></div></div>
+            </div>
+            <div class="rpg-bar-row">
+              <div class="rpg-bar-meta">
+                <span style="color:#3498db">🛡️ SHIELD</span>
+                <span id="pvShTeks" style="color:#3498db">0 Pts</span>
+              </div>
+              <div class="rpg-bar-outer"><div id="pvShFill" class="rpg-shield-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+          <label class="pv-label">HP: <b id="pvHpNilai">200</b></label>
+          <input id="pvHpGeser" type="range" min="0" max="200" value="200" oninput="pratinjauBar()" />
+          <label class="pv-label">Shield: <b id="pvShNilai">0</b></label>
+          <input id="pvShGeser" type="range" min="0" max="300" value="0" oninput="pratinjauBar()" />
+          <div class="pv-row" style="margin-top:8px">
+            <button type="button" class="pv-btn" onclick="pratinjauPreset(200,0)">Penuh</button>
+            <button type="button" class="pv-btn" onclick="pratinjauPreset(120,95)">Sedang</button>
+            <button type="button" class="pv-btn" onclick="pratinjauPreset(30,175)">HP kritis</button>
+            <button type="button" class="pv-btn" onclick="pratinjauPreset(200,300)">Maksimal</button>
+          </div>
+        </div>
+      </div>
+
       <div id="adminTabLaporan" class="admin-tab-content hidden">
         <div class="laporan-bug-top-bar">
           <div>
@@ -2858,20 +2954,20 @@
       🛠️ MODE MAINTENANCE AKTIF — siswa & guru tidak bisa masuk
     </div>
 
-    <div class="app-version-badge">Tatib v3.14.1 • Beta</div>
+    <div class="app-version-badge">Tatib v3.16.1 • Beta</div>
 
     <!-- JAVASCRIPT UTAMA & FIREBASE MODULE -->
     <script>
       // Daftarkan service worker (syarat PWA agar bisa di-install)
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
-          navigator.serviceWorker.register("sw.js?v=3.14.1").catch(function (e) {
+          navigator.serviceWorker.register("sw.js?v=3.16.1").catch(function (e) {
             console.warn("Service worker gagal didaftarkan:", e);
           });
         });
       }
     </script>
-    <script src="ambient.js?v=3.14.1"></script>
-    <script src="app.js?v=3.14.1" type="module"></script>
+    <script src="ambient.js?v=3.16.1"></script>
+    <script src="app.js?v=3.16.1" type="module"></script>
   </body>
 </html>
