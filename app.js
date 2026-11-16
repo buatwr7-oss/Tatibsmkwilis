@@ -26,7 +26,7 @@ import {
   writeBatch,
   getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=3.11.0";
+import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=3.11.1";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
@@ -1900,8 +1900,18 @@ window.bukaGame = function (nama) {
   if (!gameDibuka) return window.customAlert("🚧 Game sedang ditutup sementara.");
   const DAFTAR = { tictactoe: "game-tictactoe.html" };
   if (!DAFTAR[nama]) return;
-  const w = window.open(DAFTAR[nama] + "?v=3.11.0", "_blank", "noopener");
-  if (!w) window.customAlert("Pop-up diblokir browser. Izinkan pop-up untuk situs ini, lalu coba lagi.");
+  // Catatan: jangan pakai fitur "noopener" di sini — window.open lalu selalu
+  // mengembalikan null sehingga terbaca seolah pop-up diblokir.
+  const w = window.open(DAFTAR[nama] + "?v=3.11.1", "_blank");
+  if (w) {
+    try {
+      w.opener = null;
+    } catch (e) {}
+  } else {
+    window.customAlert(
+      "Pop-up diblokir browser. Izinkan pop-up untuk situs ini, lalu coba lagi.",
+    );
+  }
 };
 
 // ==========================================

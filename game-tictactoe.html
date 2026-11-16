@@ -114,6 +114,27 @@
   .konfeti { position: fixed; top: -12px; font-size: 20px; pointer-events: none; z-index: 30; animation: jatuh linear forwards; }
   @keyframes jatuh { to { transform: translateY(105vh) rotate(540deg); opacity: .7; } }
   .guncang { animation: guncang .4s; } @keyframes guncang { 25% { transform: translateX(-6px);} 75% { transform: translateX(6px);} }
+  /* foto profil bertingkat */
+  .ring { display: inline-block; position: relative; padding: 4px; border-radius: 50%; background: linear-gradient(135deg,#7f8c8d,#95a5a6); box-shadow: 0 0 18px #f1c40f44; }
+  .ring img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: #0b1220; border: 2px solid #0b1220; }
+  .ring.l { width: 96px; height: 96px; } .ring.m { width: 78px; height: 78px; } .ring.s { width: 46px; height: 46px; padding: 3px; }
+  .ring .lencana { position: absolute; right: -4px; bottom: -4px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; background: #111823; border: 2px solid var(--gold); }
+  .ring.s .lencana { width: 20px; height: 20px; font-size: 11px; right: -6px; bottom: -4px; border-width: 1.5px; }
+  .hero .ring { margin: 0 auto; animation: melayang 3s ease-in-out infinite; }
+  .vs .ring { margin: 0 auto 6px; }
+  .pc .ring { margin: 0 auto 4px; }
+  .pc.aktif .ring { box-shadow: 0 0 20px #f1c40f; }
+
+  /* pop-up konfirmasi bergaya RPG */
+  .modal-tanya { position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(3, 7, 15, .78); backdrop-filter: blur(4px); }
+  .modal-tanya.on { display: flex; animation: masuk .2s ease; }
+  .tanya { width: 100%; max-width: 340px; text-align: center; display: grid; gap: 8px; border-color: var(--merah); box-shadow: 0 0 40px #e74c3c44, 0 10px 40px #000a; animation: muncul .3s cubic-bezier(.3,1.5,.5,1); }
+  .tanya.netral { border-color: var(--gold); box-shadow: 0 0 40px #f1c40f33, 0 10px 40px #000a; }
+  @keyframes muncul { from { transform: scale(.8); opacity: 0; } }
+  .tq-ikon { font-size: 54px; animation: goyang 1.4s ease-in-out infinite; filter: drop-shadow(0 4px 12px #e74c3c88); }
+  .tanya h3 { font-size: 19px; letter-spacing: 1px; color: #ff7a6b; }
+  .tanya.netral h3 { color: var(--gold); }
+  .tanya p { color: var(--mut); font-size: 12.5px; line-height: 1.5; margin-bottom: 6px; }
   .foot { text-align: center; font-size: 10.5px; color: var(--mut); margin-top: auto; }
   @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
 </style>
@@ -147,7 +168,7 @@
   <!-- LOBBY -->
   <section class="screen" id="sLobby">
     <div class="panel hero">
-      <div class="emblem">⚔️</div>
+      <span class="ring l" id="lbRing"><img id="lbFoto" alt="Foto profil" src="assets/foto_siswa/avatar.webp" /><span class="lencana">⚔️</span></span>
       <h2 id="lbNama">...</h2>
       <span class="badge" id="lbTier"></span>
       <p style="margin-top:10px">Tantang siswa lain yang sedang online. Siapa cepat berpikir, dialah pemenangnya!</p>
@@ -190,9 +211,9 @@
     <div class="panel">
       <div class="teks-tengah" style="margin-bottom:12px"><h3>⚡ LAWAN DITEMUKAN!</h3></div>
       <div class="vs">
-        <div class="pj kiri"><div style="font-size:30px" id="vsSisiA"></div><div style="font-weight:700;font-size:13px" id="vsNamaA"></div><span class="badge" id="vsTierA"></span></div>
+        <div class="pj kiri"><span class="ring m" id="vsRingA"><img id="vsFotoA" alt="" src="assets/foto_siswa/avatar.webp" /><span class="lencana" id="vsSisiA"></span></span><div style="font-weight:700;font-size:13px" id="vsNamaA"></div><span class="badge" id="vsTierA"></span></div>
         <div class="tengah">VS</div>
-        <div class="pj kanan"><div style="font-size:30px" id="vsSisiB"></div><div style="font-weight:700;font-size:13px" id="vsNamaB"></div><span class="badge" id="vsTierB"></span></div>
+        <div class="pj kanan"><span class="ring m" id="vsRingB"><img id="vsFotoB" alt="" src="assets/foto_siswa/avatar.webp" /><span class="lencana" id="vsSisiB"></span></span><div style="font-weight:700;font-size:13px" id="vsNamaB"></div><span class="badge" id="vsTierB"></span></div>
       </div>
       <p class="teks-tengah" style="margin-top:12px;color:var(--mut);font-size:12px" id="vsInfo"></p>
     </div>
@@ -201,9 +222,9 @@
   <!-- PERTANDINGAN -->
   <section class="screen" id="sMain">
     <div class="pemain">
-      <div class="pc" id="pcKamu"><div class="sisi" id="sisiKamu"></div><div class="nm" id="nmKamu"></div><div class="tag">KAMU</div></div>
+      <div class="pc" id="pcKamu"><span class="ring s" id="ringKamu"><img id="fotoKamu" alt="" src="assets/foto_siswa/avatar.webp" /><span class="lencana" id="sisiKamu"></span></span><div class="nm" id="nmKamu"></div><div class="tag">KAMU</div></div>
       <div class="mid">VS</div>
-      <div class="pc" id="pcLawan"><div class="sisi" id="sisiLawan"></div><div class="nm" id="nmLawan"></div><div class="tag">LAWAN</div></div>
+      <div class="pc" id="pcLawan"><span class="ring s" id="ringLawan"><img id="fotoLawan" alt="" src="assets/foto_siswa/avatar.webp" /><span class="lencana" id="sisiLawan"></span></span><div class="nm" id="nmLawan"></div><div class="tag">LAWAN</div></div>
     </div>
     <div class="status" id="statusGiliran">...</div>
     <div class="waktu" id="waktuWrap"><div id="waktuBar"></div></div>
@@ -212,6 +233,16 @@
   </section>
 
   <div class="foot">Tatib SMK Wiraguna • Game ini tidak memengaruhi poin</div>
+</div>
+
+<div class="modal-tanya" id="modalTanya">
+  <div class="panel tanya" id="boxTanya">
+    <div class="tq-ikon" id="tqIkon">🏳️</div>
+    <h3 id="tqJudul"></h3>
+    <p id="tqIsi"></p>
+    <button class="btn bahaya" id="tqYa"></button>
+    <button class="btn sekunder" id="tqTidak"></button>
+  </div>
 </div>
 
 <div class="layar-hasil" id="layarHasil">
@@ -280,6 +311,40 @@ let tiket = { unsub: null, unsubQ: null, hb: null, tick: null, mulai: 0, antre: 
 let M = null, mRef = null, side = "", unsubM = null, hbM = null, tickM = null;
 let lastN = -1, giliranMulaiLokal = 0, lawanHbTerakhir = null, lawanTerlihat = Date.now(), lawanBerubah = 0, mulaiMatchLokal = 0;
 let hasilTampil = false, vsTimer = null, mencatatAkhir = false;
+const FOTO_DEFAULT = "assets/foto_siswa/avatar.webp";
+const fotoCache = {};
+function fotoDariData(d) {
+  if (d && d.fotoUrl) return d.fotoUrl;
+  if (d && d.jk && String(d.jk).toUpperCase() === "P") return "assets/foto_siswa/avatar_p.webp";
+  return "assets/foto_siswa/avatar_l.webp";
+}
+async function ambilFoto(n) {
+  if (fotoCache[n]) return fotoCache[n];
+  try {
+    const s = await getDoc(doc(db, "siswa", String(n)));
+    fotoCache[n] = fotoDariData(s.exists() ? s.data() : null);
+  } catch (e) { fotoCache[n] = FOTO_DEFAULT; }
+  return fotoCache[n];
+}
+function pasangFoto(imgId, ringId, n, p) {
+  const img = $(imgId), ring = $(ringId);
+  img.onerror = () => { img.onerror = null; img.src = FOTO_DEFAULT; };
+  if (p && ring) ring.style.background = p.bg;
+  if (fotoCache[n]) img.src = fotoCache[n];
+  else ambilFoto(n).then((u) => { img.src = u; });
+}
+// pop-up konfirmasi bergaya RPG (pengganti confirm bawaan browser)
+function tanya({ ikon, judul, isi, ya, tidak, netral }) {
+  return new Promise((res) => {
+    $("tqIkon").textContent = ikon; $("tqJudul").textContent = judul; $("tqIsi").textContent = isi;
+    $("tqYa").textContent = ya; $("tqTidak").textContent = tidak;
+    $("boxTanya").classList.toggle("netral", !!netral);
+    $("tqYa").classList.toggle("bahaya", !netral);
+    const tutup = (v) => { $("modalTanya").classList.remove("on"); $("tqYa").onclick = $("tqTidak").onclick = null; res(v); };
+    $("tqYa").onclick = () => tutup(true); $("tqTidak").onclick = () => tutup(false);
+    $("modalTanya").classList.add("on");
+  });
+}
 const myTicketRef = () => doc(db, "matchmaking", nisn);
 
 function show(id) {
@@ -303,10 +368,12 @@ async function mulai() {
     const d = s.data();
     const t = tier(d.shield);
     me = { nisn, nama: namaSingkat(d.panggilan || d.nama), tier: t.tier, bg: t.bg, col: t.col };
+    fotoCache[nisn] = fotoDariData(d);
   } catch (e) {
     me = { nisn, nama: "Pemain", ...tier(0) };
   }
   $("lbNama").textContent = me.nama; badge($("lbTier"), me);
+  pasangFoto("lbFoto", "lbRing", nisn, me);
   bersihkanLama();
   // lanjutkan pertandingan bila halaman dimuat ulang
   try {
@@ -366,9 +433,11 @@ function aktifLain() {
 }
 async function cobaPasangkan() {
   if (fase !== "cari" || tiket.memasang) return;
-  // hanya pemain ber-NISN lebih kecil yang memulai, supaya tidak saling berebut
-  const cand = aktifLain().filter((t) => String(nisn) < String(t.nisn)).sort((a, b) => a.ts - b.ts)[0];
-  if (!cand) return;
+  // pilih lawan ACAK di antara semua pemain yang sedang mencari.
+  // Kalau dua pemain saling memilih bersamaan, transaksi memastikan hanya satu yang berhasil.
+  const pool = aktifLain();
+  if (!pool.length) return;
+  const cand = pool[Math.floor(Math.random() * pool.length)];
   tiket.memasang = true;
   try {
     const myRef = myTicketRef(), thRef = doc(db, "matchmaking", String(cand.nisn));
@@ -434,6 +503,7 @@ function siapkanLayar(m) {
   const kamu = m[side], lawan = m[side === "x" ? "o" : "x"];
   $("sisiKamu").textContent = IKON[side]; $("sisiLawan").textContent = IKON[side === "x" ? "o" : "x"];
   $("nmKamu").textContent = kamu.nama; $("nmLawan").textContent = lawan.nama;
+  pasangFoto("fotoKamu", "ringKamu", kamu.nisn, kamu); pasangFoto("fotoLawan", "ringLawan", lawan.nisn, lawan);
   const p = $("papan"); p.innerHTML = "";
   for (let i = 0; i < 9; i++) {
     const b = document.createElement("button"); b.className = "cell"; b.dataset.i = i; b.disabled = true;
@@ -443,6 +513,7 @@ function siapkanLayar(m) {
 function tampilVs(m) {
   const kamu = m[side], lawan = m[side === "x" ? "o" : "x"];
   $("vsSisiA").textContent = IKON[side]; $("vsNamaA").textContent = kamu.nama; badge($("vsTierA"), kamu);
+  pasangFoto("vsFotoA", "vsRingA", kamu.nisn, kamu); pasangFoto("vsFotoB", "vsRingB", lawan.nisn, lawan);
   $("vsSisiB").textContent = IKON[side === "x" ? "o" : "x"]; $("vsNamaB").textContent = lawan.nama; badge($("vsTierB"), lawan);
   $("vsInfo").textContent = side === "x" ? "Kamu jalan duluan!" : "Lawan jalan duluan, bersiaplah.";
   show("sVs");
@@ -515,7 +586,11 @@ async function akhiri(winner, reason) {
     });
   } catch (e) { mencatatAkhir = false; }
 }
-window.__menyerah = () => { if (confirm("Menyerah dan mengaku kalah?")) akhiri(side === "x" ? "o" : "x", "menyerah"); };
+window.__menyerah = async () => {
+  if (!M || M.status !== "playing") return;
+  const ya = await tanya({ ikon: "🏳️", judul: "MENYERAH?", isi: "Kalau menyerah, pertandingan ini dianggap kalah. Yakin mau mengibarkan bendera putih?", ya: "🏳️ Ya, Menyerah", tidak: "⚔️ Lanjut Bertarung" });
+  if (ya) akhiri(side === "x" ? "o" : "x", "menyerah");
+};
 
 function tampilHasil(m) {
   if (hasilTampil) return; hasilTampil = true; fase = "hasil";
@@ -561,7 +636,14 @@ $("btnBatalCari").onclick = () => { hentikanCari(true); fase = "lobby"; show("sL
 $("btnLagi").onclick = () => { keluarMatch(); fase = "lobby"; cari(); };
 $("btnLobby").onclick = () => { keluarMatch(); fase = "lobby"; show("sLobby"); };
 $("btnMenyerah").onclick = () => window.__menyerah();
-$("btnTutup").onclick = () => { if (fase === "main" && M && M.status === "playing" && !confirm("Pertandingan sedang berlangsung. Tutup berarti kamu kalah. Lanjut tutup?")) return; window.close(); setTimeout(() => { location.href = "index.html#siswa"; }, 150); };
+$("btnTutup").onclick = async () => {
+  if (fase === "main" && M && M.status === "playing") {
+    const ya = await tanya({ ikon: "🚪", judul: "KELUAR ARENA?", isi: "Pertandingan sedang berlangsung. Kalau keluar sekarang, kamu dianggap menyerah dan lawanmu menang.", ya: "🚪 Ya, Keluar", tidak: "⚔️ Tetap Main" });
+    if (!ya) return;
+    await akhiri(side === "x" ? "o" : "x", "menyerah");
+  }
+  window.close(); setTimeout(() => { location.href = "index.html#siswa"; }, 150);
+};
 function pergi() {
   if (fase === "cari") deleteDoc(myTicketRef()).catch(() => {});
 }
