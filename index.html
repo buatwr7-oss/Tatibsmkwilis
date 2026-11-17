@@ -9,8 +9,8 @@
     <title>Tatib SMK Wiraguna 🛡️</title>
 
     <!-- CSS UTAMA -->
-    <link rel="stylesheet" href="style.css?v=3.16.1" />
-    <link rel="stylesheet" href="ambient.css?v=3.16.1" />
+    <link rel="stylesheet" href="style.css?v=3.17.0" />
+    <link rel="stylesheet" href="ambient.css?v=3.17.0" />
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
@@ -1385,8 +1385,9 @@
               line-height: 1.4;
             "
           >
-            Pilih kelas binaanmu, lalu pilih siswa yang ingin di-reset foto
-            profilnya agar bisa mengganti foto mandiri kembali.
+            Pilih kelas binaanmu, lalu pilih satu siswa atau seluruh siswa
+            kelas itu yang ingin di-reset foto profilnya agar bisa mengganti
+            foto mandiri kembali.
           </p>
 
           <div style="margin-bottom: 8px; text-align: left">
@@ -1441,7 +1442,7 @@
               font-size: 11px;
             "
           >
-            🔄 Eksekusi Reset Foto Siswa Terpilih
+            🔄 Eksekusi Reset Foto
           </button>
         </div>
       </div>
@@ -2954,20 +2955,20 @@
       🛠️ MODE MAINTENANCE AKTIF — siswa & guru tidak bisa masuk
     </div>
 
-    <div class="app-version-badge">Tatib v3.16.1 • Beta</div>
+    <div class="app-version-badge">Tatib v3.17.0 • Beta</div>
 
     <!-- JAVASCRIPT UTAMA & FIREBASE MODULE -->
     <script>
       // Daftarkan service worker (syarat PWA agar bisa di-install)
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
-          navigator.serviceWorker.register("sw.js?v=3.16.1").catch(function (e) {
+          navigator.serviceWorker.register("sw.js?v=3.17.0").catch(function (e) {
             console.warn("Service worker gagal didaftarkan:", e);
           });
         });
       }
     </script>
-    <script src="ambient.js?v=3.16.1"></script>
-    <script src="app.js?v=3.16.1" type="module"></script>
+    <script src="ambient.js?v=3.17.0"></script>
+    <script src="app.js?v=3.17.0" type="module"></script>
   </body>
 </html>

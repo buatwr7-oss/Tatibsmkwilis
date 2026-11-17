@@ -26,7 +26,7 @@ import {
   writeBatch,
   getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=3.16.1";
+import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=3.17.0";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
@@ -2062,7 +2062,7 @@ window.bukaGame = function (nama) {
   if (!DAFTAR[nama]) return;
   // Catatan: jangan pakai fitur "noopener" di sini — window.open lalu selalu
   // mengembalikan null sehingga terbaca seolah pop-up diblokir.
-  const w = window.open(DAFTAR[nama] + "?v=3.16.1", "_blank");
+  const w = window.open(DAFTAR[nama] + "?v=3.17.0", "_blank");
   if (w) {
     try {
       w.opener = null;
@@ -7059,6 +7059,8 @@ window.simpanFotoProfilBaru = async function () {
 // ==========================================
 // FITUR RESET FOTO OLEH WALI KELAS (PANEL GURU)
 // ==========================================
+const RESET_FOTO_SEMUA = "__SEMUA_KELAS__";
+
 window.handleWaliKelasPilihKelas = function () {
   const kelas = $("waliKelasSelectKelas").value;
   const selSiswa = $("waliKelasSelectSiswa");
@@ -7069,15 +7071,58 @@ window.handleWaliKelasPilihKelas = function () {
     return;
   }
 
-  let siswaHtml = '<option value="">-- Pilih Siswa --</option>';
-  masterDataSiswa
+  const daftar = masterDataSiswa
     .filter((s) => s.kelas === kelas)
-    .sort((a, b) => String(a.nama).localeCompare(String(b.nama)))
-    .forEach((s) => {
-      siswaHtml += `<option value="${escapeHtml(s.nisn)}">${escapeHtml(s.nama)} (NISN: ${escapeHtml(s.nisn)})</option>`;
-    });
+    .sort((a, b) => String(a.nama).localeCompare(String(b.nama)));
+  let siswaHtml = '<option value="">-- Pilih Siswa --</option>';
+  if (daftar.length > 0)
+    siswaHtml += `<option value="${RESET_FOTO_SEMUA}">👥 SEMUA SISWA KELAS INI (${daftar.length} siswa)</option>`;
+  daftar.forEach((s) => {
+    siswaHtml += `<option value="${escapeHtml(s.nisn)}">${escapeHtml(s.nama)} (NISN: ${escapeHtml(s.nisn)})</option>`;
+  });
   selSiswa.innerHTML = siswaHtml;
 };
+
+// Reset foto SELURUH kelas binaan. Hanya siswa yang memang punya foto kustom / masa tunggu
+// yang ditulis ulang, supaya hemat penulisan Firestore.
+async function resetFotoSeluruhKelas() {
+  const kelas = $("waliKelasSelectKelas").value;
+  if (!kelas || !kelasBinaanList(currentUser).includes(kelas)) {
+    return window.customAlert("⛔ Kamu hanya bisa mereset foto siswa di kelas binaanmu.");
+  }
+  const semua = masterDataSiswa.filter((s) => s.kelas === kelas);
+  const target = semua.filter((s) => s.fotoUrl || (s.lastAvatarChange || 0) > 0);
+  if (target.length === 0) {
+    return window.customAlert(
+      `ℹ️ Tidak ada siswa ${kelas} yang perlu direset. Semua belum mengganti foto profil.`,
+    );
+  }
+  const konfirmasi = await window.customConfirm(
+    `Reset foto profil SELURUH kelas ${kelas}?\n${target.length} dari ${semua.length} siswa punya foto kustom dan akan dikembalikan ke avatar bawaan. Mereka bisa mengganti foto lagi secara mandiri.`,
+  );
+  if (!konfirmasi) return;
+
+  showGamePreloader("MENGEKSEKUSI RESET FOTO KELAS...", async (done) => {
+    try {
+      const { doc, writeBatch } = window.fbFirestore;
+      for (let i = 0; i < target.length; i += BATCH_CHUNK) {
+        const batch = writeBatch(window.db);
+        target.slice(i, i + BATCH_CHUNK).forEach((s) => {
+          batch.update(doc(window.db, "siswa", String(s.nisn)), { fotoUrl: "", lastAvatarChange: 0 });
+        });
+        await batch.commit();
+      }
+      await refreshMasterSiswa();
+      done();
+      window.customAlert(`✅ Berhasil! Foto profil ${target.length} siswa kelas ${kelas} telah di-reset.`);
+      terapkanFiturWaliKelas();
+    } catch (error) {
+      done();
+      console.error("Gagal mereset foto satu kelas:", error);
+      window.customAlert("❌ Terjadi kesalahan saat mereset foto kelas ke database.");
+    }
+  });
+}
 
 window.eksekusiResetFotoOlehWaliKelas = async function () {
   const nisnTarget = $("waliKelasSelectSiswa").value;
@@ -7087,6 +7132,8 @@ window.eksekusiResetFotoOlehWaliKelas = async function () {
       "⚠️ Silakan pilih kelas dan nama siswa terlebih dahulu!",
     );
   }
+
+  if (nisnTarget === RESET_FOTO_SEMUA) return resetFotoSeluruhKelas();
 
   // Pengaman: hanya wali kelas, dan hanya untuk siswa di kelas binaannya
   const siswaTarget = masterDataSiswa.find((s) => s.nisn === nisnTarget);
