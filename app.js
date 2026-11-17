@@ -26,7 +26,7 @@ import {
   writeBatch,
   getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=3.17.0";
+import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.1.0";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
@@ -88,8 +88,10 @@ const CHAT_MAX_LEN = 250;
 const CHAT_COOLDOWN_MS = 1500;
 const MAX_LAPORAN_BUG_AKTIF = 20; // total laporan bug/masukan yang boleh menumpuk sebelum ditutup sementara
 const MAX_LAPORAN_BUG_PER_HARI = 10; // batas kirim per pengirim per hari
-const HEARTBEAT_MS = 60000;
-const ONLINE_THRESHOLD_MS = 150000;
+// Hemat kuota baca/tulis Firestore: tanda aktif tiap 2 menit (dulu 1 menit),
+// siswa dianggap online selama < 4,5 menit sejak tanda terakhir (dulu 2,5 menit).
+const HEARTBEAT_MS = 120000;
+const ONLINE_THRESHOLD_MS = 270000;
 const BATCH_CHUNK = 400;
 
 function escapeHtml(text) {
@@ -1226,6 +1228,8 @@ let friendStatusListeners = {};
 let friendListeners = {};
 
 function unsubscribeAllFriendListeners() {
+  clearTimeout(statusTemanLepasTimer);
+  statusTemanLepasTimer = null;
   Object.values(friendListeners).forEach((u) => typeof u === "function" && u());
   Object.values(friendStatusListeners).forEach(
     (u) => typeof u === "function" && u(),
@@ -1664,6 +1668,13 @@ function startStudentSession(nisn, siswa, opsi) {
   initStudentRealtimeListener(nisn);
   initOnlineStatusEngine(nisn);
   pantauSesiSiswa(nisn);
+  // Nama & foto teman diambil dari roster ringan (± 5 baca), lalu daftar dirender ulang
+  pastikanRoster().then(() => {
+    if (currentNisnSiswa !== nisn) return;
+    const req = (window.currentStudentDataCache && window.currentStudentDataCache.requests) || [];
+    renderRequests(req);
+    scheduleFriendRender();
+  });
 
   $("boxInputNisnSiswa").classList.add("hidden");
   $("hasilPoinSiswa").classList.remove("hidden");
@@ -1849,7 +1860,17 @@ async function tambahTemanImpl() {
   if (!validNisnFormat(targetNisn))
     return window.customAlert("Format NISN tidak valid!");
 
-  const temanObj = masterDataSiswa.find((s) => s.nisn === targetNisn);
+  let temanObj = cariSiswa(targetNisn);
+  if (!temanObj) {
+    // Belum ada di roster (mis. siswa baru): cek langsung ke database
+    try {
+      const { doc, getDoc } = window.fbFirestore;
+      const snapTeman = await getDoc(doc(window.db, "siswa", targetNisn));
+      if (snapTeman.exists()) temanObj = snapTeman.data();
+    } catch (e) {
+      /* dianggap tidak ditemukan */
+    }
+  }
   if (!temanObj)
     return window.customAlert(
       "NISN teman tidak ditemukan di database sekolah!",
@@ -2017,6 +2038,8 @@ window.switchSiswaTab = function (tab) {
   // Listener berat hanya aktif saat tab-nya terlihat
   if (prev === "chat" && tab !== "chat") detachChatRoomListener();
   if (prev === "global" && tab !== "global") stopGlobalOnlineListener();
+  if (tab === "teman" || tab === "chat") pasangStatusTeman();
+  else if (prev === "teman" || prev === "chat") lepasStatusTemanTertunda();
 
   if (tab === "chat") {
     renderChatList();
@@ -2062,7 +2085,7 @@ window.bukaGame = function (nama) {
   if (!DAFTAR[nama]) return;
   // Catatan: jangan pakai fitur "noopener" di sini — window.open lalu selalu
   // mengembalikan null sehingga terbaca seolah pop-up diblokir.
-  const w = window.open(DAFTAR[nama] + "?v=3.17.0", "_blank");
+  const w = window.open(DAFTAR[nama] + "?v=4.1.0", "_blank");
   if (w) {
     try {
       w.opener = null;
@@ -2111,7 +2134,7 @@ function renderRequests(requestsArray) {
   }
   let html = `<div class="request-title">📩 Undangan Masuk (${requestsArray.length}):</div>`;
   requestsArray.forEach((senderNisn) => {
-    const sender = masterDataSiswa.find((s) => s.nisn === senderNisn);
+    const sender = cariSiswa(senderNisn);
     const senderName = sender ? sender.nama : `NISN: ${senderNisn}`;
     const sNisn = escapeHtml(senderNisn);
     html += `
@@ -2141,7 +2164,7 @@ function renderTemanList() {
 
   const items = friends.map((nisn) => ({
     nisn,
-    teman: masterDataSiswa.find((s) => s.nisn === nisn),
+    teman: cariSiswa(nisn),
     st: friendState[nisn] || {},
   }));
   // Yang online di atas, lalu urut nama
@@ -2190,7 +2213,7 @@ function renderChatList() {
   const me = getMyNisn();
   const items = friends.map((nisn) => ({
     nisn,
-    teman: masterDataSiswa.find((s) => s.nisn === nisn),
+    teman: cariSiswa(nisn),
     st: friendState[nisn] || {},
   }));
   // Percakapan terbaru di atas, teman tanpa pesan di bawah (urut nama)
@@ -2254,14 +2277,6 @@ function setupFriendHub(friendsArray, requestsArray) {
     window.fbFirestore;
 
   friendsArray.forEach((nisn) => {
-    friendStatusListeners[nisn] = subscribeStatus(nisn, (info) => {
-      const st = friendState[nisn];
-      if (!st) return;
-      st.online = info.isOnline;
-      st.statusText = info.text;
-      scheduleFriendRender();
-    });
-
     try {
       const roomRef = collection(
         window.db,
@@ -2307,7 +2322,36 @@ function setupFriendHub(friendsArray, requestsArray) {
     }
   });
 
+  // Status online teman hanya dipantau saat tab Teman/Chat terlihat (hemat baca)
+  if (siswaActiveTab === "teman" || siswaActiveTab === "chat") pasangStatusTeman();
   scheduleFriendRender();
+}
+
+// Status teman (online/offline) dipantau hanya selama tab Teman atau Chat dibuka,
+// dan dilepas 60 detik setelah ditinggalkan. Dulu dipantau terus-menerus sehingga
+// tiap tanda aktif teman dihitung sebagai 1 baca walau tab tidak dilihat.
+let statusTemanLepasTimer = null;
+function pasangStatusTeman() {
+  clearTimeout(statusTemanLepasTimer);
+  statusTemanLepasTimer = null;
+  Object.keys(friendState).forEach((nisn) => {
+    if (friendStatusListeners[nisn]) return;
+    friendStatusListeners[nisn] = subscribeStatus(nisn, (info) => {
+      const st = friendState[nisn];
+      if (!st) return;
+      st.online = info.isOnline;
+      st.statusText = info.text;
+      scheduleFriendRender();
+    });
+  });
+}
+function lepasStatusTemanTertunda() {
+  clearTimeout(statusTemanLepasTimer);
+  statusTemanLepasTimer = setTimeout(() => {
+    Object.values(friendStatusListeners).forEach((u) => typeof u === "function" && u());
+    friendStatusListeners = {};
+    statusTemanLepasTimer = null;
+  }, 60000);
 }
 
 // ==========================================
@@ -2342,7 +2386,7 @@ function attachChatHeaderStatus(nisn) {
 window.bukaChatTeman = function (targetNisn, targetNama) {
   currentChatTargetNisn = targetNisn;
 
-  const teman = masterDataSiswa.find((s) => s.nisn === targetNisn);
+  const teman = cariSiswa(targetNisn);
   $("chatTitleNama").textContent = targetNama;
   const av = $("chatRoomAvatar");
   if (av) av.src = teman ? avatarFor(teman) : "assets/foto_siswa/avatar_l.webp";
@@ -2529,7 +2573,7 @@ let adminActiveChatListener = null;
 let currentAdminSelectedRoomId = "";
 
 function namaDariNisn(nisn) {
-  const s = masterDataSiswa.find((x) => x.nisn === nisn);
+  const s = cariSiswa(nisn);
   return s ? s.nama : nisn;
 }
 
@@ -2693,6 +2737,155 @@ function invalidateMasterCache() {
   }
 }
 
+// ==========================================
+// ROSTER RINGAN — hemat kuota baca Firestore
+// Siswa tidak lagi membaca SELURUH koleksi `siswa` (150+ dokumen) tiap membuka
+// aplikasi. Staf (yang memang memuat semua siswa) menyalin ringkasan
+// {nisn, nama, kelas, jk, poin harian, foto} ke beberapa dokumen kecil
+// `app_meta/roster_N` + `app_meta/roster_meta`. Siswa cukup membaca beberapa
+// dokumen itu (± 5 baca). Kalau roster belum ada / gagal dibaca, aplikasi otomatis
+// memakai cara lama (muat semua siswa) sehingga tidak ada fitur yang rusak.
+// ==========================================
+const ROSTER_META = "roster_meta";
+const ROSTER_KEY = "roster_siswa_v1";
+const ROSTER_TTL_MS = 10 * 60 * 1000; // roster di perangkat dianggap segar 10 menit
+const ROSTER_MAKS_BYTE = 500000; // batas aman per dokumen (limit Firestore ± 1 MB)
+const ROSTER_MAKS_ITEM = 60;
+let profilCache = new Map();
+let rosterWaktu = 0;
+let rosterSinkronT = 0;
+
+function hashSingkat(str) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36) + "." + str.length;
+}
+function ringkasSiswa(s) {
+  return { x: String(s.nisn), n: s.nama || "", k: s.kelas || "", j: s.jk || "", d: s.dailyScore || 0, f: s.fotoUrl || "" };
+}
+function dariRingkas(r) {
+  return { nisn: r.x, nama: r.n, kelas: r.k, jk: r.j, dailyScore: r.d, fotoUrl: r.f };
+}
+function isiProfilCache(items) {
+  profilCache = new Map();
+  items.forEach((r) => profilCache.set(String(r.x), dariRingkas(r)));
+}
+
+// Cari satu siswa: dari daftar lengkap (staf / cara lama) atau roster ringan (siswa).
+function cariSiswa(nisn) {
+  const k = String(nisn);
+  if (masterDataSiswa.length) {
+    const s = masterDataSiswa.find((x) => String(x.nisn) === k);
+    if (s) return s;
+  }
+  return profilCache.get(k);
+}
+// Daftar untuk papan peringkat
+function daftarSiswaRingan() {
+  return masterDataSiswa.length ? masterDataSiswa : Array.from(profilCache.values());
+}
+
+// STAF: salin ringkasan ke roster bila ada yang berubah (hanya tulis potongan yang berubah)
+let rosterTunda = null;
+function sinkronRoster(list) {
+  // Jeda minimal 30 detik antar-sinkron; perubahan yang datang lebih cepat
+  // ditunda dan dikirim dengan data terbaru (tidak hilang).
+  clearTimeout(rosterTunda);
+  const sisa = 30000 - (Date.now() - rosterSinkronT);
+  if (sisa > 0) {
+    rosterTunda = setTimeout(() => sinkronRoster(masterDataSiswa), sisa);
+    return;
+  }
+  return jalankanSinkronRoster(list);
+}
+async function jalankanSinkronRoster(list) {
+  try {
+    if (!window.auth || !window.auth.currentUser) return; // hanya akun staf (Firebase Auth)
+    if (!list || !list.length) return;
+    rosterSinkronT = Date.now();
+    const { doc, getDoc, writeBatch } = window.fbFirestore;
+    const items = [...list]
+      .sort((p, q) => String(p.nisn).localeCompare(String(q.nisn)))
+      .map(ringkasSiswa);
+    const chunks = [];
+    let cur = [];
+    let size = 0;
+    items.forEach((it) => {
+      const b = JSON.stringify(it).length;
+      if (cur.length && (size + b > ROSTER_MAKS_BYTE || cur.length >= ROSTER_MAKS_ITEM)) {
+        chunks.push(cur);
+        cur = [];
+        size = 0;
+      }
+      cur.push(it);
+      size += b;
+    });
+    if (cur.length) chunks.push(cur);
+    const sigs = chunks.map((c) => hashSingkat(JSON.stringify(c)));
+
+    const metaSnap = await getDoc(doc(window.db, "app_meta", ROSTER_META));
+    const lama = metaSnap.exists() ? metaSnap.data() : {};
+    const sigLama = lama.v === 1 && Array.isArray(lama.sigs) ? lama.sigs : [];
+    if (sigLama.length === sigs.length && sigs.every((s, i) => s === sigLama[i])) return; // tidak ada perubahan
+
+    const batch = writeBatch(window.db);
+    chunks.forEach((c, i) => {
+      if (sigLama[i] !== sigs[i]) batch.set(doc(window.db, "app_meta", "roster_" + i), { i, items: c });
+    });
+    for (let i = chunks.length; i < sigLama.length; i++) batch.delete(doc(window.db, "app_meta", "roster_" + i));
+    batch.set(doc(window.db, "app_meta", ROSTER_META), { v: 1, n: chunks.length, sigs, total: items.length, t: Date.now() });
+    await batch.commit();
+  } catch (e) {
+    console.warn("Sinkron roster gagal (aplikasi tetap berjalan):", e);
+  }
+}
+
+// SISWA / TAMU: pastikan roster ada di memori. Gagal -> cara lama (muat semua siswa).
+async function pastikanRoster(paksa = false) {
+  if (!paksa && profilCache.size && Date.now() - rosterWaktu < ROSTER_TTL_MS) return true;
+  if (!paksa) {
+    try {
+      const raw = localStorage.getItem(ROSTER_KEY);
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p && Array.isArray(p.items) && p.items.length && Date.now() - p.t < ROSTER_TTL_MS) {
+          isiProfilCache(p.items);
+          rosterWaktu = p.t;
+          return true;
+        }
+      }
+    } catch (e) {
+      /* cache rusak: abaikan, ambil ulang */
+    }
+  }
+  try {
+    const { doc, getDoc } = window.fbFirestore;
+    const meta = await getDoc(doc(window.db, "app_meta", ROSTER_META));
+    if (!meta.exists() || meta.data().v !== 1 || !(meta.data().n > 0)) throw new Error("roster-belum-ada");
+    const n = meta.data().n;
+    const snaps = await Promise.all(
+      Array.from({ length: n }, (_, i) => getDoc(doc(window.db, "app_meta", "roster_" + i))),
+    );
+    const items = [];
+    snaps.forEach((s) => {
+      if (s.exists()) items.push(...(s.data().items || []));
+    });
+    if (!items.length) throw new Error("roster-kosong");
+    isiProfilCache(items);
+    rosterWaktu = Date.now();
+    try {
+      localStorage.setItem(ROSTER_KEY, JSON.stringify({ t: rosterWaktu, items }));
+    } catch (e) {
+      /* penyimpanan penuh: lanjut tanpa cache lokal */
+    }
+    return true;
+  } catch (e) {
+    // Roster belum disiapkan staf / gagal dibaca: pakai cara lama supaya semua fitur tetap jalan
+    await new Promise((res) => loadMasterSiswaFromCloud(res));
+    return false;
+  }
+}
+
 async function loadMasterSiswaFromCloud(callback, force = false) {
   if (!force) {
     try {
@@ -2724,6 +2917,7 @@ async function loadMasterSiswaFromCloud(callback, force = false) {
     });
     masterDataSiswa = list;
     masterLoadError = null;
+    if (currentUser) sinkronRoster(list); // staf: perbarui roster ringan untuk siswa
     try {
       sessionStorage.setItem(
         CACHE_KEY,
@@ -3048,7 +3242,8 @@ function showScreen(screenId, pushHistory = true) {
     window.renderQuestUI("prestasi");
   } else if (screenId === "leaderboard") {
     $("leaderboardCard").classList.remove("hidden");
-    loadMasterSiswaFromCloud(() => window.renderGlobalLeaderboard());
+    if (currentUser) loadMasterSiswaFromCloud(() => window.renderGlobalLeaderboard());
+    else pastikanRoster().then(() => window.renderGlobalLeaderboard());
   } else if (screenId === "entry") {
     $("entryCard").classList.remove("hidden");
   } else if (screenId === "admin") {
@@ -3263,10 +3458,9 @@ window.renderGlobalLeaderboard = function () {
   const container = $("globalLeaderboardList");
   if (!container) return;
 
+  const sumber = daftarSiswaRingan();
   const filtered =
-    filter === "SEMUA"
-      ? [...masterDataSiswa]
-      : masterDataSiswa.filter((s) => s.kelas === filter);
+    filter === "SEMUA" ? [...sumber] : sumber.filter((s) => s.kelas === filter);
   filtered.sort((a, b) => (b.dailyScore || 0) - (a.dailyScore || 0));
 
   if (filtered.length === 0) {
@@ -3371,7 +3565,7 @@ window.kirimLaporanBugUI = async function () {
     pelaporPeran = currentUser.role || "Guru/Admin";
     pelaporId = currentUser.email || pelaporNama;
   } else if (currentNisnSiswa) {
-    const s = masterDataSiswa.find((x) => x.nisn === currentNisnSiswa);
+    const s = cariSiswa(currentNisnSiswa);
     pelaporNama = s ? s.nama : currentNisnSiswa;
     pelaporPeran = isAlumniSession ? "Alumni" : "Siswa";
     pelaporId = currentNisnSiswa;
@@ -7223,7 +7417,12 @@ function stopGlobalOnlineListener() {
     clearInterval(globalOnlineTimer);
     globalOnlineTimer = null;
   }
+  if (globalOnlinePollTimer) {
+    clearInterval(globalOnlinePollTimer);
+    globalOnlinePollTimer = null;
+  }
   globalOnlineDocs = {};
+  globalOnlineTotal = 0;
 }
 
 function renderGlobalOnline() {
@@ -7247,47 +7446,73 @@ function renderGlobalOnline() {
     return namaDariNisn(a).localeCompare(namaDariNisn(b));
   });
 
-  countEl.textContent = `${online.length} siswa online`;
+  const totalOnline = Math.max(online.length, globalOnlineTotal || 0);
+  countEl.textContent = `${totalOnline} siswa online`;
 
   const MAX = 30;
   let html = online
     .slice(0, MAX)
     .map((nisn) => {
-      const s = masterDataSiswa.find((x) => x.nisn === nisn);
+      const s = cariSiswa(nisn);
       const nama = nisn === me ? "Kamu" : namaDariNisn(nisn);
       return `<span class="online-chip ${nisn === me ? "me" : ""}"><img src="${escapeHtml(avatarFor(s))}" alt="" onerror="${AVATAR_ONERROR}"><span class="nm">${escapeHtml(nama)}</span></span>`;
     })
     .join("");
-  if (online.length > MAX) {
-    html += `<span class="online-chip"><span class="nm">+${online.length - MAX} lainnya</span></span>`;
+  if (totalOnline > MAX) {
+    html += `<span class="online-chip"><span class="nm">+${totalOnline - MAX} lainnya</span></span>`;
   }
   listEl.innerHTML = html;
 }
 
+// Daftar siswa online di Global Chat: DIAMBIL berkala (bukan listener real-time).
+// Listener lama mengirim tiap tanda aktif tiap siswa online ke tiap penonton
+// (100 online x 40 penonton = ribuan baca per menit). Sekarang: ambil saat tab dibuka,
+// lalu tiap 3 menit selama tab terlihat; hanya 30 yang paling baru aktif + hitungan total.
+const GLOBAL_ONLINE_POLL_MS = 180000;
+const GLOBAL_ONLINE_MAKS = 30;
+let globalOnlinePollTimer = null;
+let globalOnlineTotal = 0;
+let globalOnlineAmbil = false;
+
+async function ambilGlobalOnline() {
+  if (globalOnlineAmbil || document.hidden) return;
+  globalOnlineAmbil = true;
+  try {
+    const { collection, query, where, orderBy, limit, getDocs, getCountFromServer } = window.fbFirestore;
+    const batas = Date.now() - ONLINE_THRESHOLD_MS;
+    const dasar = collection(window.db, "status");
+    const snap = await getDocs(
+      query(dasar, where("lastActive", ">", batas), orderBy("lastActive", "desc"), limit(GLOBAL_ONLINE_MAKS)),
+    );
+    const baru = {};
+    snap.forEach((d) => {
+      baru[d.id] = d.data();
+    });
+    globalOnlineDocs = baru;
+    globalOnlineTotal = 0;
+    if (snap.size >= GLOBAL_ONLINE_MAKS) {
+      // lebih banyak dari yang ditampilkan: hitung total tanpa membaca dokumennya
+      try {
+        const cnt = await getCountFromServer(query(dasar, where("lastActive", ">", batas)));
+        globalOnlineTotal = cnt.data().count || 0;
+      } catch (e) {
+        globalOnlineTotal = 0;
+      }
+    }
+    renderGlobalOnline();
+  } catch (err) {
+    console.error("Gagal memuat siswa online:", err);
+  } finally {
+    globalOnlineAmbil = false;
+  }
+}
+
 function startGlobalOnlineListener() {
   stopGlobalOnlineListener();
-  try {
-    const { collection, query, where, onSnapshot } = window.fbFirestore;
-    const q = query(
-      collection(window.db, "status"),
-      where("lastActive", ">", Date.now() - ONLINE_THRESHOLD_MS),
-    );
-    globalOnlineUnsub = onSnapshot(
-      q,
-      (snap) => {
-        globalOnlineDocs = {};
-        snap.forEach((d) => {
-          globalOnlineDocs[d.id] = d.data();
-        });
-        renderGlobalOnline();
-      },
-      (err) => console.error("Gagal memuat siswa online:", err),
-    );
-    // Evaluasi ulang berkala: siswa yang berhenti heartbeat otomatis hilang
-    globalOnlineTimer = setInterval(renderGlobalOnline, 30000);
-  } catch (e) {
-    console.error("Gagal memulai pemantauan siswa online:", e);
-  }
+  ambilGlobalOnline();
+  // ambil ulang berkala & evaluasi ulang (yang berhenti tanda aktif hilang sendiri)
+  globalOnlinePollTimer = setInterval(ambilGlobalOnline, GLOBAL_ONLINE_POLL_MS);
+  globalOnlineTimer = setInterval(renderGlobalOnline, 30000);
   renderGlobalOnline();
 }
 
@@ -7522,9 +7747,12 @@ async function initApp() {
     }
   });
 
+  // Hanya perangkat dengan sesi staf yang butuh seluruh daftar siswa saat dibuka.
+  // Siswa/tamu memakai roster ringan (lihat pastikanRoster) -> hemat ratusan baca.
+  const adaSesiStaf = !!localStorage.getItem("loggedInUser");
   const [authUser] = await Promise.all([
     authReady,
-    new Promise((res) => loadMasterSiswaFromCloud(res)),
+    adaSesiStaf ? new Promise((res) => loadMasterSiswaFromCloud(res)) : Promise.resolve(),
   ]);
 
   loadTugasAktif();
@@ -7540,6 +7768,7 @@ async function initApp() {
         userObj.email = authUser.email || userObj.email;
         currentUser = userObj;
         currentRole = userObj.role;
+        sinkronRoster(masterDataSiswa); // sesi staf dipulihkan: pastikan roster siswa mutakhir
         if (userObj.role === "Super Admin") {
           $("txtNamaAdmin").innerText = userObj.nama;
           pasangSapaanStaf(userObj);
