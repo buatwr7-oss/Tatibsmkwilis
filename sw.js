@@ -1,7 +1,7 @@
 // Service Worker — Tatib SMK Wiraguna
 // Network-first untuk file milik sendiri (selalu versi terbaru); cache hanya cadangan offline.
 // Request ke Firebase/CDN/font tidak disentuh.
-const VERSION = "4.4.2";
+const VERSION = "4.4.3";
 const CACHE = "tatib-" + VERSION;
 const SHELL = [
   "./",
@@ -11,6 +11,7 @@ const SHELL = [
   "ambient.css?v=" + VERSION,
   "ambient.js?v=" + VERSION,
   "afirmasi.js?v=" + VERSION,
+  "aturan.js?v=" + VERSION,
   "game-tictactoe.html",
   "manifest.json",
   "logo.png",
