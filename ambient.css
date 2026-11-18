@@ -586,3 +586,53 @@ html.tab-tersembunyi #ambient-background * { animation-play-state: paused !impor
   box-shadow: 0 0 8px 2px rgba(218, 255, 94, 0.7);
   animation: ambientFireflyMove var(--ff-dur, 10s) ease-in-out infinite alternate var(--ff-delay, 0s) !important;
 }
+
+
+/* ============================================================
+   CUACA (v4.4.0): data-cuaca = cerah | mendung | hujan
+   Hanya transform/opacity (diproses GPU). Lapisan hujan tidak dirender
+   (display:none) saat tidak hujan, jadi tidak membebani.
+   ============================================================ */
+.ambient-weather-dim {
+  position: absolute; inset: 0; opacity: 0;
+  background: linear-gradient(180deg, rgba(71, 85, 105, 0.9) 0%, rgba(51, 65, 85, 0.75) 100%);
+  transition: opacity 2s ease;
+}
+#ambient-background[data-cuaca="mendung"] .ambient-weather-dim { opacity: 0.34; }
+#ambient-background[data-cuaca="hujan"] .ambient-weather-dim { opacity: 0.55; }
+/* benda langit memudar tertutup awan */
+#ambient-background[data-cuaca="mendung"] .celestial-body,
+#ambient-background[data-cuaca="mendung"] .sun-siang-wrap { opacity: 0.45 !important; }
+#ambient-background[data-cuaca="hujan"] .celestial-body,
+#ambient-background[data-cuaca="hujan"] .sun-siang-wrap { opacity: 0.12 !important; }
+#ambient-background[data-cuaca="hujan"] .ambient-stars-layer,
+#ambient-background[data-cuaca="hujan"] .ambient-birds-layer,
+#ambient-background[data-cuaca="hujan"] .ambient-fireflies-layer,
+#ambient-background[data-cuaca="hujan"] .ambient-particles-layer,
+#ambient-background[data-cuaca="hujan"] #ambient-shooting-container,
+#ambient-background[data-cuaca="mendung"] .ambient-birds-layer,
+#ambient-background[data-cuaca="mendung"] #ambient-shooting-container,
+#ambient-background[data-cuaca="mendung"] .sun-siang-rays { display: none !important; } /* tidak dirender & animasinya berhenti sepenuhnya */
+#ambient-background[data-cuaca="hujan"] .sun-siang-rays { animation: none !important; }
+
+/* hujan */
+.ambient-rain-layer { position: absolute; inset: 0; overflow: hidden; display: none; }
+#ambient-background[data-cuaca="hujan"] .ambient-rain-layer { display: block; }
+.rain-drop {
+  position: absolute; top: -12%; width: 1.5px; height: 18px; border-radius: 1px;
+  background: linear-gradient(180deg, rgba(200, 220, 255, 0), rgba(210, 228, 255, 0.6));
+  transform: translate3d(0, 0, 0) rotate(12deg);
+  will-change: transform;
+  animation: ambientRainFall var(--rain-dur, 1.1s) linear infinite var(--rain-delay, 0s);
+}
+@keyframes ambientRainFall {
+  from { transform: translate3d(0, 0, 0) rotate(12deg); }
+  to   { transform: translate3d(-9vh, 120vh, 0) rotate(12deg); }
+}
+html.tab-tersembunyi .rain-drop { animation-play-state: paused !important; }
+/* mode ringan: tanpa animasi hujan, hanya sedikit garis statis */
+#ambient-background.ambient-ringan .rain-drop { animation: none !important; will-change: auto; top: var(--rain-top, 20%); }
+#ambient-background.ambient-ringan .rain-drop:nth-child(n+15) { display: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .rain-drop { animation: none !important; top: var(--rain-top, 20%); }
+}

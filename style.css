@@ -2944,3 +2944,10 @@ body[data-waktu="siang"] .particle {
 
 .rk-galat { background:#fff5f5; border:1px solid #f5b7b1; border-left:4px solid #e74c3c; color:#922b21; border-radius:8px; padding:10px 12px; margin-bottom:10px; font-size:11px; line-height:1.5; text-align:left; }
 .rk-galat code { background:#fdecea; padding:0 4px; border-radius:3px; }
+
+/* kredit sumber data cuaca (syarat penggunaan Open-Meteo) */
+.credit-cuaca {
+  display: block; text-align: center; margin: 2px 0 0 0;
+  font-size: 9px; color: rgba(148, 163, 184, 0.75); text-decoration: none;
+}
+.pv-input { padding: 6px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 12px; width: auto; }

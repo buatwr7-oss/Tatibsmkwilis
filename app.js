@@ -26,7 +26,7 @@ import {
   writeBatch,
   getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.3.0";
+import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.4.0";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
@@ -2095,7 +2095,7 @@ window.bukaGame = function (nama) {
   if (!DAFTAR[nama]) return;
   // Catatan: jangan pakai fitur "noopener" di sini — window.open lalu selalu
   // mengembalikan null sehingga terbaca seolah pop-up diblokir.
-  const w = window.open(DAFTAR[nama] + "?v=4.3.0", "_blank");
+  const w = window.open(DAFTAR[nama] + "?v=4.4.0", "_blank");
   if (w) {
     try {
       w.opener = null;
@@ -5415,6 +5415,9 @@ function pratinjauMood(mood) {
   pratinjauTandaiMood(mood);
 }
 function pratinjauKembali() {
+  // cuaca pratinjau ikut dikembalikan ke cuaca asli
+  if (window.setAmbientCuaca) window.setAmbientCuaca(null);
+  pratinjauCuacaUI();
   // paksa terapkanLatarWaktu() menerapkan ulang mood sesuai jam
   if (!document.body.dataset.pvPakai) return;
   delete document.body.dataset.pvPakai;
@@ -5443,8 +5446,31 @@ function pratinjauMulai() {
   }
   pratinjauTandaiMood(document.body.dataset.pvPakai ? document.body.dataset.waktu : "auto");
   pratinjauRinganUI();
+  pratinjauCuacaUI();
   pratinjauBar(true);
 }
+const NAMA_CUACA = { cerah: "Cerah ☀️", mendung: "Mendung ☁️", hujan: "Hujan 🌧️" };
+function pratinjauCuacaUI() {
+  const i = window.ambientCuacaInfo ? window.ambientCuacaInfo() : null;
+  if (!i) return;
+  document.querySelectorAll("#adminTabPratinjau .pv-btn[data-cuaca]").forEach((b) => {
+    b.classList.toggle("aktif", b.dataset.cuaca === (i.paksa || "auto"));
+  });
+  const el = $("pvCuacaInfo");
+  if (!el) return;
+  const jam = i.waktu
+    ? new Date(i.waktu).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
+    : null;
+  el.textContent =
+    `Cuaca sekolah sekarang: ${NAMA_CUACA[i.asli]}` +
+    (jam ? ` (diperbarui ${jam})` : " (data belum tersedia, dianggap cerah)") +
+    (i.paksa ? ` — pratinjau: ${NAMA_CUACA[i.paksa]}` : "") + ".";
+}
+window.pratinjauCuaca = function (c) {
+  if (window.setAmbientCuaca) window.setAmbientCuaca(c === "auto" ? null : c);
+  pratinjauCuacaUI();
+};
+window.addEventListener("ambientCuacaDiperbarui", () => pratinjauCuacaUI());
 function pratinjauTierBesar(shield) {
   const box = $("pvTierBesar");
   const info = getTierRank(shield);
@@ -5496,6 +5522,34 @@ window.pratinjauPreset = function (hp, sh) {
   $("pvHpGeser").value = hp;
   $("pvShGeser").value = sh;
   window.pratinjauBar();
+};
+// Menjaga keadaan tetap sah menurut aturan nyata: Shield > 0 hanya bila HP = 200.
+window.pratinjauGeser = function (sumber) {
+  const hp = $("pvHpGeser");
+  const sh = $("pvShGeser");
+  if (sumber === "hp" && Number(hp.value) < 200) sh.value = 0;
+  if (sumber === "sh" && Number(sh.value) > 0) hp.value = 200;
+  window.pratinjauBar();
+};
+// Simulasi memakai hitungDampak() yang sama dengan input guru
+window.pratinjauSimulasi = function (kat, poin) {
+  kat = kat || $("pvSimKat").value;
+  poin = parseInt(poin !== undefined ? poin : $("pvSimPoin").value, 10);
+  if (!(poin > 0)) return;
+  const hp0 = Number($("pvHpGeser").value);
+  const sh0 = Number($("pvShGeser").value);
+  const b = hitungDampak({ hp: hp0, shield: sh0, totalPrestasi: 0, totalPelanggaran: 0 }, kat, poin);
+  $("pvHpGeser").value = b.hp;
+  $("pvShGeser").value = b.shield;
+  window.pratinjauBar();
+  const bag = [];
+  if (b.hp !== hp0) bag.push(`HP ${hp0} → ${b.hp}`);
+  if (b.shield !== sh0) bag.push(`Shield ${sh0} → ${b.shield}`);
+  let cat = "";
+  if (kat === "Prestasi" && b.shield >= SHIELD_MAKS && sh0 + (poin - (200 - hp0)) > SHIELD_MAKS)
+    cat = ` Shield mentok ${SHIELD_MAKS}, kelebihan hangus.`;
+  $("pvSimHasil").textContent =
+    `${kat === "Prestasi" ? "🏆 +" : "⚠️ −"}${poin}: ` + (bag.length ? bag.join(" • ") : "HP & Shield tidak berubah") + "." + cat;
 };
 
 let statistikChartInstance = null;

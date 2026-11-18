@@ -164,6 +164,101 @@
         window.setAmbientMood(moodDariJam());
         requestAnimationFrame(() => requestAnimationFrame(() => bgRoot.classList.remove('no-trans')));
       }
+      // ---- Cuaca (v4.4.0): Open-Meteo (gratis, tanpa kunci), titik tetap sekolah, cache 30 menit ----
+      // Ubah koordinat di bawah bila perlu (cukup perkiraan, grid data ~11 km).
+      const CUACA_LAT = -7.12, CUACA_LON = 107.86;
+      const KUNCI_CUACA = 'tatibCuaca';
+      const CUACA_TTL = 30 * 60 * 1000;      // data dianggap segar 30 menit
+      const CUACA_KADALUARSA = 3 * 3600 * 1000; // data lebih tua dari 3 jam tidak dipakai
+      const cuacaValid = ['cerah', 'mendung', 'hujan'];
+      let cuacaAsli = 'cerah', cuacaWaktu = 0, cuacaPaksa = null;
+
+      function klasifikasiCuaca(d) {
+        // d: respons Open-Meteo {current:{weather_code,precipitation,cloud_cover}, hourly:{precipitation_probability}}
+        const c = (d && d.current) || {};
+        const kode = Number(c.weather_code);
+        const hujanKode = (kode >= 51 && kode <= 67) || (kode >= 80 && kode <= 82) || (kode >= 95 && kode <= 99);
+        const prob = d && d.hourly && d.hourly.precipitation_probability;
+        const probJamDepan = Array.isArray(prob) && prob.length > 1 ? Number(prob[1]) : 0; // ramalan 1 jam ke depan
+        if (hujanKode || Number(c.precipitation) > 0.1 || probJamDepan >= 70) return 'hujan';
+        if (Number(c.cloud_cover) >= 85 || kode === 45 || kode === 48) return 'mendung';
+        return 'cerah';
+      }
+      function buatTetesHujan() {
+        const wadah = document.getElementById('ambient-rain-container');
+        if (!wadah || wadah.childElementCount) return;
+        const mobile = window.innerWidth < 768;
+        const jumlah = mobile ? 30 : 60;
+        const frag = document.createDocumentFragment();
+        for (let i = 0; i < jumlah; i++) {
+          const t = document.createElement('i');
+          t.className = 'rain-drop';
+          t.style.left = (Math.random() * 104 - 2).toFixed(1) + '%';
+          t.style.height = (Math.random() * 14 + 12).toFixed(0) + 'px';
+          t.style.opacity = (Math.random() * 0.4 + 0.45).toFixed(2);
+          t.style.setProperty('--rain-dur', (Math.random() * 0.6 + 0.8).toFixed(2) + 's');
+          t.style.setProperty('--rain-delay', (-Math.random() * 1.5).toFixed(2) + 's');
+          t.style.setProperty('--rain-top', (Math.random() * 90).toFixed(0) + '%');
+          frag.appendChild(t);
+        }
+        wadah.appendChild(frag);
+      }
+      function terapkanCuaca(c) {
+        if (!bgRoot || cuacaValid.indexOf(c) < 0) return;
+        if (c === 'hujan') buatTetesHujan(); // dibuat sekali, hanya saat benar-benar hujan
+        bgRoot.setAttribute('data-cuaca', c);
+        window.dispatchEvent(new CustomEvent('ambientCuacaChanged', { detail: { cuaca: c } }));
+      }
+      function cuacaTampil() { return cuacaPaksa || cuacaAsli; }
+      // Pratinjau admin: nilai paksa (cerah|mendung|hujan) atau null/'auto' untuk kembali ke cuaca asli
+      window.setAmbientCuaca = function (c) {
+        cuacaPaksa = cuacaValid.indexOf(c) >= 0 ? c : null;
+        terapkanCuaca(cuacaTampil());
+      };
+      window.ambientCuacaInfo = function () {
+        return { asli: cuacaAsli, tampil: cuacaTampil(), paksa: cuacaPaksa, waktu: cuacaWaktu };
+      };
+      window.klasifikasiCuacaTatib = klasifikasiCuaca;
+      function bacaCacheCuaca() {
+        try {
+          const o = JSON.parse(localStorage.getItem(KUNCI_CUACA) || 'null');
+          if (o && cuacaValid.indexOf(o.c) >= 0 && Date.now() - o.t < CUACA_KADALUARSA) return o;
+        } catch (e) {}
+        return null;
+      }
+      function simpanCacheCuaca(c) { try { localStorage.setItem(KUNCI_CUACA, JSON.stringify({ c, t: Date.now() })); } catch (e) {} }
+      function setCuacaAsli(c, t) {
+        cuacaAsli = c; cuacaWaktu = t;
+        if (!cuacaPaksa) terapkanCuaca(c);
+        window.dispatchEvent(new CustomEvent('ambientCuacaDiperbarui'));
+      }
+      async function muatCuaca(paksaMuat) {
+        const cache = bacaCacheCuaca();
+        if (cache && !paksaMuat && Date.now() - cache.t < CUACA_TTL) { setCuacaAsli(cache.c, cache.t); return; }
+        if (cache) setCuacaAsli(cache.c, cache.t); // tampilkan dulu data lama sambil menunggu
+        try {
+          const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+          const timer = setTimeout(() => ctl && ctl.abort(), 7000);
+          const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + CUACA_LAT + '&longitude=' + CUACA_LON +
+            '&current=weather_code,precipitation,cloud_cover&hourly=precipitation_probability&forecast_hours=2&timezone=Asia%2FJakarta';
+          const res = await fetch(url, ctl ? { signal: ctl.signal } : undefined);
+          clearTimeout(timer);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const c = klasifikasiCuaca(await res.json());
+          simpanCacheCuaca(c);
+          setCuacaAsli(c, Date.now());
+        } catch (e) {
+          // gagal/offline: tetap pakai data lama (<3 jam) atau cerah; tanpa pesan galat ke siswa
+          if (!cache) setCuacaAsli('cerah', 0);
+        }
+      }
+      window.muatCuacaTatib = muatCuaca;
+      muatCuaca(false);
+      setInterval(() => { if (!document.hidden) muatCuaca(false); }, CUACA_TTL);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) { const c = bacaCacheCuaca(); if (!c || Date.now() - c.t >= CUACA_TTL) muatCuaca(false); }
+      });
+
       // ---- Mode ringan: otomatis untuk HP lemah, bisa diubah manual (window.setAmbientRingan) ----
       // Alasan: ~150 animasi + banyak elemen berat untuk HP RAM kecil / CPU lambat.
       const KUNCI_RINGAN = 'tatibAmbientRingan'; // '1' = paksa ringan, '0' = paksa penuh, kosong = otomatis

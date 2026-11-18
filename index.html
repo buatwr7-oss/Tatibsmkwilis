@@ -9,8 +9,8 @@
     <title>Tatib SMK Wiraguna 🛡️</title>
 
     <!-- CSS UTAMA -->
-    <link rel="stylesheet" href="style.css?v=4.3.0" />
-    <link rel="stylesheet" href="ambient.css?v=4.3.0" />
+    <link rel="stylesheet" href="style.css?v=4.4.0" />
+    <link rel="stylesheet" href="ambient.css?v=4.4.0" />
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
@@ -59,6 +59,10 @@
     <div class="ambient-atmosphere-glow glow-siang"></div>
     <div class="ambient-atmosphere-glow glow-sore"></div>
     <div class="ambient-atmosphere-glow glow-malam"></div>
+
+    <!-- Cuaca (v4.4.0): peredam cahaya & hujan; dibuat tampil hanya saat data-cuaca = mendung/hujan -->
+    <div class="ambient-weather-dim"></div>
+    <div class="ambient-rain-layer" id="ambient-rain-container"></div>
 
     <!-- Bintang & Bintang Jatuh (Malam) -->
     <div class="ambient-stars-layer" id="ambient-stars-container"></div>
@@ -240,6 +244,7 @@
           </div>
         </div>
       </div>
+      <a class="credit-cuaca" href="https://open-meteo.com/" target="_blank" rel="noopener">Cuaca: Open-Meteo</a>
     </div>
 
     <!-- HALAMAN LOGIN GURU -->
@@ -2191,6 +2196,18 @@
         </div>
 
         <div class="pv-card">
+          <h4 class="pv-judul">🌦️ Cuaca Latar</h4>
+          <p class="pv-ket" id="pvCuacaInfo">–</p>
+          <div class="pv-row">
+            <button type="button" class="pv-btn" data-cuaca="cerah" onclick="pratinjauCuaca('cerah')">☀️ Cerah</button>
+            <button type="button" class="pv-btn" data-cuaca="mendung" onclick="pratinjauCuaca('mendung')">☁️ Mendung</button>
+            <button type="button" class="pv-btn" data-cuaca="hujan" onclick="pratinjauCuaca('hujan')">🌧️ Hujan</button>
+            <button type="button" class="pv-btn pv-btn-auto" data-cuaca="auto" onclick="pratinjauCuaca('auto')">🔄 Otomatis</button>
+          </div>
+          <p class="pv-ket" style="margin-top:8px">Dipadukan dengan tombol Suasana Latar di atas (mis. Sore + Hujan). Data cuaca: Open-Meteo.</p>
+        </div>
+
+        <div class="pv-card">
           <h4 class="pv-judul">🖼️ Bingkai Tier</h4>
           <p class="pv-ket">Semua bingkai dipasang pada foto. Ketuk satu untuk memperbesar.</p>
           <div id="pvTierGrid" class="pv-tier-grid"></div>
@@ -2217,15 +2234,36 @@
             </div>
           </div>
           <label class="pv-label">HP: <b id="pvHpNilai">200</b></label>
-          <input id="pvHpGeser" type="range" min="0" max="200" value="200" oninput="pratinjauBar()" />
+          <input id="pvHpGeser" type="range" min="0" max="200" value="200" oninput="pratinjauGeser('hp')" />
           <label class="pv-label">Shield: <b id="pvShNilai">0</b></label>
-          <input id="pvShGeser" type="range" min="0" max="300" value="0" oninput="pratinjauBar()" />
+          <input id="pvShGeser" type="range" min="0" max="300" value="0" oninput="pratinjauGeser('sh')" />
+          <p class="pv-ket" style="margin-top:6px">Aturan nyata: Shield hanya ada kalau HP penuh (200). HP di bawah 200 berarti Shield 0. Geser HP ke bawah otomatis menolkan Shield, dan sebaliknya.</p>
           <div class="pv-row" style="margin-top:8px">
             <button type="button" class="pv-btn" onclick="pratinjauPreset(200,0)">Penuh</button>
-            <button type="button" class="pv-btn" onclick="pratinjauPreset(120,95)">Sedang</button>
-            <button type="button" class="pv-btn" onclick="pratinjauPreset(30,175)">HP kritis</button>
+            <button type="button" class="pv-btn" onclick="pratinjauPreset(120,0)">HP sedang</button>
+            <button type="button" class="pv-btn" onclick="pratinjauPreset(30,0)">HP kritis</button>
+            <button type="button" class="pv-btn" onclick="pratinjauPreset(200,95)">Shield sedang</button>
             <button type="button" class="pv-btn" onclick="pratinjauPreset(200,300)">Maksimal</button>
           </div>
+
+          <h4 class="pv-judul" style="margin-top:14px">🧪 Simulasi Input Poin</h4>
+          <p class="pv-ket">Memakai rumus yang sama persis dengan input guru. Prestasi: isi HP dulu, sisanya jadi Shield (maks 300). Pelanggaran: kurangi Shield dulu, sisanya baru HP.</p>
+          <div class="pv-row" style="align-items:center">
+            <select id="pvSimKat" class="pv-input">
+              <option value="Prestasi">🏆 Prestasi</option>
+              <option value="Pelanggaran">⚠️ Pelanggaran</option>
+            </select>
+            <input id="pvSimPoin" class="pv-input" type="number" min="1" max="500" value="30" style="width:80px" />
+            <button type="button" class="pv-btn aktif" onclick="pratinjauSimulasi()">▶ Terapkan</button>
+          </div>
+          <div class="pv-row" style="margin-top:6px">
+            <button type="button" class="pv-btn" onclick="pratinjauSimulasi('Prestasi',10)">+10</button>
+            <button type="button" class="pv-btn" onclick="pratinjauSimulasi('Prestasi',30)">+30</button>
+            <button type="button" class="pv-btn" onclick="pratinjauSimulasi('Pelanggaran',10)">−10</button>
+            <button type="button" class="pv-btn" onclick="pratinjauSimulasi('Pelanggaran',30)">−30</button>
+            <button type="button" class="pv-btn" onclick="pratinjauSimulasi('Pelanggaran',80)">−80</button>
+          </div>
+          <div id="pvSimHasil" class="pv-ket" style="margin-top:8px;min-height:32px">–</div>
         </div>
       </div>
 
@@ -2955,20 +2993,20 @@
       🛠️ MODE MAINTENANCE AKTIF — siswa & guru tidak bisa masuk
     </div>
 
-    <div class="app-version-badge">Tatib v4.3.0 • Beta</div>
+    <div class="app-version-badge">Tatib v4.4.0 • Beta</div>
 
     <!-- JAVASCRIPT UTAMA & FIREBASE MODULE -->
     <script>
       // Daftarkan service worker (syarat PWA agar bisa di-install)
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
-          navigator.serviceWorker.register("sw.js?v=4.3.0").catch(function (e) {
+          navigator.serviceWorker.register("sw.js?v=4.4.0").catch(function (e) {
             console.warn("Service worker gagal didaftarkan:", e);
           });
         });
       }
     </script>
-    <script src="ambient.js?v=4.3.0"></script>
-    <script src="app.js?v=4.3.0" type="module"></script>
+    <script src="ambient.js?v=4.4.0"></script>
+    <script src="app.js?v=4.4.0" type="module"></script>
   </body>
 </html>
