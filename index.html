@@ -9,8 +9,8 @@
     <title>Tatib SMK Wiraguna 🛡️</title>
 
     <!-- CSS UTAMA -->
-    <link rel="stylesheet" href="style.css?v=4.1.0" />
-    <link rel="stylesheet" href="ambient.css?v=4.1.0" />
+    <link rel="stylesheet" href="style.css?v=4.2.0" />
+    <link rel="stylesheet" href="ambient.css?v=4.2.0" />
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
@@ -165,6 +165,17 @@
 
     <!-- MENU UTAMA -->
     <div id="menuWrapper" class="menu-wrapper-container">
+      <!-- PEMBERITAHUAN MAINTENANCE (tampil di halaman awal, menggantikan menu) -->
+      <div id="maintenanceHomeCard" class="card text-center maintenance-home-card hidden">
+        <div class="maintenance-home-icon" onclick="ketukIkonMaintenance()">🛠️</div>
+        <h2 class="maintenance-home-title">SEDANG MAINTENANCE</h2>
+        <p id="maintenancePesan" class="maintenance-home-pesan"></p>
+        <div id="maintenanceEstimasi" class="maintenance-home-estimasi hidden"></div>
+        <div id="maintenanceKeluarInfo" class="maintenance-home-info hidden">
+          Sesi Anda diakhiri otomatis karena maintenance.
+        </div>
+      </div>
+
       <div id="mainMenuCard" class="card text-center main-menu-card-style">
         <img
           src="logo.png"
@@ -2937,38 +2948,24 @@
       </div>
     </div>
 
-    <!-- LAYAR MAINTENANCE (saklar: Firestore app_meta/maintenance) -->
-    <div id="maintenanceOverlay" class="maintenance-overlay hidden">
-      <div class="maintenance-stripe maintenance-stripe-top"></div>
-      <div class="maintenance-box">
-        <div class="maintenance-icon-ring" onclick="ketukIkonMaintenance()">
-          <span class="maintenance-icon">🛠️</span>
-        </div>
-        <div class="maintenance-badge">⛔ AKSES DITUTUP</div>
-        <h2 class="maintenance-title">MAINTENANCE</h2>
-        <p id="maintenancePesan" class="maintenance-pesan"></p>
-        <div id="maintenanceEstimasi" class="maintenance-estimasi hidden"></div>
-      </div>
-      <div class="maintenance-stripe maintenance-stripe-bottom"></div>
-    </div>
     <div id="maintenanceAdminBanner" class="maintenance-admin-banner hidden">
       🛠️ MODE MAINTENANCE AKTIF — siswa & guru tidak bisa masuk
     </div>
 
-    <div class="app-version-badge">Tatib v4.1.0 • Beta</div>
+    <div class="app-version-badge">Tatib v4.2.0 • Beta</div>
 
     <!-- JAVASCRIPT UTAMA & FIREBASE MODULE -->
     <script>
       // Daftarkan service worker (syarat PWA agar bisa di-install)
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
-          navigator.serviceWorker.register("sw.js?v=4.1.0").catch(function (e) {
+          navigator.serviceWorker.register("sw.js?v=4.2.0").catch(function (e) {
             console.warn("Service worker gagal didaftarkan:", e);
           });
         });
       }
     </script>
-    <script src="ambient.js?v=4.1.0"></script>
-    <script src="app.js?v=4.1.0" type="module"></script>
+    <script src="ambient.js?v=4.2.0"></script>
+    <script src="app.js?v=4.2.0" type="module"></script>
   </body>
 </html>

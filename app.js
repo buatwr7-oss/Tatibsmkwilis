@@ -26,7 +26,7 @@ import {
   writeBatch,
   getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.1.0";
+import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.2.0";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
@@ -2085,7 +2085,7 @@ window.bukaGame = function (nama) {
   if (!DAFTAR[nama]) return;
   // Catatan: jangan pakai fitur "noopener" di sini — window.open lalu selalu
   // mengembalikan null sehingga terbaca seolah pop-up diblokir.
-  const w = window.open(DAFTAR[nama] + "?v=4.1.0", "_blank");
+  const w = window.open(DAFTAR[nama] + "?v=4.2.0", "_blank");
   if (w) {
     try {
       w.opener = null;
@@ -3284,30 +3284,83 @@ function sesiSuperAdminAktif() {
   }
 }
 
+let maintenanceKeluarPaksa = false;
+let maintenanceSedangTerapkan = false;
+
+// Keluarkan paksa semua sesi non-admin (siswa/alumni & guru) saat maintenance.
+function paksaKeluarSemuaNonAdmin() {
+  const stafTersimpan = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("loggedInUser") || "null");
+    } catch (e) {
+      return null;
+    }
+  })();
+  const stafNonAdmin =
+    (currentUser && currentUser.role !== "Super Admin") ||
+    (!currentUser && stafTersimpan && stafTersimpan.role !== "Super Admin");
+  const adaSiswa = !!(currentNisnSiswa || localStorage.getItem("activeUser"));
+
+  if (adaSiswa) {
+    try {
+      const n = getMyNisn();
+      if (n) Promise.resolve(lepasSesiServer(n)).catch(() => {});
+    } catch (e) {}
+    cleanupStudentSession();
+    localStorage.removeItem("activeUser");
+    localStorage.removeItem("activeUserExpiry");
+    maintenanceKeluarPaksa = true;
+  }
+  if (stafNonAdmin) {
+    cleanupAdminListeners();
+    berhentiDaftarOnline();
+    stopPresenceGuru(true);
+    localStorage.removeItem("loggedInUser");
+    currentUser = null;
+    currentRole = "";
+    signOut(auth).catch((e) => console.warn("Gagal signOut:", e));
+    maintenanceKeluarPaksa = true;
+  }
+}
+
 function terapkanMaintenance() {
-  const overlay = $("maintenanceOverlay");
+  const wrapper = $("menuWrapper");
+  const kartu = $("maintenanceHomeCard");
   const banner = $("maintenanceAdminBanner");
-  if (!overlay || !banner) return;
+  if (!wrapper || !kartu || !banner || maintenanceSedangTerapkan) return;
+  maintenanceSedangTerapkan = true;
+  try {
+    const admin = sesiSuperAdminAktif();
+    // Mode "Login Admin" hanya berlaku selama layar login terbuka
+    if (layarSaatIni !== "login") adminLoginModeMaintenance = false;
 
-  const admin = sesiSuperAdminAktif();
-  // Mode "Login Admin" hanya berlaku selama layar login terbuka
-  if (layarSaatIni !== "login") adminLoginModeMaintenance = false;
+    const blokir = maintenanceState.aktif && !admin;
+    if (blokir) {
+      paksaKeluarSemuaNonAdmin();
+      const bolehLogin = adminLoginModeMaintenance && layarSaatIni === "login";
+      if (layarSaatIni !== "menu" && !bolehLogin) {
+        showScreen("menu", false); // memanggil ulang terapkanMaintenance (dijaga flag)
+      }
+    } else {
+      maintenanceKeluarPaksa = false;
+    }
 
-  const blokir =
-    maintenanceState.aktif &&
-    !admin &&
-    !(adminLoginModeMaintenance && layarSaatIni === "login");
+    const tampilKartu = blokir && layarSaatIni === "menu";
+    wrapper.classList.toggle("maintenance-on", tampilKartu);
+    kartu.classList.toggle("hidden", !tampilKartu);
+    banner.classList.toggle("hidden", !(maintenanceState.aktif && admin));
 
-  overlay.classList.toggle("hidden", !blokir);
-  banner.classList.toggle("hidden", !(maintenanceState.aktif && admin));
-
-  if (blokir) {
-    $("maintenancePesan").textContent =
-      maintenanceState.pesan || "Sedang diperbaiki. Mohon tunggu sebentar.";
-    const est = maintenanceState.perkiraanSelesai;
-    const elEst = $("maintenanceEstimasi");
-    elEst.textContent = est ? `⏱ Perkiraan selesai: ${est}` : "";
-    elEst.classList.toggle("hidden", !est);
+    if (tampilKartu) {
+      $("maintenancePesan").textContent =
+        maintenanceState.pesan || "Sedang diperbaiki. Mohon tunggu sebentar.";
+      const est = maintenanceState.perkiraanSelesai;
+      const elEst = $("maintenanceEstimasi");
+      elEst.textContent = est ? `⏱ Perkiraan selesai: ${est}` : "";
+      elEst.classList.toggle("hidden", !est);
+      $("maintenanceKeluarInfo").classList.toggle("hidden", !maintenanceKeluarPaksa);
+    }
+  } finally {
+    maintenanceSedangTerapkan = false;
   }
 }
 
