@@ -9,10 +9,8 @@
     <title>Tatib SMK Wiraguna 🛡️</title>
 
     <!-- CSS UTAMA -->
-    <link rel="stylesheet" href="style.css?v=4.4.1" />
-    <link rel="stylesheet" href="ambient.css?v=4.4.1" />
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css?v=4.4.2" />
+    <link rel="stylesheet" href="ambient.css?v=4.4.2" />
 
     <!-- favicon -->
     <link rel="icon" type="image/x-icon" href="logo.ico" />
@@ -29,11 +27,6 @@
     />
 
     <!-- CROPPER.JS CSS & JS -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"
-    />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   </head>
   <body>
     <!-- LATAR SUASANA ALAM (pagi/siang/sore/malam) — diatur ambient.js & app.js -->
@@ -60,7 +53,7 @@
     <div class="ambient-atmosphere-glow glow-sore"></div>
     <div class="ambient-atmosphere-glow glow-malam"></div>
 
-    <!-- Cuaca (v4.4.1): peredam cahaya & hujan; dibuat tampil hanya saat data-cuaca = mendung/hujan -->
+    <!-- Cuaca (v4.4.2): peredam cahaya & hujan; dibuat tampil hanya saat data-cuaca = mendung/hujan -->
     <div class="ambient-weather-dim"></div>
     <div class="ambient-rain-layer" id="ambient-rain-container"></div>
 
@@ -1273,6 +1266,7 @@
             <span class="online-pulse"></span>
             <span id="onlineSiswaCount">0 siswa online</span>
           </div>
+          <button type="button" class="pv-btn" style="margin:6px 0" onclick="segarkanDaftarOnline()">🔄 Segarkan sekarang</button>
           <div id="onlineSiswaList"></div>
           <div id="onlineGuruWrap" class="hidden" style="margin-top: 14px">
             <div class="global-online-head" style="margin-bottom: 4px">
@@ -1283,7 +1277,7 @@
           </div>
           <div class="monitor-legend">
             Online = sedang membuka aplikasi dan aktif (bukan bukti kehadiran di
-            sekolah). Daftar diperbarui otomatis.
+            sekolah). Daftar diperbarui otomatis tiap ±2,5 menit.
           </div>
         </div>
       </div>
@@ -2993,20 +2987,20 @@
       🛠️ MODE MAINTENANCE AKTIF — siswa & guru tidak bisa masuk
     </div>
 
-    <div class="app-version-badge">Tatib v4.4.1 • Beta</div>
+    <div class="app-version-badge">Tatib v4.4.2 • Beta</div>
 
     <!-- JAVASCRIPT UTAMA & FIREBASE MODULE -->
     <script>
       // Daftarkan service worker (syarat PWA agar bisa di-install)
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
-          navigator.serviceWorker.register("sw.js?v=4.4.1").catch(function (e) {
+          navigator.serviceWorker.register("sw.js?v=4.4.2").catch(function (e) {
             console.warn("Service worker gagal didaftarkan:", e);
           });
         });
       }
     </script>
-    <script src="ambient.js?v=4.4.1"></script>
-    <script src="app.js?v=4.4.1" type="module"></script>
+    <script src="ambient.js?v=4.4.2"></script>
+    <script src="app.js?v=4.4.2" type="module"></script>
   </body>
 </html>

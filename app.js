@@ -26,7 +26,7 @@ import {
   writeBatch,
   getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.4.1";
+import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.4.2";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
@@ -2095,7 +2095,7 @@ window.bukaGame = function (nama) {
   if (!DAFTAR[nama]) return;
   // Catatan: jangan pakai fitur "noopener" di sini — window.open lalu selalu
   // mengembalikan null sehingga terbaca seolah pop-up diblokir.
-  const w = window.open(DAFTAR[nama] + "?v=4.4.1", "_blank");
+  const w = window.open(DAFTAR[nama] + "?v=4.4.2", "_blank");
   if (w) {
     try {
       w.opener = null;
@@ -4043,57 +4043,63 @@ function mulaiPresenceGuru(user) {
 
 let onlineSiswaDocs = {};
 let onlineGuruDocs = {};
-let onlineUnsubs = [];
 let onlineTimer = null;
+let onlinePoll = null;
+let onlineGen = 0; // menolak hasil terlambat setelah tab ditutup
+const ONLINE_POLL_MS = 150000; // 2,5 menit (hemat kuota baca; dulu pemantauan langsung)
 
 function berhentiDaftarOnline() {
-  onlineUnsubs.forEach((f) => {
-    try {
-      f();
-    } catch (e) {}
-  });
-  onlineUnsubs = [];
+  onlineGen++;
   if (onlineTimer) clearInterval(onlineTimer);
+  if (onlinePoll) clearInterval(onlinePoll);
   onlineTimer = null;
+  onlinePoll = null;
 }
+
+async function ambilDaftarOnline() {
+  const gen = onlineGen;
+  const { collection, query, where, getDocs } = window.fbFirestore;
+  try {
+    const snapS = await getDocs(
+      query(
+        collection(window.db, "status"),
+        where("lastActive", ">", Date.now() - ONLINE_THRESHOLD_MS),
+      ),
+    );
+    if (gen !== onlineGen) return;
+    onlineSiswaDocs = {};
+    snapS.forEach((d) => (onlineSiswaDocs[d.id] = d.data()));
+  } catch (err) {
+    console.error("Gagal memuat siswa online:", err);
+  }
+  if (isKepalaSekolah(currentUser)) {
+    try {
+      const snapG = await getDocs(
+        query(
+          collection(window.db, "teachers"),
+          where("lastActive", ">", Date.now() - ONLINE_GURU_THRESHOLD_MS),
+        ),
+      );
+      if (gen !== onlineGen) return;
+      onlineGuruDocs = {};
+      snapG.forEach((d) => (onlineGuruDocs[d.id] = d.data()));
+    } catch (err) {
+      console.error("Gagal memuat guru online:", err);
+    }
+  }
+  if (gen === onlineGen) renderDaftarOnline();
+}
+window.segarkanDaftarOnline = function () {
+  ambilDaftarOnline();
+};
 
 function mulaiDaftarOnline() {
   berhentiDaftarOnline();
-  const { collection, query, where, onSnapshot } = window.fbFirestore;
-  try {
-    onlineUnsubs.push(
-      onSnapshot(
-        query(
-          collection(window.db, "status"),
-          where("lastActive", ">", Date.now() - ONLINE_THRESHOLD_MS),
-        ),
-        (snap) => {
-          onlineSiswaDocs = {};
-          snap.forEach((d) => (onlineSiswaDocs[d.id] = d.data()));
-          renderDaftarOnline();
-        },
-        (err) => console.error("Gagal memuat siswa online:", err),
-      ),
-    );
-    if (isKepalaSekolah(currentUser)) {
-      onlineUnsubs.push(
-        onSnapshot(
-          query(
-            collection(window.db, "teachers"),
-            where("lastActive", ">", Date.now() - ONLINE_GURU_THRESHOLD_MS),
-          ),
-          (snap) => {
-            onlineGuruDocs = {};
-            snap.forEach((d) => (onlineGuruDocs[d.id] = d.data()));
-            renderDaftarOnline();
-          },
-          (err) => console.error("Gagal memuat guru online:", err),
-        ),
-      );
-    }
-  } catch (e) {
-    console.error("Gagal memulai daftar online:", e);
-  }
+  ambilDaftarOnline();
+  // Diperbarui berkala selama tab terbuka & layar terlihat
+  onlinePoll = setInterval(() => {
+    if (!document.hidden) ambilDaftarOnline();
+  }, ONLINE_POLL_MS);
   // Yang berhenti mengirim tanda aktif otomatis hilang dari daftar
   onlineTimer = setInterval(renderDaftarOnline, 30000);
   renderDaftarOnline();
@@ -5732,20 +5738,63 @@ async function muatOnlineRekap(setelahnyaFilter) {
   }
 }
 
+// ---- Pustaka luar dimuat saat dibutuhkan (v4.4.2): tidak memblokir halaman awal siswa ----
+const URL_CHARTJS = "https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js";
+const URL_CROPPER_JS = "https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js";
+const URL_CROPPER_CSS = "https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css";
+const pustakaLuar = {};
+function muatSkripLuar(url) {
+  if (!pustakaLuar[url]) {
+    pustakaLuar[url] = new Promise((ok, gagal) => {
+      const el = document.createElement("script");
+      el.src = url;
+      el.onload = () => ok();
+      el.onerror = () => {
+        delete pustakaLuar[url]; // boleh dicoba lagi
+        gagal(new Error("Gagal memuat " + url));
+      };
+      document.head.appendChild(el);
+    });
+  }
+  return pustakaLuar[url];
+}
+function muatCssLuar(url) {
+  if (document.querySelector(`link[href="${url}"]`)) return;
+  const el = document.createElement("link");
+  el.rel = "stylesheet";
+  el.href = url;
+  document.head.appendChild(el);
+}
+function muatCropperLuar() {
+  if (typeof Cropper !== "undefined") return Promise.resolve();
+  muatCssLuar(URL_CROPPER_CSS);
+  return muatSkripLuar(URL_CROPPER_JS);
+}
+
 window.renderTabelRekap = function () {
   window.saringRekap();
   muatOnlineRekap();
+  gambarGrafikRekap();
+};
 
+function gambarGrafikRekap() {
   const catatanGrafik = $("rekapGrafikCatatan");
   if (typeof Chart === "undefined") {
-    console.warn("Chart.js belum termuat, grafik dilewati.");
-    if (catatanGrafik) {
-      catatanGrafik.textContent = "Grafik tidak termuat (pustaka Chart.js dari jsDelivr gagal diunduh). Data tabel tetap berfungsi.";
-      catatanGrafik.classList.remove("hidden");
-    }
+    muatSkripLuar(URL_CHARTJS)
+      .then(() => {
+        if (typeof Chart !== "undefined") gambarGrafikRekap();
+      })
+      .catch((e) => {
+        console.warn("Chart.js gagal dimuat, grafik dilewati.", e);
+        if (catatanGrafik) {
+          catatanGrafik.textContent = "Grafik tidak termuat (pustaka Chart.js dari jsDelivr gagal diunduh). Data tabel tetap berfungsi.";
+          catatanGrafik.classList.remove("hidden");
+        }
+      });
     return;
   }
   if (catatanGrafik) catatanGrafik.classList.add("hidden");
+  if (!$("statistikChart")) return;
 
   const ctx = $("statistikChart").getContext("2d");
   const labels = ["10 SMK", "11 SMK", "12 SMK"];
@@ -5781,7 +5830,7 @@ window.renderTabelRekap = function () {
       },
     },
   });
-};
+}
 
 window.handleAdminActionTypeChange = function () {
   const act = $("adminActionType").value;
@@ -7308,6 +7357,15 @@ let sedangSimpanFoto = false;
 const MAX_FOTO_BYTES = 8 * 1024 * 1024;
 
 function buatCropper(imageElement, aspectRatio = 1) {
+  if (typeof Cropper === "undefined") {
+    // pustaka dimuat saat pertama kali dibutuhkan
+    muatCropperLuar()
+      .then(() => buatCropper(imageElement, aspectRatio))
+      .catch(() =>
+        window.customAlert("Pemotong foto gagal dimuat. Periksa koneksi internet lalu coba lagi."),
+      );
+    return;
+  }
   if (cropperInstance) cropperInstance.destroy();
   cropperInstance = new Cropper(imageElement, {
     aspectRatio: aspectRatio,
