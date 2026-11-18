@@ -26,7 +26,7 @@ import {
   writeBatch,
   getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.4.0";
+import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.4.1";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
@@ -2095,7 +2095,7 @@ window.bukaGame = function (nama) {
   if (!DAFTAR[nama]) return;
   // Catatan: jangan pakai fitur "noopener" di sini — window.open lalu selalu
   // mengembalikan null sehingga terbaca seolah pop-up diblokir.
-  const w = window.open(DAFTAR[nama] + "?v=4.4.0", "_blank");
+  const w = window.open(DAFTAR[nama] + "?v=4.4.1", "_blank");
   if (w) {
     try {
       w.opener = null;

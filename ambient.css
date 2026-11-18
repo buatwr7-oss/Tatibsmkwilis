@@ -600,11 +600,15 @@ html.tab-tersembunyi #ambient-background * { animation-play-state: paused !impor
 }
 #ambient-background[data-cuaca="mendung"] .ambient-weather-dim { opacity: 0.34; }
 #ambient-background[data-cuaca="hujan"] .ambient-weather-dim { opacity: 0.55; }
-/* benda langit memudar tertutup awan */
-#ambient-background[data-cuaca="mendung"] .celestial-body,
-#ambient-background[data-cuaca="mendung"] .sun-siang-wrap { opacity: 0.45 !important; }
-#ambient-background[data-cuaca="hujan"] .celestial-body,
-#ambient-background[data-cuaca="hujan"] .sun-siang-wrap { opacity: 0.12 !important; }
+/* benda langit memudar tertutup awan: hanya yang SEDANG aktif (yang lain tetap tersembunyi) */
+#ambient-background[data-cuaca="mendung"][data-mood="pagi"] .sun-pagi,
+#ambient-background[data-cuaca="mendung"][data-mood="siang"] .sun-siang-wrap,
+#ambient-background[data-cuaca="mendung"][data-mood="sore"] .sun-sore,
+#ambient-background[data-cuaca="mendung"][data-mood="malam"] .moon-malam { opacity: 0.45 !important; }
+#ambient-background[data-cuaca="hujan"][data-mood="pagi"] .sun-pagi,
+#ambient-background[data-cuaca="hujan"][data-mood="siang"] .sun-siang-wrap,
+#ambient-background[data-cuaca="hujan"][data-mood="sore"] .sun-sore,
+#ambient-background[data-cuaca="hujan"][data-mood="malam"] .moon-malam { opacity: 0.12 !important; }
 #ambient-background[data-cuaca="hujan"] .ambient-stars-layer,
 #ambient-background[data-cuaca="hujan"] .ambient-birds-layer,
 #ambient-background[data-cuaca="hujan"] .ambient-fireflies-layer,
