@@ -9,8 +9,8 @@
     <title>Tatib SMK Wiraguna 🛡️</title>
 
     <!-- CSS UTAMA -->
-    <link rel="stylesheet" href="style.css?v=4.2.0" />
-    <link rel="stylesheet" href="ambient.css?v=4.2.0" />
+    <link rel="stylesheet" href="style.css?v=4.3.0" />
+    <link rel="stylesheet" href="ambient.css?v=4.3.0" />
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
@@ -1183,8 +1183,8 @@
             <div class="input-box">
               <label>KATEGORI *</label>
               <select id="kategori" onchange="handleKategoriChange()" required>
-                <option value="Prestasi">🏆 Prestasi (+HP/Shield)</option>
-                <option value="Pelanggaran">⚠️ Pelanggaran (-HP)</option>
+                <option value="Prestasi">🏆 Prestasi (isi HP dulu, lalu Shield)</option>
+                <option value="Pelanggaran">⚠️ Pelanggaran (kurangi Shield dulu, lalu HP)</option>
                 <option value="TugasHarian" selected>
                   ⭐ Poin Harian / Tugas Kelas (+XP)
                 </option>
@@ -1619,6 +1619,9 @@
               </option>
               <option value="RESET_FULL_INDIVIDUAL">
                 🔄 Pemutihan Penuh SISWA PERORANGAN (Tatib)
+              </option>
+              <option value="UNDO_POIN_INDIVIDUAL">
+                ↩️ Batalkan Input Poin TERAKHIR siswa (salah input)
               </option>
               <option value="RESET_PIN_SISWA">
                 🔑 Reset PIN Siswa ke Default (123456)
@@ -2952,20 +2955,20 @@
       🛠️ MODE MAINTENANCE AKTIF — siswa & guru tidak bisa masuk
     </div>
 
-    <div class="app-version-badge">Tatib v4.2.0 • Beta</div>
+    <div class="app-version-badge">Tatib v4.3.0 • Beta</div>
 
     <!-- JAVASCRIPT UTAMA & FIREBASE MODULE -->
     <script>
       // Daftarkan service worker (syarat PWA agar bisa di-install)
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
-          navigator.serviceWorker.register("sw.js?v=4.2.0").catch(function (e) {
+          navigator.serviceWorker.register("sw.js?v=4.3.0").catch(function (e) {
             console.warn("Service worker gagal didaftarkan:", e);
           });
         });
       }
     </script>
-    <script src="ambient.js?v=4.2.0"></script>
-    <script src="app.js?v=4.2.0" type="module"></script>
+    <script src="ambient.js?v=4.3.0"></script>
+    <script src="app.js?v=4.3.0" type="module"></script>
   </body>
 </html>

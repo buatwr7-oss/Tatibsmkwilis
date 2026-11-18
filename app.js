@@ -26,7 +26,7 @@ import {
   writeBatch,
   getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.2.0";
+import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.3.0";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
@@ -1589,6 +1589,7 @@ function renderRiwayatHtml(list) {
       const p = Number(r.p) || 0;
       const isPlus = p > 0;
       const borderColor = isPlus ? "#2ecc71" : "#e74c3c";
+      const efek = teksEfekRiwayat(r);
       return `
       <div style="background: #1a2536; border-left: 3px solid ${borderColor}; padding: 8px 10px; border-radius: 0 6px 6px 0; font-size: 12.5px; color: #ecf0f1; border: 1px solid #34495e; margin-bottom: 6px;">
         <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 2px;">
@@ -1598,10 +1599,19 @@ function renderRiwayatHtml(list) {
         <div style="font-size: 11px; color: #bdc3c7; display: flex; justify-content: space-between;">
           <span>📍 ${escapeHtml(r.loc || "-")}</span>
           <span>📅 ${escapeHtml(r.d || "-")}</span>
-        </div>
+        </div>${efek ? `\n        <div style="font-size: 10.5px; color: #95a5a6; margin-top: 3px;">${efek}</div>` : ""}
       </div>`;
     })
     .join("");
+}
+
+// Ringkas dampak HP/Shield suatu entri riwayat (hanya entri baru yang punya hb/ha).
+function teksEfekRiwayat(r) {
+  if (!r || r.hb === undefined || r.ha === undefined) return "";
+  const bagian = [];
+  if (r.ha !== r.hb) bagian.push(`❤️ HP ${r.hb} → ${r.ha}`);
+  if (r.sa !== r.sb) bagian.push(`🛡️ Shield ${r.sb} → ${r.sa}`);
+  return bagian.join(" &nbsp;•&nbsp; ");
 }
 
 // Satu-satunya fungsi untuk menampilkan profil siswa
@@ -2085,7 +2095,7 @@ window.bukaGame = function (nama) {
   if (!DAFTAR[nama]) return;
   // Catatan: jangan pakai fitur "noopener" di sini — window.open lalu selalu
   // mengembalikan null sehingga terbaca seolah pop-up diblokir.
-  const w = window.open(DAFTAR[nama] + "?v=4.2.0", "_blank");
+  const w = window.open(DAFTAR[nama] + "?v=4.3.0", "_blank");
   if (w) {
     try {
       w.opener = null;
@@ -5164,10 +5174,33 @@ window.konfirmasiSimpan = function () {
         ? `+${poin} Prestasi`
         : `-${poin} Pelanggaran`;
 
+  // Pratinjau efek nyata pada HP/Shield tiap siswa (perkiraan dari data terakhir dimuat)
+  let pratinjauEfek = "";
+  if (kat !== "TugasHarian") {
+    const baris = [];
+    daftar.slice(0, 8).forEach((sw) => {
+      const m = masterDataSiswa.find((x) => x.nisn === sw.nisn);
+      if (!m) return;
+      const b = hitungDampak(m, kat, parseInt(poin, 10));
+      const hp0 = m.hp !== undefined && m.hp !== null ? m.hp : 200;
+      const sh0 = m.shield || 0;
+      const bag = [];
+      if (b.hp !== hp0) bag.push(`HP ${hp0}→${b.hp}`);
+      if (b.shield !== sh0) bag.push(`Shield ${sh0}→${b.shield}`);
+      if (!bag.length) bag.push(kat === "Prestasi" && sh0 >= SHIELD_MAKS ? "Shield sudah maksimal" : "HP & Shield tetap");
+      baris.push(`• ${escapeHtml(sw.nama)}: ${bag.join(", ")}`);
+    });
+    if (baris.length) {
+      if (daftar.length > 8) baris.push(`…dan ${daftar.length - 8} siswa lainnya`);
+      pratinjauEfek = `<strong>Efek pada HP/Shield (perkiraan):</strong><br><span style="font-size:11px">${baris.join("<br>")}</span><br>`;
+    }
+  }
+
   $("modalDetailContent").innerHTML = `
   <strong>Target Siswa (${daftar.length}):</strong><br>${escapeHtml(daftar.map((s) => s.nama).join(", "))}<br><br>
   <strong>Aktivitas:</strong> ${escapeHtml(selectedRadio.value)}<br>
   <strong>Dampak:</strong> ${escapeHtml(efekText)}<br>
+  ${pratinjauEfek}
   <strong>Guru Pelapor:</strong> ${escapeHtml($("txtNamaGuru").innerText)}
   `;
   $("modalKonfirmasi").classList.remove("hidden");
@@ -5177,7 +5210,12 @@ window.tutupModal = function () {
   $("modalKonfirmasi").classList.add("hidden");
 };
 
+// Shield dibatasi di batas atas tier tertinggi (bar penuh = 300).
+const SHIELD_MAKS = 300;
+
 // Perhitungan dampak poin (HP, shield, total) - fungsi murni
+// Prestasi : isi HP dulu sampai 200, sisanya jadi shield (maks SHIELD_MAKS).
+// Pelanggaran : kurangi shield dulu, sisanya baru mengenai HP (min 0).
 function hitungDampak(d, kat, poin) {
   let hp = d.hp !== undefined ? d.hp : 200;
   let shield = d.shield || 0;
@@ -5196,7 +5234,8 @@ function hitungDampak(d, kat, poin) {
       hp += isi;
       sisa -= isi;
     }
-    if (sisa > 0) shield += sisa;
+    if (sisa > 0 && shield < SHIELD_MAKS)
+      shield = Math.min(SHIELD_MAKS, shield + sisa);
   } else {
     totalPelanggaran += poin;
     let sisa = poin;
@@ -5256,9 +5295,18 @@ window.eksekusiSimpanWithLoading = async function () {
           if (!snap.exists()) throw new Error("Siswa tidak ditemukan");
           const data = snap.data();
           const baru = hitungDampak(data, kat, poin);
+          // Catat HP/Shield sebelum & sesudah (hb/sb -> ha/sa): dasar tampilan
+          // efek di riwayat dan pembatalan input yang salah.
+          const entrySiswa = {
+            ...entry,
+            hb: data.hp !== undefined && data.hp !== null ? data.hp : 200,
+            sb: data.shield || 0,
+            ha: baru.hp,
+            sa: baru.shield,
+          };
           tx.update(ref, {
             ...baru,
-            riwayat: tambahRiwayat(data.riwayat, entry),
+            riwayat: tambahRiwayat(data.riwayat, entrySiswa),
           });
         });
         berhasil++;
@@ -6730,6 +6778,7 @@ const LABEL_AKSI_ADMIN = {
   RESET_FULL_CLASS: "Pemutihan penuh (kelas)",
   RESET_FULL_INDIVIDUAL: "Pemutihan penuh (individu)",
   RESET_PIN_SISWA: "Reset PIN siswa",
+  UNDO_POIN_INDIVIDUAL: "Batalkan input poin terakhir",
 };
 window.muatRiwayatAdmin = async function () {
   const box = $("adminRiwayatList");
@@ -6763,6 +6812,57 @@ window.muatRiwayatAdmin = async function () {
   }
 };
 
+// Membatalkan SATU input poin terakhir (salah pilih kejadian/siswa).
+// Aman karena memakai HP/Shield sebelum-sesudah yang dicatat saat input:
+// hanya boleh jika nilai siswa sekarang masih persis hasil input itu.
+async function batalkanInputPoinTerakhir(nisn, catatan, ts) {
+  const { doc, runTransaction } = window.fbFirestore;
+  let ringkas = "";
+  await runTransaction(window.db, async (tx) => {
+    const ref = doc(window.db, "siswa", nisn);
+    const snap = await tx.get(ref);
+    if (!snap.exists()) throw new Error("Siswa tidak ditemukan");
+    const d = snap.data();
+    const rw = d.riwayat || [];
+    const idx = rw.findIndex((r) => r && r.k && r.p !== 0);
+    if (idx < 0) throw new Error("Tidak ada input poin yang bisa dibatalkan.");
+    const r = rw[idx];
+    if (r.hb === undefined || r.ha === undefined)
+      throw new Error(
+        "Input terakhir dibuat sebelum fitur ini ada (tidak tercatat HP/Shield-nya), jadi tidak bisa dibatalkan otomatis.",
+      );
+    const hpNow = d.hp !== undefined && d.hp !== null ? d.hp : 200;
+    if (idx !== 0 && rw.slice(0, idx).some((x) => x && x.hb !== undefined))
+      throw new Error("Sudah ada perubahan poin setelah input itu.");
+    if (hpNow !== r.ha || (d.shield || 0) !== r.sa)
+      throw new Error(
+        "HP/Shield siswa sudah berubah sejak input itu (mis. pemutihan), jadi tidak aman dibatalkan otomatis.",
+      );
+    const up = {
+      hp: r.hb,
+      shield: r.sb,
+      riwayat: [
+        {
+          t: `DIBATALKAN: ${r.t} — ${catatan}`,
+          p: 0,
+          loc: "Ruang BK / Admin",
+          d: ts,
+        },
+        ...rw.filter((_, i) => i !== idx),
+      ].slice(0, MAX_RIWAYAT),
+    };
+    if (r.k === "Prestasi")
+      up.totalPrestasi = Math.max(0, (d.totalPrestasi || 0) - Math.abs(r.p));
+    else if (r.k === "Pelanggaran")
+      up.totalPelanggaran = Math.max(0, (d.totalPelanggaran || 0) - Math.abs(r.p));
+    else if (r.k === "TugasHarian")
+      up.dailyScore = Math.max(0, (d.dailyScore || 0) - Math.abs(r.p));
+    tx.update(ref, up);
+    ringkas = `↩️ Dibatalkan: "${r.t}" (${r.p > 0 ? "+" : ""}${r.p}). HP ${hpNow}→${r.hb}, Shield ${r.sa}→${r.sb}.`;
+  });
+  return ringkas;
+}
+
 window.prosesActionAdminWithLoading = async function () {
   const act = $("adminActionType").value;
   const kelasTarget = $("adminKelasSelect").value;
@@ -6789,6 +6889,7 @@ window.prosesActionAdminWithLoading = async function () {
     RESET_FULL_CLASS: `PEMUTIHAN PENUH kelas ${kelasTarget}`,
     RESET_FULL_INDIVIDUAL: "PEMUTIHAN PENUH 1 siswa",
     RESET_PIN_SISWA: "Reset PIN 1 siswa ke 123456",
+    UNDO_POIN_INDIVIDUAL: "Batalkan input poin terakhir 1 siswa",
   }[act] || act;
   const butuhKetik = act.startsWith("RESET_FULL") || act === "RESET_DAILY_GLOBAL";
   if (butuhKetik) {
@@ -6800,6 +6901,12 @@ window.prosesActionAdminWithLoading = async function () {
       `${namaAksi}\nDampak: ${jumlahTarget} siswa — ${dampak}.\nTIDAK DAPAT DIBATALKAN.\n\nKetik ${kata} untuk melanjutkan:`,
       "⚠️ KONFIRMASI ADMIN",
       kata,
+    );
+    if (!ok) return;
+  } else if (act === "UNDO_POIN_INDIVIDUAL") {
+    const ok = await window.customConfirm(
+      "Batalkan input poin TERAKHIR siswa ini?\nHP, Shield, dan total poin dikembalikan seperti sebelum input itu. Catatan pembatalan tetap tersimpan di riwayat.",
+      "↩️ KONFIRMASI PEMBATALAN",
     );
     if (!ok) return;
   } else if (act.includes("GLOBAL") || act.includes("CLASS")) {
@@ -6847,6 +6954,8 @@ window.prosesActionAdminWithLoading = async function () {
           riwayat: [entry],
         }));
         pesanSukses = `👑 Pemutihan penuh (${scope}) berhasil dieksekusi!`;
+      } else if (act === "UNDO_POIN_INDIVIDUAL") {
+        pesanSukses = await batalkanInputPoinTerakhir(nisnTarget, notes, ts);
       } else if (act === "RESET_PIN_SISWA") {
         const entry = mkEntry(`RESET PIN AKUN: ${notes}`);
         await batchUpdateSiswa(targets, (d) => ({
@@ -6885,7 +6994,11 @@ window.prosesActionAdminWithLoading = async function () {
     } catch (err) {
       done();
       console.error("Gagal menjalankan aksi Admin:", err);
-      window.customAlert("Gagal mengeksekusi perintah ke database Firestore.");
+      window.customAlert(
+        act === "UNDO_POIN_INDIVIDUAL" && err && err.message
+          ? err.message
+          : "Gagal mengeksekusi perintah ke database Firestore.",
+      );
     }
   });
 };
@@ -6905,11 +7018,12 @@ window.renderQuestUI = function (tipe) {
     btnPelang.style.background = "transparent";
     btnPelang.style.color = "#e74c3c";
 
-    let html = `<div class="accordion">
+    let html = `<div class="quest-aturan">🛡️ <b>Cara kerja:</b> prestasi <b>mengisi HP dulu</b> sampai penuh (200), setelah itu baru menjadi <b>Shield</b> (maks. ${SHIELD_MAKS}).</div>
+    <div class="accordion">
               <div class="accordion-header" onclick="toggleAccordion(this)"><span>⭐ Daftar Penghargaan (Reward)</span><span>▼</span></div>
               <div class="accordion-body active">`;
     dataPilihan.Prestasi.forEach((item) => {
-      html += `<div class="q-item"><span>${escapeHtml(item.t)}</span> <span class="badge-shield">+${item.p}</span></div>`;
+      html += `<div class="q-item"><span>${escapeHtml(item.t)}</span> <span class="badge-poin-plus">+${item.p}</span></div>`;
     });
     html += `</div></div>`;
     container.innerHTML = html;
@@ -6920,13 +7034,13 @@ window.renderQuestUI = function (tipe) {
     btnPres.style.background = "transparent";
     btnPres.style.color = "#3498db";
 
-    let html = "";
+    let html = `<div class="quest-aturan">🛡️ <b>Cara kerja:</b> pelanggaran <b>mengurangi Shield dulu</b>. Kalau Shield habis, sisanya baru <b>mengurangi HP</b>.</div>`;
     ["Ringan", "Sedang", "Berat"].forEach((k, idx) => {
       html += `<div class="accordion">
                <div class="accordion-header" onclick="toggleAccordion(this)"><span>⚠️ Pelanggaran ${k}</span><span>▼</span></div>
                <div class="accordion-body ${idx === 0 ? "active" : ""}">`;
       dataPilihan.Pelanggaran[k].forEach((item) => {
-        html += `<div class="q-item"><span>${escapeHtml(item.t)}</span> <span class="badge-hp">-${item.p}</span></div>`;
+        html += `<div class="q-item"><span>${escapeHtml(item.t)}</span> <span class="badge-poin-min">-${item.p}</span></div>`;
       });
       html += `</div></div>`;
     });

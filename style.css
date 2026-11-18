@@ -638,6 +638,33 @@ button:active {
 .q-item:nth-child(even) {
   background: #fafafa;
 }
+.badge-poin-plus,
+.badge-poin-min {
+  color: #fff;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.badge-poin-plus {
+  background: #27ae60;
+}
+.badge-poin-min {
+  background: #e74c3c;
+}
+.quest-aturan {
+  margin: 0 0 10px 0;
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #475569;
+  background: #f1f5f9;
+  border-left: 3px solid #3498db;
+  border-radius: 6px;
+  text-align: left;
+}
 .badge-hp {
   background: #e74c3c;
   color: #fff;
