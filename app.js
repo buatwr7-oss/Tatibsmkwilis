@@ -26,8 +26,10 @@ import {
   writeBatch,
   getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.4.3";
-import { dataPilihan } from "./aturan.js?v=4.4.3";
+import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.5.3";
+import { dataPilihan, visiMisi } from "./aturan.js?v=4.5.3";
+import { FITUR } from "./fitur.js?v=4.5.3";
+import { PESAN_ALUMNI } from "./pesan-alumni.js?v=4.5.3";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
@@ -1658,7 +1660,12 @@ function tampilkanProfilSiswa(siswa, nisn) {
   $("txtCountPrestasi").innerText = `${siswa.totalPrestasi || 0} Pts`;
   $("txtCountPelanggaran").innerText = `${siswa.totalPelanggaran || 0} Pts`;
 
-  $("historyListSiswa").innerHTML = renderRiwayatHtml(siswa.riwayat);
+  // Riwayat kejadian mengikuti FITUR.riwayatSiswa; riwayat kelas/semester sebelumnya mengikuti FITUR.riwayatKelasSebelumnya (fitur.js)
+  const wadahRiwayat = document.querySelector(".history-container-main");
+  if (wadahRiwayat) wadahRiwayat.style.display = FITUR.riwayatSiswa ? "" : "none";
+  const tombolArsip = $("btnRiwayatKelasSiswa");
+  if (tombolArsip) tombolArsip.style.display = FITUR.riwayatKelasSebelumnya ? "" : "none";
+  $("historyListSiswa").innerHTML = FITUR.riwayatSiswa ? renderRiwayatHtml(siswa.riwayat) : "";
 
   // Kartu ganti PIN hanya tampil selama PIN masih bawaan; hilang setelah diganti
   const cardGantiPin = $("cardGantiPin");
@@ -2096,7 +2103,7 @@ window.bukaGame = function (nama) {
   if (!DAFTAR[nama]) return;
   // Catatan: jangan pakai fitur "noopener" di sini — window.open lalu selalu
   // mengembalikan null sehingga terbaca seolah pop-up diblokir.
-  const w = window.open(DAFTAR[nama] + "?v=4.4.3", "_blank");
+  const w = window.open(DAFTAR[nama] + "?v=4.5.3", "_blank");
   if (w) {
     try {
       w.opener = null;
@@ -3339,7 +3346,7 @@ window.bukaPortal = function (tipe) {
   } else if (tipe === "siswa") {
     showScreen("siswa");
   } else if (tipe === "quest") {
-    showGamePreloader("LOADING KODE ETIK & TATIB...", (done) => {
+    showGamePreloader("MEMUAT PANDUAN TATIB...", (done) => {
       setTimeout(() => {
         showScreen("quest");
         done();
@@ -5627,7 +5634,7 @@ async function muatOnlineRekap(setelahnyaFilter) {
   }
 }
 
-// ---- Pustaka luar dimuat saat dibutuhkan (v4.4.3): tidak memblokir halaman awal siswa ----
+// ---- Pustaka luar dimuat saat dibutuhkan (v4.5.3): tidak memblokir halaman awal siswa ----
 const URL_CHARTJS = "https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js";
 const URL_CROPPER_JS = "https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js";
 const URL_CROPPER_CSS = "https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css";
@@ -6674,12 +6681,47 @@ window.tampilDetailArsipKelas = function (idx) {
 // ---- Tampilan alumni: transkrip akhir rekam jejak (read-only) ----
 let isAlumniSession = false;
 
+// Halaman alumni mode "perpisahan": hanya nama + status ALUMNI + kata-kata guru
+function tampilkanPerpisahanAlumni(siswa, nisn) {
+  const avatarImg = $("alumniAvatar");
+  if (avatarImg) avatarImg.src = avatarFor(siswa);
+  $("alumniNama").textContent = (siswa.nama || "").toUpperCase();
+  $("alumniNisn").classList.add("hidden");
+  $("alumniTranskripWrap").classList.add("hidden");
+  $("alumniPerpisahan").classList.remove("hidden");
+  $("alumniJudul").textContent = PESAN_ALUMNI.judul || "";
+  const pembuka = $("alumniPembuka");
+  pembuka.textContent = PESAN_ALUMNI.pembuka || "";
+  pembuka.classList.toggle("hidden", !PESAN_ALUMNI.pembuka);
+  // Satu pesan saja: dipilih berdasarkan NISN, jadi beda antar alumni tetapi tetap sama tiap login
+  const daftar = PESAN_ALUMNI.kata || [];
+  let pilih = null;
+  if (daftar.length) {
+    let h = 0;
+    for (const c of String(siswa.nisn || nisn)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    pilih = daftar[h % daftar.length];
+  }
+  $("alumniKataGuru").innerHTML = pilih
+    ? `<div class="alumni-kata">
+        <div class="alumni-kata-isi">“${escapeHtml(pilih.pesan || "")}”</div>
+        <div class="alumni-kata-dari">— ${escapeHtml(pilih.dari || "")}</div>
+      </div>`
+    : "";
+}
+
 async function tampilkanTranskripAlumni(siswa, nisn) {
   isAlumniSession = true;
   setSiswaAppMode(false);
   $("hasilPoinSiswa").classList.add("hidden");
   $("boxInputNisnSiswa").classList.add("hidden");
   $("alumniTranscriptView").classList.remove("hidden");
+  if (FITUR.alumniMode !== "transkrip") {
+    tampilkanPerpisahanAlumni(siswa, nisn);
+    return; // data alumni tetap tersimpan; tidak ada pembacaan arsip
+  }
+  $("alumniPerpisahan").classList.add("hidden");
+  $("alumniTranskripWrap").classList.remove("hidden");
+  $("alumniNisn").classList.remove("hidden");
 
   let arsipList = [];
   try {
@@ -6996,20 +7038,29 @@ window.prosesActionAdminWithLoading = async function () {
 };
 
 // ==========================================
-// PAPAN QUEST
+// PANDUAN (dulu Papan Quest): Prestasi, Pelanggaran, Poin Harian, Visi & Misi
 // ==========================================
 window.renderQuestUI = function (tipe) {
-  const btnPres = $("tabQuestPrestasi");
-  const btnPelang = $("tabQuestPelanggaran");
   const container = $("questContainerUI");
+  if (!container) return;
+  // Tombol tab: [id, tipe, warna]
+  const TAB = [
+    ["tabQuestPrestasi", "prestasi", "#3498db"],
+    ["tabQuestPelanggaran", "pelanggaran", "#e74c3c"],
+    ["tabQuestHarian", "harian", "#f39c12"],
+    ["tabQuestVisi", "visi", "#8e44ad"],
+  ];
+  TAB.forEach(([id, t, warna]) => {
+    const btn = $(id);
+    if (!btn) return;
+    const aktif = t === tipe;
+    btn.className = aktif ? "" : "btn-outline";
+    btn.style.background = aktif ? warna : "transparent";
+    btn.style.color = aktif ? "white" : warna;
+    btn.style.borderColor = warna;
+  });
 
   if (tipe === "prestasi") {
-    btnPres.style.background = "#3498db";
-    btnPres.style.color = "white";
-    btnPelang.className = "btn-outline";
-    btnPelang.style.background = "transparent";
-    btnPelang.style.color = "#e74c3c";
-
     let html = `<div class="quest-aturan">🛡️ <b>Cara kerja:</b> prestasi <b>mengisi HP dulu</b> sampai penuh (200), setelah itu baru menjadi <b>Shield</b> (maks. ${SHIELD_MAKS}).</div>
     <div class="accordion">
               <div class="accordion-header" onclick="toggleAccordion(this)"><span>⭐ Daftar Penghargaan (Reward)</span><span>▼</span></div>
@@ -7019,13 +7070,7 @@ window.renderQuestUI = function (tipe) {
     });
     html += `</div></div>`;
     container.innerHTML = html;
-  } else {
-    btnPelang.style.background = "#e74c3c";
-    btnPelang.style.color = "white";
-    btnPres.className = "btn-outline";
-    btnPres.style.background = "transparent";
-    btnPres.style.color = "#3498db";
-
+  } else if (tipe === "pelanggaran") {
     let html = `<div class="quest-aturan">🛡️ <b>Cara kerja:</b> pelanggaran <b>mengurangi Shield dulu</b>. Kalau Shield habis, sisanya baru <b>mengurangi HP</b>.</div>`;
     ["Ringan", "Sedang", "Berat"].forEach((k, idx) => {
       html += `<div class="accordion">
@@ -7037,6 +7082,20 @@ window.renderQuestUI = function (tipe) {
       html += `</div></div>`;
     });
     container.innerHTML = html;
+  } else if (tipe === "harian") {
+    let html = `<div class="quest-aturan" style="border-left-color:#f39c12">⭐ <b>Poin Harian</b> didapat dari kegiatan belajar sehari-hari (daftar di bawah) dan diberikan oleh guru. Jumlahnya tampil sebagai <b>⭐ Pts di bawah foto profilmu</b> dan dipakai untuk peringkat <b>Top Global Rank</b>. Poin harian <b>tidak mengubah HP maupun Shield</b>.</div>
+    <div class="accordion">
+              <div class="accordion-header" onclick="toggleAccordion(this)"><span>⭐ Cara Mendapat Poin Harian</span><span>▼</span></div>
+              <div class="accordion-body active">`;
+    dataPilihan.TugasHarian.forEach((item) => {
+      html += `<div class="q-item"><span>${escapeHtml(item.t)}</span> <span class="badge-poin-harian">+${item.p}</span></div>`;
+    });
+    html += `</div></div>`;
+    container.innerHTML = html;
+  } else {
+    const misi = visiMisi.misi.map((m) => `<li>${escapeHtml(m)}</li>`).join("");
+    container.innerHTML = `<div class="visimisi-box"><h4>🎯 Visi</h4>${escapeHtml(visiMisi.visi)}</div>
+      <div class="visimisi-box"><h4>🚀 Misi</h4><ol>${misi}</ol></div>`;
   }
 };
 

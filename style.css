@@ -585,7 +585,8 @@ button:active {
 
 /* QUEST BOARD STYLES */
 .quest-tabs {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 5px;
   margin-bottom: 10px;
 }
@@ -593,8 +594,37 @@ button:active {
   margin-top: 0;
   padding: 8px;
   font-size: 11px;
-  flex: 1;
   border: 2px solid transparent;
+}
+.badge-poin-harian {
+  background: #f39c12;
+  color: #fff;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 10px;
+}
+.visimisi-box {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  color: #334155;
+  font-size: 11.5px;
+  line-height: 1.65;
+}
+.visimisi-box h4 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: #1e3c72;
+}
+.visimisi-box ol {
+  margin: 0;
+  padding-left: 18px;
+}
+.visimisi-box li {
+  margin-bottom: 6px;
 }
 .accordion {
   border: 1px solid #e2e8f0;
@@ -2951,3 +2981,13 @@ body[data-waktu="siang"] .particle {
   font-size: 9px; color: rgba(148, 163, 184, 0.75); text-decoration: none;
 }
 .pv-input { padding: 6px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 12px; width: auto; }
+
+/* ===== Halaman alumni (mode perpisahan) ===== */
+.alumni-perpisahan { text-align: center; padding: 18px 14px; }
+.alumni-topi { font-size: 40px; line-height: 1; margin-bottom: 8px; }
+.alumni-judul { font-size: 15px; font-weight: 800; color: #f1c40f; line-height: 1.4; }
+.alumni-pembuka { margin-top: 10px; font-size: 12px; line-height: 1.7; color: #cbd5e1; }
+.alumni-kata { margin: 10px 0 0 0; padding: 12px 14px; background: #1a2536; border: 1px solid #334155; border-left: 3px solid #f1c40f; border-radius: 10px; }
+.alumni-kata-isi { font-size: 12px; line-height: 1.7; color: #e2e8f0; font-style: italic; }
+.alumni-kata-dari { margin-top: 6px; font-size: 11px; font-weight: 700; color: #f1c40f; text-align: right; }
+

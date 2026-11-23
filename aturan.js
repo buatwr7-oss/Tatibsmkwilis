@@ -131,3 +131,14 @@ export const dataPilihan = {
     ],
   },
 };
+
+// Visi & Misi sekolah — tampil di halaman "Panduan" (menu depan).
+// Ganti teksnya sesuai sekolah; naikkan nomor versi setelah mengubah.
+export const visiMisi = {
+  visi: "Mewujudkan warga sekolah yang unggul dan mandiri dilandasi iptaq dan iptek di era global yang berdasarkan nilai-nilai masyarakat dan budaya bangsa.",
+  misi: [
+    "Meningkatkan mutu pendidikan dan pelatihan melalui pembelajaran yang berkualitas dan berorientasi kepada pencapaian kompetensi dengan mempertimbangkan potensi yang dimilikinya, serta dilandasi iptaq dan iptek.",
+    "Melaksanakan kegiatan pembelajaran berbasis pada minat dan kebutuhan peserta didik dan dudika yang didukung oleh teknologi informasi dan komunikasi.",
+    "Mengoptimalkan pembinaan dan pembimbingan kegiatan akademik dan non akademik.",
+  ],
+};

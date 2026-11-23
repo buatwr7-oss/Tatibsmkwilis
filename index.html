@@ -9,8 +9,8 @@
     <title>Tatib SMK Wiraguna 🛡️</title>
 
     <!-- CSS UTAMA -->
-    <link rel="stylesheet" href="style.css?v=4.4.3" />
-    <link rel="stylesheet" href="ambient.css?v=4.4.3" />
+    <link rel="stylesheet" href="style.css?v=4.5.3" />
+    <link rel="stylesheet" href="ambient.css?v=4.5.3" />
 
     <!-- favicon -->
     <link rel="icon" type="image/x-icon" href="logo.ico" />
@@ -53,7 +53,7 @@
     <div class="ambient-atmosphere-glow glow-sore"></div>
     <div class="ambient-atmosphere-glow glow-malam"></div>
 
-    <!-- Cuaca (v4.4.3): peredam cahaya & hujan; dibuat tampil hanya saat data-cuaca = mendung/hujan -->
+    <!-- Cuaca (v4.5.3): peredam cahaya & hujan; dibuat tampil hanya saat data-cuaca = mendung/hujan -->
     <div class="ambient-weather-dim"></div>
     <div class="ambient-rain-layer" id="ambient-rain-container"></div>
 
@@ -198,8 +198,8 @@
         <div class="card quest-card-btn" onclick="bukaPortal('quest')">
           <span style="font-size: 28px; flex-shrink: 0">📜</span>
           <div class="flex-column-overflow">
-            <h3 class="card-title-small">Papan Quest</h3>
-            <p class="card-desc-small">Panduan Poin Tata Tertib</p>
+            <h3 class="card-title-small">Panduan</h3>
+            <p class="card-desc-small">Poin, Aturan, Visi &amp; Misi</p>
           </div>
         </div>
 
@@ -526,6 +526,7 @@
 
               <button
                 type="button"
+                id="btnRiwayatKelasSiswa"
                 class="mini-btn"
                 style="width: 100%; margin-top: 10px; padding: 8px"
                 onclick="lihatArsipKelas()"
@@ -748,6 +749,18 @@
 
         <div class="siswa-panels">
           <section class="siswa-panel">
+            <!-- Mode "perpisahan": nama + status + kata-kata guru (isi: pesan-alumni.js) -->
+            <div id="alumniPerpisahan" class="hidden">
+              <div class="rpg-card-container alumni-perpisahan">
+                <div class="alumni-topi">🎓</div>
+                <div id="alumniJudul" class="alumni-judul"></div>
+                <div id="alumniPembuka" class="alumni-pembuka"></div>
+              </div>
+              <div id="alumniKataGuru"></div>
+            </div>
+
+            <!-- Mode "transkrip" (tampilan lama) -->
+            <div id="alumniTranskripWrap">
             <div class="rpg-card-container">
               <div
                 style="
@@ -796,6 +809,7 @@
               ></select>
             </div>
             <div id="alumniPeriodeDetail"></div>
+            </div>
           </section>
         </div>
       </div>
@@ -2301,7 +2315,7 @@
       </div>
     </div>
 
-    <!-- HALAMAN PAPAN QUEST -->
+    <!-- HALAMAN PANDUAN (dulu "Papan Quest") -->
     <div
       id="questBoardCard"
       class="card hidden"
@@ -2309,8 +2323,8 @@
     >
       <div class="header-app" style="margin-bottom: 5px">
         <div class="user-info">
-          <h3>📜 Papan Quest</h3>
-          <p>Sistem Poin Prestasi & Pelanggaran</p>
+          <h3>📖 Panduan Tatib</h3>
+          <p>Poin, Aturan, Visi &amp; Misi</p>
         </div>
         <button class="btn-logout" onclick="kembaliKeMenu()">Tutup</button>
       </div>
@@ -2321,7 +2335,7 @@
           onclick="renderQuestUI('prestasi')"
           style="background: #3498db; color: white"
         >
-          🛡️ Prestasi (+Poin)
+          🛡️ Prestasi
         </button>
         <button
           id="tabQuestPelanggaran"
@@ -2329,7 +2343,23 @@
           class="btn-outline"
           style="color: #e74c3c; border-color: #e74c3c"
         >
-          ⚠️ Pelanggaran (-Poin)
+          ⚠️ Pelanggaran
+        </button>
+        <button
+          id="tabQuestHarian"
+          onclick="renderQuestUI('harian')"
+          class="btn-outline"
+          style="color: #f39c12; border-color: #f39c12"
+        >
+          ⭐ Poin Harian
+        </button>
+        <button
+          id="tabQuestVisi"
+          onclick="renderQuestUI('visi')"
+          class="btn-outline"
+          style="color: #8e44ad; border-color: #8e44ad"
+        >
+          🎯 Visi &amp; Misi
         </button>
       </div>
 
@@ -2987,20 +3017,20 @@
       🛠️ MODE MAINTENANCE AKTIF — siswa & guru tidak bisa masuk
     </div>
 
-    <div class="app-version-badge">Tatib v4.4.3 • Beta</div>
+    <div class="app-version-badge">Tatib v4.5.3 • Beta</div>
 
     <!-- JAVASCRIPT UTAMA & FIREBASE MODULE -->
     <script>
       // Daftarkan service worker (syarat PWA agar bisa di-install)
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
-          navigator.serviceWorker.register("sw.js?v=4.4.3").catch(function (e) {
+          navigator.serviceWorker.register("sw.js?v=4.5.3").catch(function (e) {
             console.warn("Service worker gagal didaftarkan:", e);
           });
         });
       }
     </script>
-    <script src="ambient.js?v=4.4.3"></script>
-    <script src="app.js?v=4.4.3" type="module"></script>
+    <script src="ambient.js?v=4.5.3"></script>
+    <script src="app.js?v=4.5.3" type="module"></script>
   </body>
 </html>
