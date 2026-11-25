@@ -23,7 +23,7 @@
 //                         awan, hujan, dst). Ketuk / tekan tombol -> menu kembali.
 //                 false = mati total
 // ==========================================================================
-export const AMBIENT_DIAM_MS = 300000; // 300 detik
+export const AMBIENT_DIAM_MS = 300000; // 5 menit
 export const FITUR = {
   easterEgg: true,
   riwayatSiswa: true,
