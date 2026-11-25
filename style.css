@@ -2991,3 +2991,16 @@ body[data-waktu="siang"] .particle {
 .alumni-kata-isi { font-size: 12px; line-height: 1.7; color: #e2e8f0; font-style: italic; }
 .alumni-kata-dari { margin-top: 6px; font-size: 11px; font-weight: 700; color: #f1c40f; text-align: right; }
 
+
+/* ===== Mode Ambient (diam di menu utama -> hanya pemandangan cuaca) ===== */
+#menuWrapper > * { transition: opacity 1.8s ease; }
+body.ambient-mode #menuWrapper > :not(.credit-cuaca) { opacity: 0; pointer-events: none; }
+body:not(.ambient-mode) #menuWrapper > * { transition-duration: .7s; }
+#ambientTangkap { position: fixed; inset: 0; z-index: 8000; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.ambient-petunjuk {
+  position: absolute; left: 0; right: 0; top: 12vh; text-align: center;
+  color: #fff; font: 600 12px Poppins, system-ui, sans-serif; text-shadow: 0 1px 6px rgba(0,0,0,.7);
+  opacity: 0; animation: ambientMuncul 1.6s ease 2.2s forwards; transition: opacity 1.2s;
+}
+#ambientTangkap.petunjuk-hilang .ambient-petunjuk { opacity: 0 !important; animation: none; }
+@keyframes ambientMuncul { to { opacity: .85; } }

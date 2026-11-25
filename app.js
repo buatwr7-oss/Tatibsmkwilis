@@ -26,10 +26,10 @@ import {
   writeBatch,
   getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.5.3";
-import { dataPilihan, visiMisi } from "./aturan.js?v=4.5.3";
-import { FITUR } from "./fitur.js?v=4.5.3";
-import { PESAN_ALUMNI } from "./pesan-alumni.js?v=4.5.3";
+import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.8.0";
+import { dataPilihan, visiMisi } from "./aturan.js?v=4.8.0";
+import { FITUR, AMBIENT_DIAM_MS } from "./fitur.js?v=4.8.0";
+import { PESAN_ALUMNI } from "./pesan-alumni.js?v=4.8.0";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
@@ -2103,7 +2103,7 @@ window.bukaGame = function (nama) {
   if (!DAFTAR[nama]) return;
   // Catatan: jangan pakai fitur "noopener" di sini — window.open lalu selalu
   // mengembalikan null sehingga terbaca seolah pop-up diblokir.
-  const w = window.open(DAFTAR[nama] + "?v=4.5.3", "_blank");
+  const w = window.open(DAFTAR[nama] + "?v=4.8.0", "_blank");
   if (w) {
     try {
       w.opener = null;
@@ -3101,6 +3101,61 @@ window.simpanPengumumanTugas = async function () {
 // ==========================================
 let layarSaatIni = "menu"; // dipakai saklar maintenance
 
+// ---- Mode Ambient: diam di menu utama AMBIENT_DIAM_MS -> menu memudar, tinggal pemandangan cuaca ----
+let ambientAktif = false;
+let ambientTerakhir = Date.now();
+let ambientPetunjukTimer = null;
+function ambientCatat() {
+  ambientTerakhir = Date.now();
+}
+function ambientBolehMulai() {
+  if (!FITUR.easterEgg || ambientAktif || document.hidden) return false;
+  if (layarSaatIni !== "menu") return false;
+  const menu = $("menuWrapper");
+  if (!menu || menu.classList.contains("hidden")) return false;
+  const mt = $("maintenanceHomeCard");
+  if (mt && !mt.classList.contains("hidden")) return false; // jangan ganggu pengumuman maintenance
+  const pop = $("customPopupOverlay");
+  if (pop && getComputedStyle(pop).display !== "none") return false;
+  return Date.now() - ambientTerakhir >= AMBIENT_DIAM_MS;
+}
+function ambientMulai() {
+  ambientAktif = true;
+  const tangkap = document.createElement("div");
+  tangkap.id = "ambientTangkap";
+  tangkap.innerHTML = '<div class="ambient-petunjuk">Ketuk di mana saja untuk kembali ke menu</div>';
+  document.body.appendChild(tangkap);
+  const selesai = (ev) => {
+    if (ev && ev.type === "keydown" && ev.key === "Tab") return;
+    ambientSelesai();
+  };
+  tangkap.addEventListener("pointerdown", selesai);
+  document.addEventListener("keydown", selesai, true);
+  tangkap._selesai = selesai;
+  document.body.classList.add("ambient-mode");
+  ambientPetunjukTimer = setTimeout(() => tangkap.classList.add("petunjuk-hilang"), 5000);
+}
+function ambientSelesai() {
+  if (!ambientAktif) return;
+  ambientAktif = false;
+  clearTimeout(ambientPetunjukTimer);
+  const tangkap = $("ambientTangkap");
+  if (tangkap) {
+    document.removeEventListener("keydown", tangkap._selesai, true);
+    tangkap.remove();
+  }
+  document.body.classList.remove("ambient-mode");
+  ambientTerakhir = Date.now();
+}
+if (FITUR.easterEgg) {
+  ["pointerdown", "pointermove", "keydown", "touchstart", "wheel", "scroll"].forEach((ev) =>
+    document.addEventListener(ev, ambientCatat, { passive: true, capture: true }),
+  );
+  setInterval(() => {
+    if (ambientBolehMulai()) ambientMulai();
+  }, 5000);
+}
+
 const SCREEN_IDS = [
   "menuWrapper",
   "mainMenuCard",
@@ -3114,6 +3169,7 @@ const SCREEN_IDS = [
 
 function showScreen(screenId, pushHistory = true) {
   layarSaatIni = screenId;
+  ambientSelesai();
   SCREEN_IDS.forEach((id) => $(id).classList.add("hidden"));
 
   if (screenId === "menu") {
@@ -5634,7 +5690,7 @@ async function muatOnlineRekap(setelahnyaFilter) {
   }
 }
 
-// ---- Pustaka luar dimuat saat dibutuhkan (v4.5.3): tidak memblokir halaman awal siswa ----
+// ---- Pustaka luar dimuat saat dibutuhkan (v4.8.0): tidak memblokir halaman awal siswa ----
 const URL_CHARTJS = "https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js";
 const URL_CROPPER_JS = "https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js";
 const URL_CROPPER_CSS = "https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css";

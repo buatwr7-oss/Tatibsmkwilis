@@ -17,8 +17,15 @@
 //                                ALUMNI, dan kata-kata dari para guru
 //                                (isi: pesan-alumni.js)
 //                 "transkrip"  = tampilan lama (transkrip riwayat per periode)
+//  easterEgg    : true  = Mode Ambient: bila pengunjung diam di menu utama selama
+//                         AMBIENT_DIAM_MS, semua menu memudar pelan-pelan dan
+//                         yang tampil hanya pemandangan cuaca (bulan/matahari,
+//                         awan, hujan, dst). Ketuk / tekan tombol -> menu kembali.
+//                 false = mati total
 // ==========================================================================
+export const AMBIENT_DIAM_MS = 70000; // 70 detik
 export const FITUR = {
+  easterEgg: true,
   riwayatSiswa: true,
   riwayatKelasSebelumnya: false,
   alumniMode: "perpisahan",
