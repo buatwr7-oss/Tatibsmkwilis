@@ -170,9 +170,9 @@
       const KUNCI_CUACA = 'tatibCuaca';
       const CUACA_TTL = 30 * 60 * 1000;      // data dianggap segar 30 menit
       const CUACA_KADALUARSA = 3 * 3600 * 1000; // data lebih tua dari 3 jam tidak dipakai
-      const cuacaValid = ['cerah', 'mendung', 'kabut', 'gerimis', 'hujan', 'lebat', 'badai'];
+      const cuacaValid = ['cerah', 'mendung', 'hujan', 'lebat'];
       // jumlah tetes tampil per tingkat [HP, desktop]; wadah dibuat sekali (maks 100) lalu hanya disembunyikan/ditampilkan
-      const JUMLAH_TETES = { gerimis: [12, 24], hujan: [28, 56], lebat: [42, 90], badai: [50, 100] };
+      const JUMLAH_TETES = { hujan: [24, 48], lebat: [50, 100] };
       let cuacaAsli = 'cerah', cuacaWaktu = 0, cuacaPaksa = null;
 
       function klasifikasiCuaca(d) {
@@ -182,13 +182,10 @@
         const mm = Number(c.precipitation) || 0;
         const prob = d && d.hourly && d.hourly.precipitation_probability;
         const probJamDepan = Array.isArray(prob) && prob.length > 1 ? Number(prob[1]) : 0; // ramalan 1 jam ke depan
-        if (kode >= 95 && kode <= 99) return 'badai';
-        if (kode === 65 || kode === 82 || kode === 66 || kode === 67 || mm >= 4) return 'lebat';
-        if (kode === 63 || kode === 81 || mm >= 1) return 'hujan';
-        if (kode === 61 || kode === 80) return mm >= 0.5 ? 'hujan' : 'gerimis';
-        if ((kode >= 51 && kode <= 57) || (kode >= 85 && kode <= 86) || mm > 0.1 || probJamDepan >= 70) return 'gerimis';
-        if (kode === 45 || kode === 48) return 'kabut';
-        if (Number(c.cloud_cover) >= 85) return 'mendung';
+        // lebat: hujan deras / badai petir; hujan: hujan ringan-sedang / gerimis; mendung: awan tebal atau kabut
+        if ((kode >= 95 && kode <= 99) || kode === 65 || kode === 82 || kode === 66 || kode === 67 || mm >= 4) return 'lebat';
+        if ((kode >= 51 && kode <= 64) || kode === 80 || kode === 81 || (kode >= 85 && kode <= 86) || mm > 0.1 || probJamDepan >= 70) return 'hujan';
+        if (Number(c.cloud_cover) >= 85 || kode === 45 || kode === 48) return 'mendung';
         return 'cerah';
       }
       function buatTetesHujan() {
@@ -223,7 +220,7 @@
         window.dispatchEvent(new CustomEvent('ambientCuacaChanged', { detail: { cuaca: c } }));
       }
       function cuacaTampil() { return cuacaPaksa || cuacaAsli; }
-      // Pratinjau admin: nilai paksa (cerah|mendung|kabut|gerimis|hujan|lebat|badai) atau null/'auto' untuk kembali ke cuaca asli
+      // Pratinjau admin: nilai paksa (cerah|mendung|hujan|lebat) atau null/'auto' untuk kembali ke cuaca asli
       window.setAmbientCuaca = function (c) {
         cuacaPaksa = cuacaValid.indexOf(c) >= 0 ? c : null;
         terapkanCuaca(cuacaTampil());
