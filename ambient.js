@@ -165,32 +165,37 @@
         requestAnimationFrame(() => requestAnimationFrame(() => bgRoot.classList.remove('no-trans')));
       }
       // ---- Cuaca (v4.4.0): Open-Meteo (gratis, tanpa kunci), titik tetap sekolah, cache 30 menit ----
-      // Ubah koordinat di bawah bila perlu (cukup perkiraan, grid data ~11 km).
-      const CUACA_LAT = -7.12, CUACA_LON = 107.86;
+      // Koordinat sekolah (sumber: data referensi sekolah). Ubah bila perlu; grid data Open-Meteo ~11 km.
+      const CUACA_LAT = -7.02689, CUACA_LON = 107.99552; // SMKS Wiraguna Limbangan, Kp. Dunguswiru, Blubur Limbangan, Garut
       const KUNCI_CUACA = 'tatibCuaca';
       const CUACA_TTL = 30 * 60 * 1000;      // data dianggap segar 30 menit
       const CUACA_KADALUARSA = 3 * 3600 * 1000; // data lebih tua dari 3 jam tidak dipakai
-      const cuacaValid = ['cerah', 'mendung', 'hujan'];
+      const cuacaValid = ['cerah', 'mendung', 'kabut', 'gerimis', 'hujan', 'lebat', 'badai'];
+      // jumlah tetes tampil per tingkat [HP, desktop]; wadah dibuat sekali (maks 100) lalu hanya disembunyikan/ditampilkan
+      const JUMLAH_TETES = { gerimis: [12, 24], hujan: [28, 56], lebat: [42, 90], badai: [50, 100] };
       let cuacaAsli = 'cerah', cuacaWaktu = 0, cuacaPaksa = null;
 
       function klasifikasiCuaca(d) {
         // d: respons Open-Meteo {current:{weather_code,precipitation,cloud_cover}, hourly:{precipitation_probability}}
         const c = (d && d.current) || {};
         const kode = Number(c.weather_code);
-        const hujanKode = (kode >= 51 && kode <= 67) || (kode >= 80 && kode <= 82) || (kode >= 95 && kode <= 99);
+        const mm = Number(c.precipitation) || 0;
         const prob = d && d.hourly && d.hourly.precipitation_probability;
         const probJamDepan = Array.isArray(prob) && prob.length > 1 ? Number(prob[1]) : 0; // ramalan 1 jam ke depan
-        if (hujanKode || Number(c.precipitation) > 0.1 || probJamDepan >= 70) return 'hujan';
-        if (Number(c.cloud_cover) >= 85 || kode === 45 || kode === 48) return 'mendung';
+        if (kode >= 95 && kode <= 99) return 'badai';
+        if (kode === 65 || kode === 82 || kode === 66 || kode === 67 || mm >= 4) return 'lebat';
+        if (kode === 63 || kode === 81 || mm >= 1) return 'hujan';
+        if (kode === 61 || kode === 80) return mm >= 0.5 ? 'hujan' : 'gerimis';
+        if ((kode >= 51 && kode <= 57) || (kode >= 85 && kode <= 86) || mm > 0.1 || probJamDepan >= 70) return 'gerimis';
+        if (kode === 45 || kode === 48) return 'kabut';
+        if (Number(c.cloud_cover) >= 85) return 'mendung';
         return 'cerah';
       }
       function buatTetesHujan() {
         const wadah = document.getElementById('ambient-rain-container');
         if (!wadah || wadah.childElementCount) return;
-        const mobile = window.innerWidth < 768;
-        const jumlah = mobile ? 30 : 60;
         const frag = document.createDocumentFragment();
-        for (let i = 0; i < jumlah; i++) {
+        for (let i = 0; i < 100; i++) {
           const t = document.createElement('i');
           t.className = 'rain-drop';
           t.style.left = (Math.random() * 104 - 2).toFixed(1) + '%';
@@ -203,14 +208,22 @@
         }
         wadah.appendChild(frag);
       }
+      function aturTetes(c) {
+        const wadah = document.getElementById('ambient-rain-container');
+        const j = JUMLAH_TETES[c];
+        if (!wadah || !j) return;
+        const n = j[window.innerWidth < 768 ? 0 : 1];
+        const kids = wadah.children;
+        for (let i = 0; i < kids.length; i++) kids[i].style.display = i < n ? '' : 'none';
+      }
       function terapkanCuaca(c) {
         if (!bgRoot || cuacaValid.indexOf(c) < 0) return;
-        if (c === 'hujan') buatTetesHujan(); // dibuat sekali, hanya saat benar-benar hujan
+        if (JUMLAH_TETES[c]) { buatTetesHujan(); aturTetes(c); } // dibuat sekali, hanya saat benar-benar hujan
         bgRoot.setAttribute('data-cuaca', c);
         window.dispatchEvent(new CustomEvent('ambientCuacaChanged', { detail: { cuaca: c } }));
       }
       function cuacaTampil() { return cuacaPaksa || cuacaAsli; }
-      // Pratinjau admin: nilai paksa (cerah|mendung|hujan) atau null/'auto' untuk kembali ke cuaca asli
+      // Pratinjau admin: nilai paksa (cerah|mendung|kabut|gerimis|hujan|lebat|badai) atau null/'auto' untuk kembali ke cuaca asli
       window.setAmbientCuaca = function (c) {
         cuacaPaksa = cuacaValid.indexOf(c) >= 0 ? c : null;
         terapkanCuaca(cuacaTampil());

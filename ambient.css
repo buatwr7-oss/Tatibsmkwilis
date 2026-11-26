@@ -598,40 +598,66 @@ html.tab-tersembunyi #ambient-background * { animation-play-state: paused !impor
   background: linear-gradient(180deg, rgba(71, 85, 105, 0.9) 0%, rgba(51, 65, 85, 0.75) 100%);
   transition: opacity 2s ease;
 }
+#ambient-background[data-cuaca="kabut"] .ambient-weather-dim { opacity: 0.30; }
 #ambient-background[data-cuaca="mendung"] .ambient-weather-dim { opacity: 0.34; }
+#ambient-background[data-cuaca="gerimis"] .ambient-weather-dim { opacity: 0.42; }
 #ambient-background[data-cuaca="hujan"] .ambient-weather-dim { opacity: 0.55; }
+#ambient-background[data-cuaca="lebat"] .ambient-weather-dim { opacity: 0.66; }
+#ambient-background[data-cuaca="badai"] .ambient-weather-dim { opacity: 0.78; background: linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.85) 100%); }
 /* benda langit memudar tertutup awan: hanya yang SEDANG aktif (yang lain tetap tersembunyi) */
-#ambient-background[data-cuaca="mendung"][data-mood="pagi"] .sun-pagi,
-#ambient-background[data-cuaca="mendung"][data-mood="siang"] .sun-siang-wrap,
-#ambient-background[data-cuaca="mendung"][data-mood="sore"] .sun-sore,
-#ambient-background[data-cuaca="mendung"][data-mood="malam"] .moon-malam { opacity: 0.45 !important; }
-#ambient-background[data-cuaca="hujan"][data-mood="pagi"] .sun-pagi,
-#ambient-background[data-cuaca="hujan"][data-mood="siang"] .sun-siang-wrap,
-#ambient-background[data-cuaca="hujan"][data-mood="sore"] .sun-sore,
-#ambient-background[data-cuaca="hujan"][data-mood="malam"] .moon-malam { opacity: 0.12 !important; }
-#ambient-background[data-cuaca="hujan"] .ambient-stars-layer,
-#ambient-background[data-cuaca="hujan"] .ambient-birds-layer,
-#ambient-background[data-cuaca="hujan"] .ambient-fireflies-layer,
-#ambient-background[data-cuaca="hujan"] .ambient-particles-layer,
-#ambient-background[data-cuaca="hujan"] #ambient-shooting-container,
-#ambient-background[data-cuaca="mendung"] .ambient-birds-layer,
-#ambient-background[data-cuaca="mendung"] #ambient-shooting-container,
-#ambient-background[data-cuaca="mendung"] .sun-siang-rays { display: none !important; } /* tidak dirender & animasinya berhenti sepenuhnya */
-#ambient-background[data-cuaca="hujan"] .sun-siang-rays { animation: none !important; }
+#ambient-background:is([data-cuaca="mendung"],[data-cuaca="kabut"])[data-mood="pagi"] .sun-pagi,
+#ambient-background:is([data-cuaca="mendung"],[data-cuaca="kabut"])[data-mood="siang"] .sun-siang-wrap,
+#ambient-background:is([data-cuaca="mendung"],[data-cuaca="kabut"])[data-mood="sore"] .sun-sore,
+#ambient-background:is([data-cuaca="mendung"],[data-cuaca="kabut"])[data-mood="malam"] .moon-malam { opacity: 0.45 !important; }
+#ambient-background:is([data-cuaca="gerimis"])[data-mood="pagi"] .sun-pagi,
+#ambient-background:is([data-cuaca="gerimis"])[data-mood="siang"] .sun-siang-wrap,
+#ambient-background:is([data-cuaca="gerimis"])[data-mood="sore"] .sun-sore,
+#ambient-background:is([data-cuaca="gerimis"])[data-mood="malam"] .moon-malam { opacity: 0.25 !important; }
+#ambient-background:is([data-cuaca="hujan"],[data-cuaca="lebat"],[data-cuaca="badai"])[data-mood="pagi"] .sun-pagi,
+#ambient-background:is([data-cuaca="hujan"],[data-cuaca="lebat"],[data-cuaca="badai"])[data-mood="siang"] .sun-siang-wrap,
+#ambient-background:is([data-cuaca="hujan"],[data-cuaca="lebat"],[data-cuaca="badai"])[data-mood="sore"] .sun-sore,
+#ambient-background:is([data-cuaca="hujan"],[data-cuaca="lebat"],[data-cuaca="badai"])[data-mood="malam"] .moon-malam { opacity: 0.12 !important; }
+#ambient-background:is([data-cuaca="gerimis"],[data-cuaca="hujan"],[data-cuaca="lebat"],[data-cuaca="badai"]) :is(.ambient-stars-layer,.ambient-birds-layer,.ambient-fireflies-layer,.ambient-particles-layer,#ambient-shooting-container),
+#ambient-background:is([data-cuaca="mendung"],[data-cuaca="kabut"]) :is(.ambient-birds-layer,#ambient-shooting-container),
+#ambient-background:is([data-cuaca="mendung"],[data-cuaca="kabut"]) .sun-siang-rays { display: none !important; } /* tidak dirender & animasinya berhenti sepenuhnya */
+#ambient-background:is([data-cuaca="gerimis"],[data-cuaca="hujan"],[data-cuaca="lebat"],[data-cuaca="badai"]) .sun-siang-rays { animation: none !important; }
+
+/* kabut: 2 lapisan gradien lebar, hanya transform (GPU), sangat pelan */
+.ambient-kabut { position: absolute; inset: 0; overflow: hidden; display: none; pointer-events: none; }
+#ambient-background[data-cuaca="kabut"] .ambient-kabut { display: block; }
+.kabut-lapis {
+  position: absolute; left: -30%; width: 160%; height: 45%;
+  background: radial-gradient(ellipse at center, rgba(226, 232, 240, 0.55) 0%, rgba(226, 232, 240, 0) 70%);
+  will-change: transform; animation: ambientKabutGeser 38s ease-in-out infinite alternate;
+}
+.kabut-lapis.k1 { top: 30%; }
+.kabut-lapis.k2 { top: 58%; animation-duration: 52s; animation-direction: alternate-reverse; opacity: .8; }
+@keyframes ambientKabutGeser { from { transform: translate3d(-8%, 0, 0); } to { transform: translate3d(8%, 0, 0); } }
+html.tab-tersembunyi .kabut-lapis { animation-play-state: paused !important; }
+#ambient-background.ambient-ringan .kabut-lapis { animation: none !important; will-change: auto; }
+#ambient-background.ambient-ringan .kabut-lapis.k2 { display: none; }
 
 /* hujan */
 .ambient-rain-layer { position: absolute; inset: 0; overflow: hidden; display: none; }
-#ambient-background[data-cuaca="hujan"] .ambient-rain-layer { display: block; }
+#ambient-background:is([data-cuaca="gerimis"],[data-cuaca="hujan"],[data-cuaca="lebat"],[data-cuaca="badai"]) .ambient-rain-layer { display: block; }
 .rain-drop {
   position: absolute; top: -12%; width: 1.5px; height: 18px; border-radius: 1px;
   background: linear-gradient(180deg, rgba(200, 220, 255, 0), rgba(210, 228, 255, 0.6));
   transform: translate3d(0, 0, 0) rotate(12deg);
   will-change: transform;
-  animation: ambientRainFall var(--rain-dur, 1.1s) linear infinite var(--rain-delay, 0s);
+  animation: ambientRainFall calc(var(--rain-dur, 1.1s) * var(--rain-skala, 1)) linear infinite var(--rain-delay, 0s);
 }
 @keyframes ambientRainFall {
   from { transform: translate3d(0, 0, 0) rotate(12deg); }
   to   { transform: translate3d(-9vh, 120vh, 0) rotate(12deg); }
+}
+/* kecepatan/arah per tingkat */
+#ambient-background[data-cuaca="gerimis"] .rain-drop { --rain-skala: 1.7; width: 1px; }
+#ambient-background[data-cuaca="lebat"] .rain-drop { --rain-skala: .8; }
+#ambient-background[data-cuaca="badai"] .rain-drop { --rain-skala: .6; transform: translate3d(0,0,0) rotate(24deg); animation-name: ambientRainAngin; }
+@keyframes ambientRainAngin {
+  from { transform: translate3d(0, 0, 0) rotate(24deg); }
+  to   { transform: translate3d(-28vh, 120vh, 0) rotate(24deg); }
 }
 html.tab-tersembunyi .rain-drop { animation-play-state: paused !important; }
 /* mode ringan: tanpa animasi hujan, hanya sedikit garis statis */

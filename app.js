@@ -26,10 +26,10 @@ import {
   writeBatch,
   getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.8.1";
-import { dataPilihan, visiMisi } from "./aturan.js?v=4.8.1";
-import { FITUR, AMBIENT_DIAM_MS } from "./fitur.js?v=4.8.1";
-import { PESAN_ALUMNI } from "./pesan-alumni.js?v=4.8.1";
+import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.9.0";
+import { dataPilihan, visiMisi } from "./aturan.js?v=4.9.0";
+import { FITUR, AMBIENT_DIAM_MS } from "./fitur.js?v=4.9.0";
+import { PESAN_ALUMNI } from "./pesan-alumni.js?v=4.9.0";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
@@ -2103,7 +2103,7 @@ window.bukaGame = function (nama) {
   if (!DAFTAR[nama]) return;
   // Catatan: jangan pakai fitur "noopener" di sini — window.open lalu selalu
   // mengembalikan null sehingga terbaca seolah pop-up diblokir.
-  const w = window.open(DAFTAR[nama] + "?v=4.8.1", "_blank");
+  const w = window.open(DAFTAR[nama] + "?v=4.9.0", "_blank");
   if (w) {
     try {
       w.opener = null;
@@ -5407,7 +5407,7 @@ function pratinjauMulai() {
   pratinjauCuacaUI();
   pratinjauBar(true);
 }
-const NAMA_CUACA = { cerah: "Cerah ☀️", mendung: "Mendung ☁️", hujan: "Hujan 🌧️" };
+const NAMA_CUACA = { cerah: "Cerah ☀️", mendung: "Mendung ☁️", kabut: "Kabut 🌫️", gerimis: "Gerimis 🌦️", hujan: "Hujan 🌧️", lebat: "Hujan lebat 🌧️", badai: "Hujan badai ⛈️" };
 function pratinjauCuacaUI() {
   const i = window.ambientCuacaInfo ? window.ambientCuacaInfo() : null;
   if (!i) return;
@@ -5690,7 +5690,7 @@ async function muatOnlineRekap(setelahnyaFilter) {
   }
 }
 
-// ---- Pustaka luar dimuat saat dibutuhkan (v4.8.1): tidak memblokir halaman awal siswa ----
+// ---- Pustaka luar dimuat saat dibutuhkan (v4.9.0): tidak memblokir halaman awal siswa ----
 const URL_CHARTJS = "https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js";
 const URL_CROPPER_JS = "https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js";
 const URL_CROPPER_CSS = "https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css";

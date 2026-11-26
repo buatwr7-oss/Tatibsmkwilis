@@ -9,8 +9,8 @@
     <title>Tatib SMK Wiraguna 🛡️</title>
 
     <!-- CSS UTAMA -->
-    <link rel="stylesheet" href="style.css?v=4.8.1" />
-    <link rel="stylesheet" href="ambient.css?v=4.8.1" />
+    <link rel="stylesheet" href="style.css?v=4.9.0" />
+    <link rel="stylesheet" href="ambient.css?v=4.9.0" />
 
     <!-- favicon -->
     <link rel="icon" type="image/x-icon" href="logo.ico" />
@@ -53,8 +53,9 @@
     <div class="ambient-atmosphere-glow glow-sore"></div>
     <div class="ambient-atmosphere-glow glow-malam"></div>
 
-    <!-- Cuaca (v4.8.1): peredam cahaya & hujan; dibuat tampil hanya saat data-cuaca = mendung/hujan -->
+    <!-- Cuaca (v4.9.0): peredam cahaya & hujan; dibuat tampil hanya saat data-cuaca = mendung/hujan -->
     <div class="ambient-weather-dim"></div>
+    <div class="ambient-kabut"><i class="kabut-lapis k1"></i><i class="kabut-lapis k2"></i></div>
     <div class="ambient-rain-layer" id="ambient-rain-container"></div>
 
     <!-- Bintang & Bintang Jatuh (Malam) -->
@@ -2209,7 +2210,11 @@
           <div class="pv-row">
             <button type="button" class="pv-btn" data-cuaca="cerah" onclick="pratinjauCuaca('cerah')">☀️ Cerah</button>
             <button type="button" class="pv-btn" data-cuaca="mendung" onclick="pratinjauCuaca('mendung')">☁️ Mendung</button>
+            <button type="button" class="pv-btn" data-cuaca="kabut" onclick="pratinjauCuaca('kabut')">🌫️ Kabut</button>
+            <button type="button" class="pv-btn" data-cuaca="gerimis" onclick="pratinjauCuaca('gerimis')">🌦️ Gerimis</button>
             <button type="button" class="pv-btn" data-cuaca="hujan" onclick="pratinjauCuaca('hujan')">🌧️ Hujan</button>
+            <button type="button" class="pv-btn" data-cuaca="lebat" onclick="pratinjauCuaca('lebat')">🌧️ Lebat</button>
+            <button type="button" class="pv-btn" data-cuaca="badai" onclick="pratinjauCuaca('badai')">⛈️ Badai</button>
             <button type="button" class="pv-btn pv-btn-auto" data-cuaca="auto" onclick="pratinjauCuaca('auto')">🔄 Otomatis</button>
           </div>
           <p class="pv-ket" style="margin-top:8px">Dipadukan dengan tombol Suasana Latar di atas (mis. Sore + Hujan). Data cuaca: Open-Meteo.</p>
@@ -3017,20 +3022,20 @@
       🛠️ MODE MAINTENANCE AKTIF — siswa & guru tidak bisa masuk
     </div>
 
-    <div class="app-version-badge">Tatib v4.8.1 • Beta</div>
+    <div class="app-version-badge">Tatib v4.9.0 • Beta</div>
 
     <!-- JAVASCRIPT UTAMA & FIREBASE MODULE -->
     <script>
       // Daftarkan service worker (syarat PWA agar bisa di-install)
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
-          navigator.serviceWorker.register("sw.js?v=4.8.1").catch(function (e) {
+          navigator.serviceWorker.register("sw.js?v=4.9.0").catch(function (e) {
             console.warn("Service worker gagal didaftarkan:", e);
           });
         });
       }
     </script>
-    <script src="ambient.js?v=4.8.1"></script>
-    <script src="app.js?v=4.8.1" type="module"></script>
+    <script src="ambient.js?v=4.9.0"></script>
+    <script src="app.js?v=4.9.0" type="module"></script>
   </body>
 </html>
