@@ -9,8 +9,8 @@
     <title>Tatib SMK Wiraguna 🛡️</title>
 
     <!-- CSS UTAMA -->
-    <link rel="stylesheet" href="style.css?v=4.9.1" />
-    <link rel="stylesheet" href="ambient.css?v=4.9.1" />
+    <link rel="stylesheet" href="style.css?v=4.10.1" />
+    <link rel="stylesheet" href="ambient.css?v=4.10.1" />
 
     <!-- favicon -->
     <link rel="icon" type="image/x-icon" href="logo.ico" />
@@ -53,7 +53,7 @@
     <div class="ambient-atmosphere-glow glow-sore"></div>
     <div class="ambient-atmosphere-glow glow-malam"></div>
 
-    <!-- Cuaca (v4.9.1): peredam cahaya & hujan; dibuat tampil hanya saat data-cuaca = mendung/hujan -->
+    <!-- Cuaca (v4.10.1): peredam cahaya & hujan; dibuat tampil hanya saat data-cuaca = mendung/hujan -->
     <div class="ambient-weather-dim"></div>
     <div class="ambient-rain-layer" id="ambient-rain-container"></div>
 
@@ -237,6 +237,7 @@
           </div>
         </div>
       </div>
+      <div class="cuaca-hari-ini" id="cuacaHariIni" aria-hidden="true"></div>
       <a class="credit-cuaca" href="https://open-meteo.com/" target="_blank" rel="noopener">Cuaca: Open-Meteo</a>
     </div>
 
@@ -3018,20 +3019,20 @@
       🛠️ MODE MAINTENANCE AKTIF — siswa & guru tidak bisa masuk
     </div>
 
-    <div class="app-version-badge">Tatib v4.9.1 • Beta</div>
+    <div class="app-version-badge">Tatib v4.10.1 • Beta</div>
 
     <!-- JAVASCRIPT UTAMA & FIREBASE MODULE -->
     <script>
       // Daftarkan service worker (syarat PWA agar bisa di-install)
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
-          navigator.serviceWorker.register("sw.js?v=4.9.1").catch(function (e) {
+          navigator.serviceWorker.register("sw.js?v=4.10.1").catch(function (e) {
             console.warn("Service worker gagal didaftarkan:", e);
           });
         });
       }
     </script>
-    <script src="ambient.js?v=4.9.1"></script>
-    <script src="app.js?v=4.9.1" type="module"></script>
+    <script src="ambient.js?v=4.10.1"></script>
+    <script src="app.js?v=4.10.1" type="module"></script>
   </body>
 </html>

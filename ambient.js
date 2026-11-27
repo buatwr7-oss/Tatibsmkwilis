@@ -175,19 +175,41 @@
       const JUMLAH_TETES = { hujan: [24, 48], lebat: [50, 100] };
       let cuacaAsli = 'cerah', cuacaWaktu = 0, cuacaPaksa = null;
 
-      function klasifikasiCuaca(d) {
-        // d: respons Open-Meteo {current:{weather_code,precipitation,cloud_cover}, hourly:{precipitation_probability}}
-        const c = (d && d.current) || {};
-        const kode = Number(c.weather_code);
-        const mm = Number(c.precipitation) || 0;
-        const prob = d && d.hourly && d.hourly.precipitation_probability;
-        const probJamDepan = Array.isArray(prob) && prob.length > 1 ? Number(prob[1]) : 0; // ramalan 1 jam ke depan
+      // satu jam: kode WMO, curah hujan (mm), tutupan awan (%), peluang hujan (%)
+      function klasJam(kode, mm, awan, prob) {
+        mm = Number(mm) || 0; prob = Number(prob) || 0; kode = Number(kode);
         // lebat: hujan deras / badai petir; hujan: hujan ringan-sedang / gerimis; mendung: awan tebal atau kabut
         if ((kode >= 95 && kode <= 99) || kode === 65 || kode === 82 || kode === 66 || kode === 67 || mm >= 4) return 'lebat';
-        if ((kode >= 51 && kode <= 64) || kode === 80 || kode === 81 || (kode >= 85 && kode <= 86) || mm > 0.1 || probJamDepan >= 70) return 'hujan';
-        if (Number(c.cloud_cover) >= 85 || kode === 45 || kode === 48) return 'mendung';
+        if ((kode >= 51 && kode <= 64) || kode === 80 || kode === 81 || (kode >= 85 && kode <= 86) || mm > 0.1 || prob >= 70) return 'hujan';
+        if (Number(awan) >= 85 || kode === 45 || kode === 48) return 'mendung';
         return 'cerah';
       }
+      function klasifikasiCuaca(d) {
+        // d: respons Open-Meteo {current:{time,weather_code,precipitation,cloud_cover}, hourly:{time,precipitation_probability}}
+        const c = (d && d.current) || {};
+        const h = (d && d.hourly) || {};
+        const prob = h.precipitation_probability;
+        let idx = 0;
+        if (Array.isArray(h.time) && c.time) { const k = h.time.findIndex((t) => String(t).slice(0, 13) === String(c.time).slice(0, 13)); if (k >= 0) idx = k; }
+        const probJamDepan = Array.isArray(prob) && prob.length > idx + 1 ? Number(prob[idx + 1]) : 0; // ramalan 1 jam ke depan
+        return klasJam(c.weather_code, c.precipitation, c.cloud_cover, probJamDepan);
+      }
+      const IKON_LABEL = { cerah: '\u2600\uFE0F', mendung: '\u2601\uFE0F', hujan: '\uD83C\uDF26\uFE0F', lebat: '\u26C8\uFE0F' };
+      // cuaca terkini: "Pagi yang cerah", "Sore ini hujan ringan" (bagian hari sama dengan suasana latar)
+      function teksCuacaHariIni(cuaca, jam) {
+        const kata = { cerah: 'yang cerah', mendung: 'yang mendung', hujan: 'ini hujan ringan', lebat: 'ini hujan lebat' }[cuaca];
+        if (!kata) return '';
+        const m = moodDariJam(new Date(2000, 0, 1, jam));
+        return m.charAt(0).toUpperCase() + m.slice(1) + ' ' + kata;
+      }
+      function tampilkanCuacaHariIni() {
+        const el = document.getElementById('cuacaHariIni');
+        if (!el) return;
+        if (!cuacaWaktu) { el.textContent = ''; return; } // data belum ada / gagal: tidak menampilkan apa pun
+        const t = teksCuacaHariIni(cuacaAsli, new Date().getHours());
+        el.textContent = t ? IKON_LABEL[cuacaAsli] + ' ' + t : '';
+      }
+      window.teksCuacaHariIniTatib = teksCuacaHariIni;
       function buatTetesHujan() {
         const wadah = document.getElementById('ambient-rain-container');
         if (!wadah || wadah.childElementCount) return;
@@ -238,7 +260,7 @@
       }
       function simpanCacheCuaca(c) { try { localStorage.setItem(KUNCI_CUACA, JSON.stringify({ c, t: Date.now() })); } catch (e) {} }
       function setCuacaAsli(c, t) {
-        cuacaAsli = c; cuacaWaktu = t;
+        cuacaAsli = c; cuacaWaktu = t; tampilkanCuacaHariIni();
         if (!cuacaPaksa) terapkanCuaca(c);
         window.dispatchEvent(new CustomEvent('ambientCuacaDiperbarui'));
       }
@@ -254,7 +276,8 @@
           const res = await fetch(url, ctl ? { signal: ctl.signal } : undefined);
           clearTimeout(timer);
           if (!res.ok) throw new Error('HTTP ' + res.status);
-          const c = klasifikasiCuaca(await res.json());
+          const data = await res.json();
+          const c = klasifikasiCuaca(data);
           simpanCacheCuaca(c);
           setCuacaAsli(c, Date.now());
         } catch (e) {
@@ -264,6 +287,7 @@
       }
       window.muatCuacaTatib = muatCuaca;
       muatCuaca(false);
+      setInterval(tampilkanCuacaHariIni, 10 * 60 * 1000); // ganti kata Pagi/Siang/Sore/Malam seiring waktu
       setInterval(() => { if (!document.hidden) muatCuaca(false); }, CUACA_TTL);
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden) { const c = bacaCacheCuaca(); if (!c || Date.now() - c.t >= CUACA_TTL) muatCuaca(false); }
