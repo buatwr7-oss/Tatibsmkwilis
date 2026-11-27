@@ -2994,7 +2994,7 @@ body[data-waktu="siang"] .particle {
 
 /* ===== Mode Ambient (diam di menu utama -> hanya pemandangan cuaca) ===== */
 #menuWrapper > * { transition: opacity 1.8s ease; }
-body.ambient-mode #menuWrapper > :not(.credit-cuaca) { opacity: 0; pointer-events: none; }
+body.ambient-mode #menuWrapper > :not(.credit-cuaca):not(.cuaca-hari-ini) { opacity: 0; pointer-events: none; }
 body:not(.ambient-mode) #menuWrapper > * { transition-duration: .7s; }
 #ambientTangkap { position: fixed; inset: 0; z-index: 8000; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 .ambient-petunjuk {
@@ -3004,3 +3004,15 @@ body:not(.ambient-mode) #menuWrapper > * { transition-duration: .7s; }
 }
 #ambientTangkap.petunjuk-hilang .ambient-petunjuk { opacity: 0 !important; animation: none; }
 @keyframes ambientMuncul { to { opacity: .85; } }
+
+/* Cuaca hari ini: tulisan samar di kanan atas menu utama (v4.10.0) */
+.cuaca-hari-ini {
+  position: fixed; top: 8px; right: 10px; z-index: 5; max-width: 62vw; text-align: right;
+  font: 500 10.5px/1.35 Poppins, system-ui, sans-serif; letter-spacing: .1px;
+  color: rgba(255,255,255,.62); text-shadow: 0 1px 5px rgba(0,0,0,.5);
+  pointer-events: none; user-select: none; -webkit-user-select: none;
+}
+.cuaca-hari-ini:empty { display: none; }
+@media (min-width: 768px) {
+  .cuaca-hari-ini { top: 14px; right: 20px; max-width: 46vw; font-size: 13.5px; }
+}
