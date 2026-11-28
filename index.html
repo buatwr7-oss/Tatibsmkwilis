@@ -9,8 +9,8 @@
     <title>Tatib SMK Wiraguna 🛡️</title>
 
     <!-- CSS UTAMA -->
-    <link rel="stylesheet" href="style.css?v=4.10.1" />
-    <link rel="stylesheet" href="ambient.css?v=4.10.1" />
+    <link rel="stylesheet" href="style.css?v=5.0.0" />
+    <link rel="stylesheet" href="ambient.css?v=5.0.0" />
 
     <!-- favicon -->
     <link rel="icon" type="image/x-icon" href="logo.ico" />
@@ -53,7 +53,7 @@
     <div class="ambient-atmosphere-glow glow-sore"></div>
     <div class="ambient-atmosphere-glow glow-malam"></div>
 
-    <!-- Cuaca (v4.10.1): peredam cahaya & hujan; dibuat tampil hanya saat data-cuaca = mendung/hujan -->
+    <!-- Cuaca (v5.0.0): peredam cahaya & hujan; dibuat tampil hanya saat data-cuaca = mendung/hujan -->
     <div class="ambient-weather-dim"></div>
     <div class="ambient-rain-layer" id="ambient-rain-container"></div>
 
@@ -162,6 +162,11 @@
 
     <!-- MENU UTAMA -->
     <div id="menuWrapper" class="menu-wrapper-container">
+      <!-- JAM & TANGGAL (Home v4.11) -->
+      <div class="jam-beranda" id="jamBeranda" aria-hidden="true">
+        <div class="jam-angka" id="jamAngka"></div>
+        <div class="jam-tanggal" id="jamTanggal"></div>
+      </div>
       <!-- PEMBERITAHUAN MAINTENANCE (tampil di halaman awal, menggantikan menu) -->
       <div id="maintenanceHomeCard" class="card text-center maintenance-home-card hidden">
         <div class="maintenance-home-icon" onclick="ketukIkonMaintenance()">🛠️</div>
@@ -182,21 +187,24 @@
             this.src = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
           "
         />
-        <h2 style="margin-bottom: 0">TATA TERTIB</h2>
-        <h2 style="color: #1e3c72; margin-top: 0">SMK WIRAGUNA LIMBANGAN</h2>
+        <h2 class="judul-menu">TATA TERTIB<br />SMK WIRAGUNA LIMBANGAN</h2>
         <p class="subtitle-menu">
           SISTEM MANAJEMEN KARAKTER & KEDISIPLINAN SISWA
         </p>
-        <button onclick="bukaPortal('guru')">👨‍🏫 Portal Guru</button>
-        <button class="btn-outline" onclick="bukaPortal('siswa')">
-          👨‍🎓 Portal Siswa
+        <button class="btn-menu-guru" onclick="bukaPortal('guru')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20l4-4 4 4"/></svg>
+          Portal Guru
+        </button>
+        <button class="btn-menu-siswa" onclick="bukaPortal('siswa')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-4.5"/></svg>
+          Portal Siswa
         </button>
       </div>
 
       <!-- KARTU BERSEBELAHAN: PAPAN QUEST & GLOBAL LEADERBOARD -->
       <div class="quest-leaderboard-row">
         <div class="card quest-card-btn" onclick="bukaPortal('quest')">
-          <span style="font-size: 28px; flex-shrink: 0">📜</span>
+          <svg class="ikon-tile" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg>
           <div class="flex-column-overflow">
             <h3 class="card-title-small">Panduan</h3>
             <p class="card-desc-small">Poin, Aturan, Visi &amp; Misi</p>
@@ -205,10 +213,9 @@
 
         <div
           class="card quest-card-btn"
-          style="border-color: #f1c40f"
           onclick="bukaPortal('leaderboard')"
         >
-          <span style="font-size: 28px; flex-shrink: 0">🏆</span>
+          <svg class="ikon-tile" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4"/><path d="M12 13v4M8 21h8M10 17h4"/></svg>
           <div class="flex-column-overflow">
             <h3 class="card-title-small">Top Global Rank</h3>
             <p class="card-desc-small">Leaderboard Siswa</p>
@@ -217,22 +224,15 @@
       </div>
 
       <!-- BAGIAN BAWAH: DAFTAR TUGAS / PR AKTIF DARI GURU -->
-      <div class="card" style="width: 100%; padding: 15px; text-align: left">
+      <div class="card kartu-papan-tugas">
         <div class="task-board-header">
-          <h3 style="font-size: 12px; color: #1e3c72; font-weight: 700">
-            📚 Papan Tugas (PR Aktif) & Pengumuman
+          <h3 class="judul-papan-tugas">
+            Papan Tugas (PR Aktif) & Pengumuman
           </h3>
           <span class="task-board-sub">(Berlaku untuk ±1 Minggu)</span>
         </div>
         <div id="mainTaskBoardList" class="main-task-list-box">
-          <div
-            style="
-              font-size: 10.5px;
-              color: #888;
-              text-align: center;
-              padding: 10px;
-            "
-          >
+          <div class="tugas-kosong">
             Memuat tugas aktif dari guru...
           </div>
         </div>
@@ -3019,20 +3019,20 @@
       🛠️ MODE MAINTENANCE AKTIF — siswa & guru tidak bisa masuk
     </div>
 
-    <div class="app-version-badge">Tatib v4.10.1 • Beta</div>
+    <div class="app-version-badge">Tatib v5.0.0 • Beta</div>
 
     <!-- JAVASCRIPT UTAMA & FIREBASE MODULE -->
     <script>
       // Daftarkan service worker (syarat PWA agar bisa di-install)
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
-          navigator.serviceWorker.register("sw.js?v=4.10.1").catch(function (e) {
+          navigator.serviceWorker.register("sw.js?v=5.0.0").catch(function (e) {
             console.warn("Service worker gagal didaftarkan:", e);
           });
         });
       }
     </script>
-    <script src="ambient.js?v=4.10.1"></script>
-    <script src="app.js?v=4.10.1" type="module"></script>
+    <script src="ambient.js?v=5.0.0"></script>
+    <script src="app.js?v=5.0.0" type="module"></script>
   </body>
 </html>

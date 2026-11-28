@@ -26,10 +26,10 @@ import {
   writeBatch,
   getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=4.10.1";
-import { dataPilihan, visiMisi } from "./aturan.js?v=4.10.1";
-import { FITUR, AMBIENT_DIAM_MS } from "./fitur.js?v=4.10.1";
-import { PESAN_ALUMNI } from "./pesan-alumni.js?v=4.10.1";
+import { AFIRMASI_SISWA, AFIRMASI_GURU } from "./afirmasi.js?v=5.0.0";
+import { dataPilihan, visiMisi } from "./aturan.js?v=5.0.0";
+import { FITUR, AMBIENT_DIAM_MS } from "./fitur.js?v=5.0.0";
+import { PESAN_ALUMNI } from "./pesan-alumni.js?v=5.0.0";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-zHaBz23d-ICl-CFxXzXydJ7Sb7zWRpc",
@@ -2103,7 +2103,7 @@ window.bukaGame = function (nama) {
   if (!DAFTAR[nama]) return;
   // Catatan: jangan pakai fitur "noopener" di sini — window.open lalu selalu
   // mengembalikan null sehingga terbaca seolah pop-up diblokir.
-  const w = window.open(DAFTAR[nama] + "?v=4.10.1", "_blank");
+  const w = window.open(DAFTAR[nama] + "?v=5.0.0", "_blank");
   if (w) {
     try {
       w.opener = null;
@@ -2957,6 +2957,20 @@ async function refreshMasterSiswa() {
 }
 
 // ==========================================
+// JAM & TANGGAL HOME
+// ==========================================
+function perbaruiJamHome() {
+  const a = $("jamAngka"), t = $("jamTanggal");
+  if (!a || !t || document.hidden) return;
+  const d = new Date();
+  a.textContent = d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }).replace(":", ".");
+  t.textContent = d.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+}
+perbaruiJamHome();
+setInterval(perbaruiJamHome, 20000);
+document.addEventListener("visibilitychange", perbaruiJamHome);
+
+// ==========================================
 // TUGAS / PR
 // ==========================================
 async function loadTugasAktif() {
@@ -2980,18 +2994,18 @@ async function loadTugasAktif() {
 
     if (container) {
       if (masterDataTugas.length === 0) {
-        container.innerHTML = `<div style="font-size: 10.5px; color: #888; text-align: center; padding: 10px;">Belum ada tugas atau PR aktif minggu ini.</div>`;
+        container.innerHTML = `<div class="tugas-kosong">Belum ada tugas atau PR aktif minggu ini.</div>`;
       } else {
         container.innerHTML = masterDataTugas
           .map(
             (t) => `
-          <div style="background: #f8f9fa; border-left: 3px solid #f1c40f; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px;">
-            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 11px; color: #1e3c72; margin-bottom: 2px;">
+          <div class="tugas-item">
+            <div class="tugas-item-atas">
               <span>📌 ${escapeHtml(t.judul)}</span>
-              <span style="font-size: 8.5px; background: #e2e8f0; padding: 2px 5px; border-radius: 4px; color: #555;">${escapeHtml(t.targetKelas)}</span>
+              <span class="tugas-item-kelas">${escapeHtml(t.targetKelas)}</span>
             </div>
-            <div style="font-size: 10px; color: #444; line-height: 1.4; margin-bottom: 4px; white-space: pre-line;">${escapeHtml(t.isi)}</div>
-            <div style="font-size: 8.5px; color: #888; display: flex; justify-content: space-between;">
+            <div class="tugas-item-isi">${escapeHtml(t.isi)}</div>
+            <div class="tugas-item-bawah">
               <span>👨‍🏫 Oleh: ${escapeHtml(t.namaGuru)}</span>
               <span>📅 ${escapeHtml(t.tanggal)}</span>
             </div>
@@ -5690,7 +5704,7 @@ async function muatOnlineRekap(setelahnyaFilter) {
   }
 }
 
-// ---- Pustaka luar dimuat saat dibutuhkan (v4.10.1): tidak memblokir halaman awal siswa ----
+// ---- Pustaka luar dimuat saat dibutuhkan (v5.0.0): tidak memblokir halaman awal siswa ----
 const URL_CHARTJS = "https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js";
 const URL_CROPPER_JS = "https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js";
 const URL_CROPPER_CSS = "https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css";

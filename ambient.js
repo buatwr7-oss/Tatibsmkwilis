@@ -300,6 +300,7 @@
       function simpanPilihan(v) { try { v === null ? localStorage.removeItem(KUNCI_RINGAN) : localStorage.setItem(KUNCI_RINGAN, v); } catch (e) {} }
       function terapkanRingan(on) {
         if (bgRoot) bgRoot.classList.toggle('ambient-ringan', !!on);
+        document.documentElement.classList.toggle('mode-ringan', !!on); // kartu kaca tanpa blur di HP lemah
         window.dispatchEvent(new CustomEvent('ambientRinganChanged', { detail: { ringan: !!on } }));
       }
       function perangkatLemah() {
